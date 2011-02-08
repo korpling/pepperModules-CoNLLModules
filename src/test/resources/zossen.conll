@@ -1,0 +1,8 @@
+1	Die	_	ART	ART	Nom|Pl|*	2	DET	2	P_DET
+2	Jugendlichen	_	N	NN	Nom|Pl|*	5	SUBJ	5	P_SUBJ
+3	in	_	PREP	APPR	_	5	PP	5	P_PP
+4	Zossen	_	N	NE	Dat|Sg|Neut	3	PN	3	P_PN
+5	wollen	_	V	VMFIN	3|Pl|Pres|Ind	0	ROOT	0	P_ROOT
+6	ein	_	ART	ART	Acc|Sg|Neut	7	DET	7	P_DET
+7	Musikcafe	_	N	NN	Acc|Sg|Neut	5	OBJA	5	P_OBJA
+8	.	_	$.	$.	_	7	-PUNCT-	7	P_-PUNCT-
