@@ -139,17 +139,25 @@ public class Conll2SaltMapper{
 			throw new ConllConversionInputFileException(); 
 		}
 
-		SaltProject saltProject  = SaltCommonFactory.eINSTANCE.createSaltProject();
-		SCorpusGraph sCorpusGraph = SaltCommonFactory.eINSTANCE.createSCorpusGraph();
-		SCorpus sCorpus = SaltCommonFactory.eINSTANCE.createSCorpus();
-		SCorpusDocumentRelation sDocumentRelation = SaltCommonFactory.eINSTANCE.createSCorpusDocumentRelation();
+		//TODO das saltProject wird bereits von Pepper erzeugt
+//		SaltProject saltProject  = SaltCommonFactory.eINSTANCE.createSaltProject();
+		//TODO der SCorpusGraph wird bereits von Pepper erzeugt
+//		SCorpusGraph sCorpusGraph = SaltCommonFactory.eINSTANCE.createSCorpusGraph();
+		//TODO das SCorpus und SDocument wird bereits durch die Methode importCorpusStructure() erzeugt,
+		// wenn ich das richtig sehe, benutzt Du alles was hier erzeugt wird spaeter auch gar nicht 
+		{
+//			SCorpus sCorpus = SaltCommonFactory.eINSTANCE.createSCorpus();
+//			SCorpusDocumentRelation sDocumentRelation = SaltCommonFactory.eINSTANCE.createSCorpusDocumentRelation();
+//			sCorpusGraph.setSName(getSDocumentGraphName() + "_corpusGraph");
+//			saltProject.getSCorpusGraphs().add(sCorpusGraph);
+//			sCorpusGraph.addSNode(sCorpus);
+//			sCorpusGraph.addSNode(sDocument);
+//			sDocumentRelation.setSCorpus(sCorpus);
+//			sDocumentRelation.setSDocument(sDocument);
+		}
+		
 
-		sCorpusGraph.setSName(getSDocumentGraphName() + "_corpusGraph");
-		saltProject.getSCorpusGraphs().add(sCorpusGraph);
-		sCorpusGraph.addSNode(sCorpus);
-		sCorpusGraph.addSNode(sDocument);
-		sDocumentRelation.setSCorpus(sCorpus);
-		sDocumentRelation.setSDocument(sDocument);
+		
 		sDocumentGraph = SaltCommonFactory.eINSTANCE.createSDocumentGraph();
 		sDocumentGraph.setSName(getSDocumentGraphName());
 		sDocument.setSDocumentGraph(sDocumentGraph);
