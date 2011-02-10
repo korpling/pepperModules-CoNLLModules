@@ -4,10 +4,14 @@
   <artifactId>CoNLLModules</artifactId>
   <version>1.1.0</version>
   <packaging>bundle</packaging>
-	<properties>
-    	<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    	<component.descriptor.name>serviceComponents.xml</component.descriptor.name>
-  	</properties>
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <bundle.file>${project.groupId}.${project.artifactId}_${project.version}.jar</bundle.file>
+    <component.descriptor.name>serviceComponents.xml</component.descriptor.name>
+    <assemblies.name>src/assemble/assemblies.xml</assemblies.name>
+    <license.file>${basedir}/LICENSE</license.file>
+    <notice.file>${basedir}/NOTICE</notice.file>
+  </properties>
   	<dependencies>
 	       	<dependency>
     			<groupId>org.apache.commons</groupId>
@@ -90,7 +94,20 @@
   
   <build>
       <plugins>
-      	      	<plugin>
+      <plugin>
+        <artifactId>maven-assembly-plugin</artifactId>
+        <version>2.2</version>
+        <configuration>
+          <descriptors>
+            <descriptor>${assemblies.name}</descriptor>
+          </descriptors>
+          <appendAssemblyId>false</appendAssemblyId>
+          <finalName>${project.groupId}.${project.artifactId}_${project.version}</finalName>
+          <outputDirectory>target/distribution</outputDirectory>
+          <workDirectory>target/assembly/work</workDirectory>
+        </configuration>
+      </plugin>
+      	      <plugin>
 		    <artifactId>maven-clean-plugin</artifactId>
 		    <version>2.4.1</version>
 		    <executions>
