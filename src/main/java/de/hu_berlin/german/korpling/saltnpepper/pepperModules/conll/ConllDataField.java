@@ -61,19 +61,10 @@ public enum ConllDataField {
 	}
 	
 	public static ConllDataField getFieldByNum(int fieldNum) {
-		switch (fieldNum) {
-			case  1: return ID;
-			case  2: return FORM;
-			case  3: return LEMMA;
-			case  4: return CPOSTAG;
-			case  5: return POSTAG;
-			case  6: return FEATS;
-			case  7: return HEAD;
-			case  8: return DEPREL;
-			case  9: return PHEAD;
-			case 10: return PDEPREL;
-			default: return null;
+		if ((fieldNum>0)&&(fieldNum<=ConllDataField.values().length)) {
+			return ConllDataField.values()[fieldNum-1];
 		}
+		return null;
 	}
 	
 	public static String getPropertyKey_Name_byFieldNum(int fieldNum) {

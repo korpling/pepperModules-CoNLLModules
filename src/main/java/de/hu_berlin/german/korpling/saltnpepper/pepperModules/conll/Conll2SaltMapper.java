@@ -35,10 +35,7 @@ import de.hu_berlin.german.korpling.saltnpepper.misc.tupleconnector.TupleReader;
 import de.hu_berlin.german.korpling.saltnpepper.pepperModules.conll.exception.ConllConversionInputFileException;
 import de.hu_berlin.german.korpling.saltnpepper.pepperModules.conll.exception.ConllConversionMandatoryValueMissingException;
 import de.hu_berlin.german.korpling.saltnpepper.salt.saltCommon.SaltCommonFactory;
-import de.hu_berlin.german.korpling.saltnpepper.salt.saltCommon.SaltProject;
 import de.hu_berlin.german.korpling.saltnpepper.salt.saltCommon.sCorpusStructure.SCorpus;
-import de.hu_berlin.german.korpling.saltnpepper.salt.saltCommon.sCorpusStructure.SCorpusDocumentRelation;
-import de.hu_berlin.german.korpling.saltnpepper.salt.saltCommon.sCorpusStructure.SCorpusGraph;
 import de.hu_berlin.german.korpling.saltnpepper.salt.saltCommon.sCorpusStructure.SDocument;
 import de.hu_berlin.german.korpling.saltnpepper.salt.saltCommon.sDocumentStructure.SDocumentGraph;
 import de.hu_berlin.german.korpling.saltnpepper.salt.saltCommon.sDocumentStructure.SPointingRelation;
@@ -156,25 +153,6 @@ public class Conll2SaltMapper{
 			throw new ConllConversionInputFileException(); 
 		}
 
-		//TODO das saltProject wird bereits von Pepper erzeugt
-//		SaltProject saltProject  = SaltCommonFactory.eINSTANCE.createSaltProject();
-		//TODO der SCorpusGraph wird bereits von Pepper erzeugt
-//		SCorpusGraph sCorpusGraph = SaltCommonFactory.eINSTANCE.createSCorpusGraph();
-		//TODO das SCorpus und SDocument wird bereits durch die Methode importCorpusStructure() erzeugt,
-		// wenn ich das richtig sehe, benutzt Du alles was hier erzeugt wird spaeter auch gar nicht 
-		{
-//			SCorpus sCorpus = SaltCommonFactory.eINSTANCE.createSCorpus();
-//			SCorpusDocumentRelation sDocumentRelation = SaltCommonFactory.eINSTANCE.createSCorpusDocumentRelation();
-//			sCorpusGraph.setSName(getSDocumentGraphName() + "_corpusGraph");
-//			saltProject.getSCorpusGraphs().add(sCorpusGraph);
-//			sCorpusGraph.addSNode(sCorpus);
-//			sCorpusGraph.addSNode(sDocument);
-//			sDocumentRelation.setSCorpus(sCorpus);
-//			sDocumentRelation.setSDocument(sDocument);
-		}
-		
-
-		
 		sDocumentGraph = SaltCommonFactory.eINSTANCE.createSDocumentGraph();
 		sDocumentGraph.setSName(getSDocumentGraphName());
 		sDocument.setSDocumentGraph(sDocumentGraph);
@@ -208,7 +186,7 @@ public class Conll2SaltMapper{
 			tupleSize = tuple.size();
 			fieldValues.clear();
 
-			if (!((tupleSize==1)||(tupleSize==10))) {
+			if (!((tupleSize==1)||(tupleSize==ConllDataField.values().length))) {
 				logError(String.format("invalid format in line %d of input file. lines must be empty or contain 10 columns of data. abort conversion.",rowIndex+1));
 				throw new ConllConversionInputFileException();
 			}
