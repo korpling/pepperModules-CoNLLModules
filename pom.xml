@@ -3,6 +3,12 @@
   <groupId>de.hu_berlin.german.korpling.saltnpepper.pepperModules</groupId>
   <artifactId>CoNLLModules</artifactId>
   <version>1.1.0</version>
+  <licenses>
+    	<license>
+			<name>The Apache Software License, Version 2.0</name>
+			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+    	</license>
+  	</licenses>
   <packaging>bundle</packaging>
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -79,7 +85,7 @@
 			<dependency>
 				<groupId>de.hu_berlin.german.korpling.saltnpepper.misc</groupId>
 				<artifactId>TupleConnector</artifactId>
-				<version>1.0.0</version>
+				<version>1.1.0</version>
 				<type>bundle</type>
 				<scope>compile</scope>
 			</dependency>
