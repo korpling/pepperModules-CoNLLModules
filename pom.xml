@@ -64,28 +64,28 @@
 			<dependency>
 				<groupId>de.hu_berlin.german.korpling.saltnpepper.salt</groupId>
 				<artifactId>SaltCommon</artifactId>
-				<version>1.1.0</version>
+				<version>[1.1.0,)</version>
 				<type>jar</type>
 				<scope>compile</scope>
 			</dependency>
 			<dependency>
 				<groupId>de.hu_berlin.german.korpling.saltnpepper.pepper</groupId>
 				<artifactId>PepperExceptions</artifactId>
-				<version>1.1.0</version>
+				<version>[1.1.0,)</version>
 				<type>bundle</type>
 				<scope>compile</scope>
 			</dependency>
 			<dependency>
 				<groupId>de.hu_berlin.german.korpling.saltnpepper.pepper</groupId>
 				<artifactId>PepperFW</artifactId>
-				<version>1.1.0</version>
+				<version>[1.1.0,)</version>
 				<type>jar</type>
 				<scope>compile</scope>
 			</dependency>
 			<dependency>
 				<groupId>de.hu_berlin.german.korpling.saltnpepper.misc</groupId>
 				<artifactId>TupleConnector</artifactId>
-				<version>1.1.0</version>
+				<version>[1.1.0,)</version>
 				<type>bundle</type>
 				<scope>compile</scope>
 			</dependency>
