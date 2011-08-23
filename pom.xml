@@ -3,13 +3,24 @@
   <groupId>de.hu_berlin.german.korpling.saltnpepper.pepperModules</groupId>
   <artifactId>CoNLLModules</artifactId>
   <version>1.1.0</version>
+  <packaging>bundle</packaging>  
+  <repositories>
+    <repository>
+      <id>SaltNPepper Repository</id>
+            <url>https://korpling.german.hu-berlin.de/~annis/maven2/saltnpepper/</url>
+    </repository>
+  </repositories>
+  <parent>
+  	<groupId>de.hu_berlin.german.korpling.saltnpepper.pepperModules</groupId>
+  	<artifactId>PepperParentModule</artifactId>
+  	<version>0.0.1</version>
+  </parent>
   <licenses>
     	<license>
-			<name>The Apache Software License, Version 2.0</name>
-			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-    	</license>
-  	</licenses>
-  <packaging>bundle</packaging>
+		<name>The Apache Software License, Version 2.0</name>
+		<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+	</license>
+  </licenses>
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <bundle.file>${project.groupId}.${project.artifactId}_${project.version}.jar</bundle.file>
