@@ -531,7 +531,7 @@ public class Conll2SaltMapper{
 							key = PROPERTYKEY_FIELD6_DEFAULT;
 						}
 					}
-					// toDo: check if default is defined! 
+					// TODO: check if default is defined! 
 					String[] featureKeys = properties.getProperty(key, MORPH).split(MORPHSEPARATOR); 
 					String[] featureValues = featureString.split(MORPHSEPARATOR);
 
