@@ -126,8 +126,7 @@ public class Conll2SaltMapperTest extends TestCase {
 	
 	
 	public final void testTokens() {
-		getFixture().setInFile(testFileURI);
-		getFixture().convert(SaltCommonFactory.eINSTANCE.createSDocument());
+		getFixture().map(testFileURI, SaltCommonFactory.eINSTANCE.createSDocument());
 		
 		//check whetcher number of tokens is correct
 		assertEquals(Array.getLength(tokenAnnotationNamesExpected), getFixture().getSDocumentGraph().getSTokens().size());
@@ -146,6 +145,7 @@ public class Conll2SaltMapperTest extends TestCase {
 				assertEquals(tokenAnnotationValueStringsExpected[tokenIndex][annotationIndex], annotation.getValueString());
 				annotationIndex++;
 			}
+
 			//check associated textual relation (linear order -> same index as token)
 			assertEquals(token, getFixture().getSDocumentGraph().getSTextualRelations().get(tokenIndex).getSource());
 
@@ -153,7 +153,7 @@ public class Conll2SaltMapperTest extends TestCase {
 			assertEquals(token, getFixture().getSDocumentGraph().getSSpanningRelations().get(tokenIndex).getTarget());
 
 			//check associated pointing relations; tests depend on properties...
-			boolean projectivity = getFixture().getProperties().getProperty("conll.considerProjectivity", "NO").equals("YES");
+			boolean projectivity = getFixture().getProperties().getProperty(Conll2SaltMapper.PROPERTYKEY_PROJECTIVITY, "NO").equals("YES");
 			int proFactor = 2; //proFactor is the factor that tokenIndex has to be multiplied with if projectivity is considered (double number of pointingRels)
 			if (!projectivity) {
 				proFactor = 1;
@@ -175,8 +175,7 @@ public class Conll2SaltMapperTest extends TestCase {
 	
 	
 	public final void testTextualRelations() {
-		getFixture().setInFile(testFileURI);
-		getFixture().convert(SaltCommonFactory.eINSTANCE.createSDocument());
+		getFixture().map(testFileURI,SaltCommonFactory.eINSTANCE.createSDocument());
 
 		STextualDS textualDS = getFixture().getSDocumentGraph().getSTextualDSs().get(0);
 		
@@ -196,9 +195,8 @@ public class Conll2SaltMapperTest extends TestCase {
 		
 	
 	public final void testSpans() {
-		getFixture().setInFile(testFileURI);
-		getFixture().convert(SaltCommonFactory.eINSTANCE.createSDocument());
-
+		getFixture().map(testFileURI,SaltCommonFactory.eINSTANCE.createSDocument());
+		
 		int spanIndex = 0;
 		for (SSpan span : getFixture().getSDocumentGraph().getSSpans()) {
 			//check sDocumentGraph
@@ -214,8 +212,7 @@ public class Conll2SaltMapperTest extends TestCase {
 			
 	
 	public final void testSpanningRelations() {
-		getFixture().setInFile(testFileURI);
-		getFixture().convert(SaltCommonFactory.eINSTANCE.createSDocument());
+		getFixture().map(testFileURI,SaltCommonFactory.eINSTANCE.createSDocument());		
 		
 		int spanRelIndex = 0;
 		for (SSpanningRelation spanRel : getFixture().getSDocumentGraph().getSSpanningRelations()) {
@@ -231,17 +228,16 @@ public class Conll2SaltMapperTest extends TestCase {
 	
 	
 	public final void testPointingRelations() {
-		getFixture().setInFile(testFileURI);
-		getFixture().convert(SaltCommonFactory.eINSTANCE.createSDocument());
-
-		boolean projectivity = getFixture().getProperties().getProperty("conll.considerProjectivity", "NO").equals("YES");
+		getFixture().map(testFileURI,SaltCommonFactory.eINSTANCE.createSDocument());
+		
+		boolean projectivity = getFixture().getProperties().getProperty(Conll2SaltMapper.PROPERTYKEY_PROJECTIVITY, Conll2SaltMapper.FALSE).equals(Conll2SaltMapper.TRUE);
 		int proFactor = 1; 
 		//proFactor is for calculating list indexes
 		if (!projectivity) {
 			proFactor = 2;
 		}
 		
-		boolean projectiveModeIsType = getFixture().getProperties().getProperty("conll.projectiveMode", "TYPE").equals("TYPE");
+		boolean projectiveModeIsType = getFixture().getProperties().getProperty(Conll2SaltMapper.PROPERTYKEY_PROJECTIVEMODE, Conll2SaltMapper.TYPE).equals(Conll2SaltMapper.TYPE);
 		
 		int pointRelIndex = 0;
 		for (SPointingRelation pointRel : getFixture().getSDocumentGraph().getSPointingRelations()) {

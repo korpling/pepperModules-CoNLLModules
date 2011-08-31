@@ -43,24 +43,31 @@ import de.hu_berlin.german.korpling.saltnpepper.salt.saltCore.SElementId;
 @Service(value=PepperImporter.class)
 public class CoNLLImporter extends PepperImporterImpl implements PepperImporter
 {
+	//-------------------------------------------------------------------------
+	private final String NAME          = "CoNLLImporter";
+	private final String SYMBOLICNAME  = "de.hu_berlin.german.korpling.saltnpepper.pepperModules.CoNLLModules";
+	private final String FORMATNAME    = "CoNLL";
+	private final String FORMATVERSION = "1.0"; //TODO: What version? 
+	//-------------------------------------------------------------------------
+	
 	public CoNLLImporter()
 	{
 		super();
 		{//setting name of module
-			this.name= "CoNLLImporter";
+			this.name= NAME;
 		}//setting name of module
 		
 		{//for testing the symbolic name has to be set without osgi
 			if (	(this.getSymbolicName()==  null) ||
 					(this.getSymbolicName().equalsIgnoreCase("")))
-				this.setSymbolicName("de.hu_berlin.german.korpling.saltnpepper.pepperModules.CoNLLModules");
+				this.setSymbolicName(SYMBOLICNAME);
 		}//for testing the symbolic name has to be set without osgi
 		
 		{//set list of formats supported by this module
 			this.supportedFormats= new BasicEList<FormatDefinition>();
 			FormatDefinition formatDef= PepperInterfaceFactory.eINSTANCE.createFormatDefinition();
-			formatDef.setFormatName("CoNLL");
-			formatDef.setFormatVersion("1.0"); //TODO: Which CoNLL format version?
+			formatDef.setFormatName(FORMATNAME);
+			formatDef.setFormatVersion(FORMATVERSION); 
 			this.supportedFormats.add(formatDef);
 		}
 		
@@ -125,19 +132,14 @@ public class CoNLLImporter extends PepperImporterImpl implements PepperImporter
 				(sElementId.getSIdentifiableElement()!= null) &&
 				((sElementId.getSIdentifiableElement() instanceof SDocument) ||
 				((sElementId.getSIdentifiableElement() instanceof SCorpus))))
-
 		{//only if given sElementId belongs to an object of type SDocument or SCorpus	
 			if (sElementId.getSIdentifiableElement() instanceof SDocument) {
 				this.returningMode= RETURNING_MODE.PUT;
-				URI uri= this.documentResourceTable.get(sElementId);
-				//TODO: Factory!
 				Conll2SaltMapper conll2SaltMapper = new Conll2SaltMapper();
 				conll2SaltMapper.setProperties(this.getSpecialParams());
 				conll2SaltMapper.setLogService(this.getLogService());
-				conll2SaltMapper.setInFile(uri);
-				conll2SaltMapper.convert((SDocument)sElementId.getSIdentifiableElement());
+				conll2SaltMapper.map(this.documentResourceTable.get(sElementId),(SDocument)sElementId.getSIdentifiableElement());
 			}
-		
 		}//only if given sElementId belongs to an object of type SDocument or SCorpus
 	}
 	

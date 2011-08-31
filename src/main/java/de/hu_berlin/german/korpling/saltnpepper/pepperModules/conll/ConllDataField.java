@@ -22,17 +22,17 @@ public enum ConllDataField {
 	ID		( 1,true),
 	FORM	( 2,true),
 	LEMMA	( 3,false,"_"),
-	CPOSTAG ( 4,true),
-	POSTAG	( 5,true),
+	CPOSTAG ( 4,false,"_"),
+	POSTAG	( 5,false,"_"),
 	FEATS	( 6,false,"_"),
 	HEAD	( 7,true),
-	DEPREL	( 8,true),
+	DEPREL	( 8,false,"_"),
 	PHEAD	( 9,false,"_"),
 	PDEPREL	(10,false,"_");
 
-	private final int fieldNum;
+	private final int     fieldNum;
 	private final boolean mandatory;
-	private final String dummyValue;
+	private final String  dummyValue;
 	
 	ConllDataField(int fieldNum, boolean mandatory) {
 		this(fieldNum,mandatory,"");

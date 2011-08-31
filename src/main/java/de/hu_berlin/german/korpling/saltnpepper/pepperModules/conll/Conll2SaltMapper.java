@@ -35,7 +35,6 @@ import de.hu_berlin.german.korpling.saltnpepper.misc.tupleconnector.TupleReader;
 import de.hu_berlin.german.korpling.saltnpepper.pepperModules.conll.exception.ConllConversionInputFileException;
 import de.hu_berlin.german.korpling.saltnpepper.pepperModules.conll.exception.ConllConversionMandatoryValueMissingException;
 import de.hu_berlin.german.korpling.saltnpepper.salt.saltCommon.SaltCommonFactory;
-import de.hu_berlin.german.korpling.saltnpepper.salt.saltCommon.sCorpusStructure.SCorpus;
 import de.hu_berlin.german.korpling.saltnpepper.salt.saltCommon.sCorpusStructure.SDocument;
 import de.hu_berlin.german.korpling.saltnpepper.salt.saltCommon.sDocumentStructure.SDocumentGraph;
 import de.hu_berlin.german.korpling.saltnpepper.salt.saltCommon.sDocumentStructure.SPointingRelation;
@@ -45,9 +44,57 @@ import de.hu_berlin.german.korpling.saltnpepper.salt.saltCommon.sDocumentStructu
 import de.hu_berlin.german.korpling.saltnpepper.salt.saltCommon.sDocumentStructure.STextualRelation;
 import de.hu_berlin.german.korpling.saltnpepper.salt.saltCommon.sDocumentStructure.SToken;
 import de.hu_berlin.german.korpling.saltnpepper.salt.saltCore.SAnnotation;
+import de.hu_berlin.german.korpling.saltnpepper.salt.saltSemantics.SPOSAnnotation;
+import de.hu_berlin.german.korpling.saltnpepper.salt.saltSemantics.SaltSemanticsFactory;
 
+/**
+ * This class maps input data from CoNLL format to Salt format
+ * @author hildebax
+ *
+ */
 public class Conll2SaltMapper{
 
+	//property defaults
+	private final boolean defaultUseSPOSAnnoation    = true;
+	private final boolean defaultUseSLemmaAnnoation  = true;
+	
+	//some values and keys used in this class
+	public final static String PROPERTYKEY_PROJECTIVITY    = "conll.considerProjectivity";
+	public final static String PROPERTYKEY_PROJECTIVEMODE  = "conll.projectiveMode";
+	public final static String PROPERTYKEY_SPOS            = "conll.SPOS";
+	public final static String PROPERTYKEY_SLEMMA          = "conll.SLEMMA";
+
+	public final static String PROPERTYKEY_FIELD6_POSTAG_  = "conll.field6.POSTAG.";  //the dot at the end is correct
+	public final static String PROPERTYKEY_FIELD6_CPOSTAG_ = "conll.field6.CPOSTAG."; //the dot at the end is correct	
+	public final static String PROPERTYKEY_FIELD6_DEFAULT  = "conll.field6.default";
+	
+	private final String PROPERTYVAL_NONE            = "NONE";
+	private final String PROPERTYVAL_POSTAG          = "POSTAG";
+	private final String PROPERTYVAL_CPOSTAG         = "CPOSTAG";
+	private final String PROPERTYVAL_LEMMA           = "LEMMA";	
+
+	//
+	private ConllDataField firstSPOSField = null;
+	private ConllDataField secondSPOSField = null;
+
+	private final ConllDataField DEFAULT_SPOS   = ConllDataField.POSTAG;
+	//private final ConllDataField DEFAULT_SLEMMA = ConllDataField.LEMMA;	
+	
+	private final String PROJECTIVE     			  = "projective";
+	private final String PRODEP         			  = "prodep";
+	private final String DEP            			  = "dep";
+	private final String DEPREL         			  = "deprel";
+	private final String CAT            			  = "cat";
+	private final String S              			  = "S";	
+	public static final String TRUE       			  = "true";
+	public static final String FALSE       		  	  = "false";	
+	public static final String TYPE       			  = "TYPE";
+	private final String MORPH          			  = "morph";	
+	
+	//separator for morphological annotation values
+	private final String MORPHSEPARATOR = "\\|";
+	
+	
 	//----------------------------------------------------------
 	private Properties properties = new Properties();
 	
@@ -55,107 +102,305 @@ public class Conll2SaltMapper{
 	private boolean considerProjectivity = false;  
 	private boolean projectiveModeIsType = true; //if false, projective mode is "namespace"
 
+	/**
+	 * Setter for the properties file of the conversion  
+	 * @param propertyFile URI for the properties file
+	 */
 	public void setProperties(URI propertyFile) {
-		if (propertyFile!=null)  {
+		if (propertyFile!=null) {
 			try {
+				logInfo(String.format("Trying to read property file '%s'",propertyFile.toFileString()));
 				properties.load(new FileInputStream(propertyFile.toFileString()));
-				considerProjectivity = !properties.getProperty("conll.considerProjectivity", "NO").equals("NO");
-				projectiveModeIsType = properties.getProperty("conll.projectiveMode", "TYPE").equals("TYPE");
+				considerProjectivity = !properties.getProperty(PROPERTYKEY_PROJECTIVITY, TRUE).equals(TRUE);
+				projectiveModeIsType = properties.getProperty(PROPERTYKEY_PROJECTIVEMODE, TYPE).equals(TYPE);
 			} catch (IOException e) {
-				logWarning("no property file");
-				//throw new ConllConversionPropertiesMissingException();
+				logWarning("property file for mapping CoNLL to Salt could not be read; default values are used");
 			}
+		}
+		else {
+			logWarning("URI of property file for mapping CoNLL to Salt is NULL; default values are used");
 		}
 	}
 
+	/**
+	 * Getter for the properties file
+	 * @return properties the Properties
+	 */
 	public Properties getProperties() {
 		return properties;
 	}
 	//----------------------------------------------------------
 
+	//the Salt document graph; it will contain the data after conversion
 	private SDocumentGraph sDocumentGraph = null; 
 
+	/**
+	 * Getter for the Salt document graph
+	 * @return sDocumentGraph the Salt document graph
+	 */
 	public SDocumentGraph getSDocumentGraph() {
 		return sDocumentGraph;
 	}
 	//----------------------------------------------------------
 	
+	//the URI for the CoNLL file
 	private URI inFileURI = null;
-	
-	public void setInFile(URI inFileURI) {
+
+	//setter for the URI
+	private void setInFileURI(URI inFileURI) {
 		this.inFileURI = inFileURI;
 	}
-
+	
+	/**
+	 * Getter for the URI for the CoNLL (input) file
+	 * @return inFileURI the URI
+	 */
 	public URI getInFileURI() {
 		return inFileURI;
 	}
 	//----------------------------------------------------------
 
+	//the Salt document 
 	private SDocument sDocument = null;
 	
+	//Setter for the Salt document
+	private void setSDocument(SDocument sDocument) {
+		this.sDocument = sDocument;
+	}
+	
+	/**
+	 * Getter for the Salt document
+	 * @return sDocument the Salt document
+	 */
 	public SDocument getSDocument() {
 		return this.sDocument;
 	}
 	//----------------------------------------------------------
-
-	private SCorpus sCorpus = null;
 	
-	public SCorpus getSCorpus() {
-		return this.sCorpus;
-	}
-	//----------------------------------------------------------
-	
+	//the name of the Salt document graph
 	private String sDocumentGraphName = null;
 	
+	/**
+	 * Setter for the name of the Salt document graph
+	 * @param sDocumentGraphName the name
+	 */
 	public void setSDocumentGraphName(String sDocumentGraphName) {
 		this.sDocumentGraphName = sDocumentGraphName;
 	}
 	
+	/**
+	 * Getter for the name of the Salt document graph
+	 * @return sDocumentGraphName the name
+	 */
 	public String getSDocumentGraphName() {
 		return sDocumentGraphName;
 	}
 	//----------------------------------------------------------
 	
+	// the log service
 	private LogService logService = null;
 	
+	/**
+	 * Getter for the log service
+	 * @return logService the log service
+	 */
 	public LogService getLogService() {
 		return logService;
 	}
 
+	/**
+	 * Setter for the log service
+	 * @param logService the log service
+	 */
 	public void setLogService(LogService logService) {
 		this.logService = logService;
 	}
 
+	//used by logError, logWarning, logInfo and logDebug
 	private void log(int logLevel, String logText) {
 		if (this.getLogService()!=null) {
 			this.getLogService().log(logLevel, logText);
 		}
 	}
 	
+	//logging methods
 	private void logError  (String logText) { this.log(LogService.LOG_ERROR,   logText); }
 	private void logWarning(String logText) { this.log(LogService.LOG_WARNING, logText); }
-	@SuppressWarnings("unused")
 	private void logInfo   (String logText) { this.log(LogService.LOG_INFO,    logText); }
 	@SuppressWarnings("unused")
 	private void logDebug  (String logText) { this.log(LogService.LOG_DEBUG,   logText); }
 	//----------------------------------------------------------
 	
-	public void convert(SDocument sDocument) {
+	boolean useSLemmaAnnotation;
+	//retrieves whether or not to use SLemmaAnnoations  
+	private boolean getUseSLemmaAnnotation() {
+		String propVal = properties.getProperty(PROPERTYKEY_SLEMMA, PROPERTYVAL_LEMMA); 
+		if (propVal.equals(PROPERTYVAL_LEMMA))	return true;
+		if (propVal.equals(PROPERTYVAL_NONE))	return false;
+		logWarning(String.format("Invalid value '%s' for property '%s'. Default value '%s' is used.",propVal,PROPERTYKEY_SLEMMA,PROPERTYVAL_LEMMA));
+		return defaultUseSLemmaAnnoation;
+	}
+
+	
+	boolean useSPOSAnnotation;	
+	//retrieves whether or not to use SPOSAnnoations and sets the values for 'firstPOSField' and 'secondPOSField'
+	private boolean getUseSPOSAnnotation() {
+		this.firstSPOSField=null;		
+		this.secondSPOSField=null;
+
+		if (!properties.containsKey(PROPERTYKEY_SPOS)) {
+			if (defaultUseSPOSAnnoation) {
+				this.firstSPOSField=DEFAULT_SPOS;
+			}
+			return defaultUseSPOSAnnoation;
+		}
+		String propVal = properties.getProperty(PROPERTYKEY_SPOS);
+		String[] propVals = propVal.split(",");
+		
+		if (propVals.length>2) {
+			logWarning(String.format("Found '%s' for property '%s'. Only two values are regarded, the rest will be ignored.",propVal,PROPERTYKEY_SPOS));
+		}
+		
+		if ((propVals.length>1) && (propVals[0].equals(PROPERTYVAL_NONE))) {
+			logWarning(String.format("Found '%s' for property '%s'. With this setting, no SPOSAnnotation will ever be created.",propVal,PROPERTYKEY_SPOS));
+		}
+		
+		String val = propVals[0].trim();
+		if (val.equals(PROPERTYVAL_NONE)) {
+			return false;
+		}
+		else if ((val.equals(PROPERTYVAL_POSTAG))||(val.equals(PROPERTYVAL_CPOSTAG))) {
+			if (val.equals(PROPERTYVAL_POSTAG)) {
+				this.firstSPOSField = ConllDataField.POSTAG;
+			}
+			else if (val.equals(PROPERTYVAL_CPOSTAG)) {
+				this.firstSPOSField = ConllDataField.CPOSTAG;	
+			}
+		}
+		else {
+			if (propVals.length==1) {
+				logWarning(String.format("Invalid value '%s' for property '%s'. Using default value.",val,PROPERTYKEY_SPOS));
+				this.firstSPOSField=DEFAULT_SPOS;
+			}
+			else {
+				logWarning(String.format("Invalid value '%s' for property '%s'. Using alternative value.",val,PROPERTYKEY_SPOS));	
+			}
+		}
+		
+		if (propVals.length>=2) {
+			val = propVals[1].trim();
+			if (val.equals(PROPERTYVAL_NONE)) {
+			}
+			else if ((val.equals(PROPERTYVAL_POSTAG))||(val.equals(PROPERTYVAL_CPOSTAG))) {
+				ConllDataField field = null; 
+				if (val.equals(PROPERTYVAL_POSTAG)) {
+					field = ConllDataField.POSTAG;	
+				}
+				else if (val.equals(PROPERTYVAL_CPOSTAG)) {
+					field = ConllDataField.CPOSTAG;
+				}
+
+				if (this.firstSPOSField==null) {
+					this.firstSPOSField=field;
+				}
+				else {
+					this.secondSPOSField=field;
+				}
+			}
+			else {
+				if (this.firstSPOSField==null) {
+					logWarning(String.format("Invalid alternative value '%s' for property '%s'. Using default value.",val,PROPERTYKEY_SPOS));	
+					this.firstSPOSField=DEFAULT_SPOS;
+				} 
+				else {
+					logWarning(String.format("Invalid alternative value '%s' for property '%s'.",val,PROPERTYKEY_SPOS));
+				}
+			}
+		}
+		
+		
+		return (this.firstSPOSField!=null); 
+	}
+	
+	private void createPOSandCPOSAnnotation(ArrayList<String> fieldValues, SToken sToken) {
+		{
+		
+			if (!this.useSPOSAnnotation) {			
+				ConllDataField[] posFields = {ConllDataField.POSTAG,ConllDataField.CPOSTAG};
+				for (int index=0; index<posFields.length; index++) {
+					ConllDataField field      = posFields[index];
+					String         fieldValue = fieldValues.get(field.getFieldNum()-1);
+					if (fieldValue!=null) {
+						SAnnotation sAnnotation = SaltCommonFactory.eINSTANCE.createSAnnotation();
+						sAnnotation.setSName(properties.getProperty(field.getPropertyKey_Name(), field.name())); //use user specified name for field, or default: the field�s ConLL name
+						sAnnotation.setValueString(fieldValue);
+						sToken.addSAnnotation(sAnnotation);
+					}
+				}
+			}
+			else {
+				int SPOSAnnotationIndex = -1;
+				ConllDataField[] bothFields = {this.firstSPOSField,this.secondSPOSField};
+				ConllDataField field = null;				
+				for (int index=0; index<bothFields.length; index++) {
+					if (SPOSAnnotationIndex==-1) {
+						field = bothFields[index]; 
+						if (field!=null) {
+							String fieldVal = fieldValues.get(field.getFieldNum()-1);
+							if (fieldVal!=null) {
+								SPOSAnnotation anno = SaltSemanticsFactory.eINSTANCE.createSPOSAnnotation();
+								anno.setValueString(fieldVal);
+								sToken.addSAnnotation(anno);
+								SPOSAnnotationIndex=index;
+							}
+						}
+					}
+				}
+
+				for (int index=0; index<bothFields.length; index++) {
+					if (SPOSAnnotationIndex!=index) {
+						field = bothFields[index]; 
+						if (field!=null) {
+							String fieldVal = fieldValues.get(field.getFieldNum()-1);
+							if (fieldVal!=null) {
+								SAnnotation anno = SaltCommonFactory.eINSTANCE.createSAnnotation();
+								anno.setSName(properties.getProperty(field.getPropertyKey_Name(), field.name())); //use user specified name for field, or default: the field�s ConLL name
+								anno.setValueString(fieldVal);
+								sToken.addSAnnotation(anno);
+								SPOSAnnotationIndex=index;
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	
+	/**
+	 * Maps the content of an input file (given as URI) in CoNLL format to a Salt document
+	 * @param CoNLLFileURI the file URI containing the input data
+	 * @param sDocument the Salt document; destination of the conversion
+	 */
+	public void map(URI inFileURI, SDocument sDocument) {
+		
+		setInFileURI(inFileURI);
+		setSDocument(sDocument);
 		
 		TupleReader tupleReader = TupleConnectorFactory.fINSTANCE.createTupleReader();
 		// try reading the input file 
 		try   {
-			tupleReader.setFile(new File(inFileURI.toFileString()));
+			tupleReader.setFile(new File(this.getInFileURI().toFileString()));
 			tupleReader.readFile();
 		}
 		catch (IOException e) {
-			logError("input file could not be read. abort conversion.");
-			throw new ConllConversionInputFileException(); 
+			String errorMessage = "input file could not be read. abort conversion.";
+			logError(errorMessage);
+			throw new ConllConversionInputFileException(errorMessage); 
 		}
 
 		sDocumentGraph = SaltCommonFactory.eINSTANCE.createSDocumentGraph();
 		sDocumentGraph.setSName(getSDocumentGraphName());
-		sDocument.setSDocumentGraph(sDocumentGraph);
+		getSDocument().setSDocumentGraph(sDocumentGraph);
 		STextualDS sTextualDS = SaltCommonFactory.eINSTANCE.createSTextualDS();
 		sTextualDS.setSDocumentGraph(sDocumentGraph);
  
@@ -167,8 +412,12 @@ public class Conll2SaltMapper{
 		int numOfTuples = tupleReader.getNumOfTuples();
 		int lastTupleIndex = numOfTuples-1;
 		int tupleSize = 0;
+		int numOfColumnsExpected = ConllDataField.values().length;
 		int fieldNum = 1;
 
+		this.useSLemmaAnnotation = getUseSLemmaAnnotation();
+		this.useSPOSAnnotation   = getUseSPOSAnnotation();
+		
 		// using a StringBuilder for the iteratively updated raw text 
 		int stringBuilderCharBufferSize = tupleReader.characterSize(ConllDataField.FORM.getFieldNum()-1) + numOfTuples;
 		StringBuilder primaryText = new StringBuilder(stringBuilderCharBufferSize);
@@ -179,16 +428,18 @@ public class Conll2SaltMapper{
 				tuple = tupleReader.getTuple();
 			} 
 			catch (IOException e) {
-				logError(String.format("line %d of input file could not be read. abort conversion.",rowIndex+1));
-				throw new ConllConversionInputFileException();
+				String errorMessage = String.format("line %d of input file could not be read. abort conversion.",rowIndex+1);
+				logError(errorMessage);
+				throw new ConllConversionInputFileException(errorMessage);
 			}
 			
 			tupleSize = tuple.size();
 			fieldValues.clear();
 
-			if (!((tupleSize==1)||(tupleSize==ConllDataField.values().length))) {
-				logError(String.format("invalid format in line %d of input file. lines must be empty or contain 10 columns of data. abort conversion.",rowIndex+1));
-				throw new ConllConversionInputFileException();
+			if (!((tupleSize==1)||(tupleSize==numOfColumnsExpected))) {
+				String errorMessage = String.format("invalid format in line %d of input file. lines must be empty or contain %d columns of data. abort conversion.",rowIndex+1,numOfColumnsExpected);
+				logError(errorMessage);
+				throw new ConllConversionInputFileException(errorMessage);
 			}
 			
 			if (tupleSize>1) { //if true, this is a data row, else it is a sentence separating line
@@ -201,8 +452,9 @@ public class Conll2SaltMapper{
 					if (fieldValue.equals(field.getDummyValue())) {
 						fieldValue = null;
 						if (field.isMandatory()) {
-							logError(String.format("mandatory value for %s missing in line %d of input file!",field.toString(),rowIndex+1));
-							throw new ConllConversionMandatoryValueMissingException();
+							String errorMessage = String.format("mandatory value for %s missing in line %d of input file!",field.toString(),rowIndex+1);
+							logError(errorMessage);
+							throw new ConllConversionMandatoryValueMissingException(errorMessage);
 						}
 					}
 					fieldValues.add(fieldValue);
@@ -225,28 +477,36 @@ public class Conll2SaltMapper{
 				sTextualRelation.setSStart(tokenTextStartOffset);
 				sTextualRelation.setSEnd(tokenTextEndOffset);
 				sTextualRelation.setSDocumentGraph(sDocumentGraph);
-				
-				// annotations for lemma, cpos, pos
-				ConllDataField[] tokenAnnotationFields = {
-						ConllDataField.LEMMA,
-						ConllDataField.CPOSTAG,
-						ConllDataField.POSTAG
-					};
-				
-				for (ConllDataField field : tokenAnnotationFields) {
+
+
+				//Lemma
+				{
+					ConllDataField field = ConllDataField.LEMMA;
 					String fieldValue = fieldValues.get(field.getFieldNum()-1);
-					if (fieldValue!=null) { // lemma may be null, cpos and pos must not
-						SAnnotation sAnnotation = SaltCommonFactory.eINSTANCE.createSAnnotation();
-						sAnnotation.setName(properties.getProperty(field.getPropertyKey_Name(), field.name())); //use user specified name for field, or default: the field�s ConLL name 
+					if (fieldValue!=null) {
+						SAnnotation sAnnotation = null;
+						if (useSLemmaAnnotation) {
+							sAnnotation = SaltSemanticsFactory.eINSTANCE.createSLemmaAnnotation();
+						}
+						else {
+							sAnnotation = SaltCommonFactory.eINSTANCE.createSAnnotation();
+							sAnnotation.setName(properties.getProperty(field.getPropertyKey_Name(), field.name())); //use user specified name for field, or default: the field�s ConLL name								
+						}
 						sAnnotation.setValueString(fieldValue);
-						sToken.addSAnnotation(sAnnotation);
+						sToken.addSAnnotation(sAnnotation);					
 					}
 				}
-				
+					
+				//POS and CPOS
+				{
+					createPOSandCPOSAnnotation(fieldValues, sToken);
+				}
+				///POS and CPOS
+					
 				// create annotation for span
 				SAnnotation sAnnotation = SaltCommonFactory.eINSTANCE.createSAnnotation();
-				sAnnotation.setName("cat"); //toDo: variable for "cat"
-				sAnnotation.setValueString("S"); //toDo: variable for "S"
+				sAnnotation.setName(CAT);
+				sAnnotation.setValueString(S);
 				
 				// create span and add span annotation
 				SSpan sSpan = SaltCommonFactory.eINSTANCE.createSSpan();
@@ -264,16 +524,16 @@ public class Conll2SaltMapper{
 				if (featureString!=null) {
 					// check whether rule for feature category is defined. POSTAG (fine grained) gets priority over
 					// CPOSTAG (coarse grained). if neither one is defined, use default
-					String key = "conll.field6.POSTAG." + fieldValues.get(ConllDataField.POSTAG.getFieldNum()-1);
+					String key = PROPERTYKEY_FIELD6_POSTAG_ + fieldValues.get(ConllDataField.POSTAG.getFieldNum()-1);
 					if (!properties.containsKey(key)) {
-						key = "conll.field6.CPOSTAG." + fieldValues.get(ConllDataField.CPOSTAG.getFieldNum()-1);
+						key = PROPERTYKEY_FIELD6_CPOSTAG_ + fieldValues.get(ConllDataField.CPOSTAG.getFieldNum()-1);
 						if (!properties.containsKey(key)) {
-							key = "conll.field6.default";
+							key = PROPERTYKEY_FIELD6_DEFAULT;
 						}
 					}
 					// toDo: check if default is defined! 
-					String[] featureKeys = properties.getProperty(key, "morph").split("\\|"); 
-					String[] featureValues = featureString.split("\\|");
+					String[] featureKeys = properties.getProperty(key, MORPH).split(MORPHSEPARATOR); 
+					String[] featureValues = featureString.split(MORPHSEPARATOR);
 
 					for (int idx=0; idx<Math.min(featureKeys.length,featureValues.length); idx++) {
 						sAnnotation = SaltCommonFactory.eINSTANCE.createSAnnotation();
@@ -287,8 +547,6 @@ public class Conll2SaltMapper{
 				
 				} // (featureString!=null)
 				
-
-				
 				// get ID of current token
 				String tokenIDStr = fieldValues.get(ConllDataField.ID.getFieldNum()-1);
 				Integer tokenID = null;
@@ -296,7 +554,8 @@ public class Conll2SaltMapper{
 					tokenID = Integer.parseInt(tokenIDStr);
 				}
 				catch (NumberFormatException e) {
-					logError(String.format("invalid integer value '%s' for ID in line %d of input file. abort conversion.",tokenIDStr,rowIndex+1));
+					String errorMessage = String.format("invalid integer value '%s' for ID in line %d of input file. abort conversion.",tokenIDStr,rowIndex+1); 
+					logError(errorMessage);
 					throw new ConllConversionInputFileException();
 				}
 
@@ -309,21 +568,22 @@ public class Conll2SaltMapper{
 					headID = Integer.parseInt(headIDStr);
 				}
 				catch (NumberFormatException e) {
-					logError(String.format("invalid integer value '%s' for HEAD in line %d of input file. abort conversion.",headIDStr,rowIndex+1));
-					throw new ConllConversionInputFileException();
+					String errorMessage = String.format("invalid integer value '%s' for HEAD in line %d of input file. abort conversion.",headIDStr,rowIndex+1); 
+					logError(errorMessage);
+					throw new ConllConversionInputFileException(errorMessage);
 				}
 				
 				// create pointing relation, pointing from head to dependent
 				if (headID>0) {
 					// create annotation for pointing relation
 					sAnnotation = SaltCommonFactory.eINSTANCE.createSAnnotation();
-					sAnnotation.setSName("deprel"); //toDo: variable for "deprel"
+					sAnnotation.setSName(DEPREL);
 					sAnnotation.setValueString(fieldValues.get(ConllDataField.DEPREL.getFieldNum()-1));
 
 					SPointingRelation sPointingRelation = SaltCommonFactory.eINSTANCE.createSPointingRelation();
 					sPointingRelation.setSDocumentGraph(sDocumentGraph);
 					sPointingRelation.addSAnnotation(sAnnotation);
-					sPointingRelation.addSType("dep"); //toDo: variable for "dep"
+					sPointingRelation.addSType(DEP);
 					sPointingRelation.setTarget(sToken);
 					
 					if (headID<=tokenID) {
@@ -344,7 +604,8 @@ public class Conll2SaltMapper{
 						proheadID = Integer.parseInt(proheadIDStr);
 					}
 					catch (NumberFormatException e) {
-						logError(String.format("invalid integer value '%s' for PHEAD in line %d of input file. abort conversion.",proheadIDStr,rowIndex+1));
+						String errorMessage = String.format("invalid integer value '%s' for PHEAD in line %d of input file. abort conversion.",proheadIDStr,rowIndex+1); 
+						logError(errorMessage);
 						throw new ConllConversionInputFileException();
 					}
 					
@@ -352,7 +613,7 @@ public class Conll2SaltMapper{
 					if (proheadID>0) {
 						// create annotation for pointing relation
 						sAnnotation = SaltCommonFactory.eINSTANCE.createSAnnotation();
-						sAnnotation.setSName("deprel"); //toDo: variable for "deprel"
+						sAnnotation.setSName(DEPREL);
 						sAnnotation.setValueString(fieldValues.get(ConllDataField.PDEPREL.getFieldNum()-1));
 
 						SPointingRelation sPointingRelation = SaltCommonFactory.eINSTANCE.createSPointingRelation();
@@ -361,11 +622,11 @@ public class Conll2SaltMapper{
 						sPointingRelation.setTarget(sToken);
 						
 						if (projectiveModeIsType) {
-							sPointingRelation.addSType("prodep"); //toDo: variable for "prodep"
+							sPointingRelation.addSType(PRODEP);
 						}
 						else {
-							sAnnotation.setNamespace("projective"); //toDo: variable for "projective" (default namespace is "graph")
-							sPointingRelation.addSType("dep"); //toDo: variable for "dep"
+							sAnnotation.setNamespace(PROJECTIVE);
+							sPointingRelation.addSType(DEP);
 						}
 						
 						if (proheadID<=tokenID) {
@@ -397,7 +658,7 @@ public class Conll2SaltMapper{
 		primaryText.deleteCharAt(primaryText.length()-1);
 		sTextualDS.setSText(primaryText.toString());
 		
-	} // convert()
+	} // map
 
 } // ConllDep2SaltMapper
 

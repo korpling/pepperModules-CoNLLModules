@@ -17,11 +17,35 @@
  */
 package de.hu_berlin.german.korpling.saltnpepper.pepperModules.conll.exception;
 
-@SuppressWarnings("serial")
 public class ConllConversionInputFileException extends ConllConversionException {
 
-	public ConllConversionInputFileException () {
-		
+	/**
+	 * generated ID 
+	 */
+	private static final long serialVersionUID = -9121164909598095201L;
+
+	/**
+	 * Constructs a new exception with <code>null</code> as its detail message. 
+	 */
+	public ConllConversionInputFileException() {
+		super();
+	}
+	
+    /**
+     * Constructs a new exception with the specified detail message.
+     * @param msg the detail message
+     */
+	public ConllConversionInputFileException(String msg) {
+		super(msg);
+	}
+	
+    /**
+     * Constructs a new exception with the specified detail message and cause. 
+     * @param msg the detail message
+	 * @param cause the cause
+	 */
+	public ConllConversionInputFileException(String msg, Throwable cause) {
+		super(msg,cause);		
 	}
 
 }
