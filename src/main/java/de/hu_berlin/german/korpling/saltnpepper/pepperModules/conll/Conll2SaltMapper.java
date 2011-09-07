@@ -34,7 +34,7 @@ import de.hu_berlin.german.korpling.saltnpepper.misc.tupleconnector.TupleConnect
 import de.hu_berlin.german.korpling.saltnpepper.misc.tupleconnector.TupleReader;
 import de.hu_berlin.german.korpling.saltnpepper.pepperModules.conll.exception.ConllConversionInputFileException;
 import de.hu_berlin.german.korpling.saltnpepper.pepperModules.conll.exception.ConllConversionMandatoryValueMissingException;
-import de.hu_berlin.german.korpling.saltnpepper.salt.saltCommon.SaltCommonFactory;
+import de.hu_berlin.german.korpling.saltnpepper.salt.SaltFactory;
 import de.hu_berlin.german.korpling.saltnpepper.salt.saltCommon.sCorpusStructure.SDocument;
 import de.hu_berlin.german.korpling.saltnpepper.salt.saltCommon.sDocumentStructure.SDocumentGraph;
 import de.hu_berlin.german.korpling.saltnpepper.salt.saltCommon.sDocumentStructure.SPointingRelation;
@@ -331,7 +331,7 @@ public class Conll2SaltMapper{
 					ConllDataField field      = posFields[index];
 					String         fieldValue = fieldValues.get(field.getFieldNum()-1);
 					if (fieldValue!=null) {
-						SAnnotation sAnnotation = SaltCommonFactory.eINSTANCE.createSAnnotation();
+						SAnnotation sAnnotation = SaltFactory.eINSTANCE.createSAnnotation();
 						sAnnotation.setSName(properties.getProperty(field.getPropertyKey_Name(), field.name())); //use user specified name for field, or default: the field�s ConLL name
 						sAnnotation.setValueString(fieldValue);
 						sToken.addSAnnotation(sAnnotation);
@@ -363,7 +363,7 @@ public class Conll2SaltMapper{
 						if (field!=null) {
 							String fieldVal = fieldValues.get(field.getFieldNum()-1);
 							if (fieldVal!=null) {
-								SAnnotation anno = SaltCommonFactory.eINSTANCE.createSAnnotation();
+								SAnnotation anno = SaltFactory.eINSTANCE.createSAnnotation();
 								anno.setSName(properties.getProperty(field.getPropertyKey_Name(), field.name())); //use user specified name for field, or default: the field�s ConLL name
 								anno.setValueString(fieldVal);
 								sToken.addSAnnotation(anno);
@@ -393,15 +393,15 @@ public class Conll2SaltMapper{
 			tupleReader.readFile();
 		}
 		catch (IOException e) {
-			String errorMessage = "input file could not be read. abort conversion.";
+			String errorMessage = "input file could not be read. Abort conversion of file "+inFileURI+".";
 			logError(errorMessage);
 			throw new ConllConversionInputFileException(errorMessage); 
 		}
 
-		sDocumentGraph = SaltCommonFactory.eINSTANCE.createSDocumentGraph();
+		sDocumentGraph = SaltFactory.eINSTANCE.createSDocumentGraph();
 		sDocumentGraph.setSName(getSDocumentGraphName());
 		getSDocument().setSDocumentGraph(sDocumentGraph);
-		STextualDS sTextualDS = SaltCommonFactory.eINSTANCE.createSTextualDS();
+		STextualDS sTextualDS = SaltFactory.eINSTANCE.createSTextualDS();
 		sTextualDS.setSDocumentGraph(sDocumentGraph);
  
 		ArrayList<SToken> tokenList = new ArrayList<SToken>();
@@ -428,7 +428,7 @@ public class Conll2SaltMapper{
 				tuple = tupleReader.getTuple();
 			} 
 			catch (IOException e) {
-				String errorMessage = String.format("line %d of input file could not be read. abort conversion.",rowIndex+1);
+				String errorMessage = String.format("line %d of input file could not be read. Abort conversion of file "+inFileURI+".",rowIndex+1);
 				logError(errorMessage);
 				throw new ConllConversionInputFileException(errorMessage);
 			}
@@ -437,7 +437,7 @@ public class Conll2SaltMapper{
 			fieldValues.clear();
 
 			if (!((tupleSize==1)||(tupleSize==numOfColumnsExpected))) {
-				String errorMessage = String.format("invalid format in line %d of input file. lines must be empty or contain %d columns of data. abort conversion.",rowIndex+1,numOfColumnsExpected);
+				String errorMessage = String.format("invalid format in line %d of input file. lines must be empty or contain %d columns of data. Abort conversion of file "+inFileURI+".",rowIndex+1,numOfColumnsExpected);
 				logError(errorMessage);
 				throw new ConllConversionInputFileException(errorMessage);
 			}
@@ -452,7 +452,7 @@ public class Conll2SaltMapper{
 					if (fieldValue.equals(field.getDummyValue())) {
 						fieldValue = null;
 						if (field.isMandatory()) {
-							String errorMessage = String.format("mandatory value for %s missing in line %d of input file!",field.toString(),rowIndex+1);
+							String errorMessage = String.format("mandatory value for %s missing in line %d of input file '"+inFileURI+"'!",field.toString(),rowIndex+1);
 							logError(errorMessage);
 							throw new ConllConversionMandatoryValueMissingException(errorMessage);
 						}
@@ -461,7 +461,7 @@ public class Conll2SaltMapper{
 				} // for (Iterator<String> iter=tuple.iterator(); iter.hasNext(); fieldNum++)
 				
 				// create token and add to local token list
-				SToken sToken = SaltCommonFactory.eINSTANCE.createSToken();
+				SToken sToken = SaltFactory.eINSTANCE.createSToken();
 				sToken.setSDocumentGraph(sDocumentGraph);
 				tokenList.add(sToken);
 				
@@ -471,7 +471,7 @@ public class Conll2SaltMapper{
 				int tokenTextEndOffset = primaryText.length()-1;
 
 				// create textual relation
-				STextualRelation sTextualRelation = SaltCommonFactory.eINSTANCE.createSTextualRelation();
+				STextualRelation sTextualRelation = SaltFactory.eINSTANCE.createSTextualRelation();
 				sTextualRelation.setSource(sToken);
 				sTextualRelation.setTarget(sTextualDS);
 				sTextualRelation.setSStart(tokenTextStartOffset);
@@ -489,7 +489,7 @@ public class Conll2SaltMapper{
 							sAnnotation = SaltSemanticsFactory.eINSTANCE.createSLemmaAnnotation();
 						}
 						else {
-							sAnnotation = SaltCommonFactory.eINSTANCE.createSAnnotation();
+							sAnnotation = SaltFactory.eINSTANCE.createSAnnotation();
 							sAnnotation.setName(properties.getProperty(field.getPropertyKey_Name(), field.name())); //use user specified name for field, or default: the field�s ConLL name								
 						}
 						sAnnotation.setValueString(fieldValue);
@@ -504,17 +504,17 @@ public class Conll2SaltMapper{
 				///POS and CPOS
 					
 				// create annotation for span
-				SAnnotation sAnnotation = SaltCommonFactory.eINSTANCE.createSAnnotation();
+				SAnnotation sAnnotation = SaltFactory.eINSTANCE.createSAnnotation();
 				sAnnotation.setName(CAT);
 				sAnnotation.setValueString(S);
 				
 				// create span and add span annotation
-				SSpan sSpan = SaltCommonFactory.eINSTANCE.createSSpan();
+				SSpan sSpan = SaltFactory.eINSTANCE.createSSpan();
 				sSpan.setGraph(sDocumentGraph);
 				sSpan.addSAnnotation(sAnnotation);
 
 				// create spanning relation, set span as source and token as target
-				SSpanningRelation sSpanningRelation = SaltCommonFactory.eINSTANCE.createSSpanningRelation();
+				SSpanningRelation sSpanningRelation = SaltFactory.eINSTANCE.createSSpanningRelation();
 				sSpanningRelation.setGraph(sDocumentGraph);
 				sSpanningRelation.setSource(sSpan);
 				sSpanningRelation.setTarget(sToken);
@@ -536,13 +536,13 @@ public class Conll2SaltMapper{
 					String[] featureValues = featureString.split(MORPHSEPARATOR);
 
 					for (int idx=0; idx<Math.min(featureKeys.length,featureValues.length); idx++) {
-						sAnnotation = SaltCommonFactory.eINSTANCE.createSAnnotation();
+						sAnnotation = SaltFactory.eINSTANCE.createSAnnotation();
 						sAnnotation.setName(featureKeys[idx]);
 						sAnnotation.setValueString(featureValues[idx]);
 						sToken.addSAnnotation(sAnnotation);
 					}
 					if (featureKeys.length!=featureValues.length)	{
-						logWarning(String.format("number of feature values doesn't match number of categories in line %d of input file!", rowIndex+1));
+						logWarning(String.format("Number of feature values doesn't match number of categories in line %d of input file!", rowIndex+1));
 					}
 				
 				} // (featureString!=null)
@@ -554,7 +554,7 @@ public class Conll2SaltMapper{
 					tokenID = Integer.parseInt(tokenIDStr);
 				}
 				catch (NumberFormatException e) {
-					String errorMessage = String.format("invalid integer value '%s' for ID in line %d of input file. abort conversion.",tokenIDStr,rowIndex+1); 
+					String errorMessage = String.format("Invalid integer value '%s' for ID in line %d of input file. Abort conversion of file "+inFileURI+".",tokenIDStr,rowIndex+1); 
 					logError(errorMessage);
 					throw new ConllConversionInputFileException();
 				}
@@ -568,7 +568,7 @@ public class Conll2SaltMapper{
 					headID = Integer.parseInt(headIDStr);
 				}
 				catch (NumberFormatException e) {
-					String errorMessage = String.format("invalid integer value '%s' for HEAD in line %d of input file. abort conversion.",headIDStr,rowIndex+1); 
+					String errorMessage = String.format("Invalid integer value '%s' for HEAD in line %d of input file '"+inFileURI+"'. Abort conversion of file "+inFileURI+".",headIDStr,rowIndex+1); 
 					logError(errorMessage);
 					throw new ConllConversionInputFileException(errorMessage);
 				}
@@ -576,11 +576,11 @@ public class Conll2SaltMapper{
 				// create pointing relation, pointing from head to dependent
 				if (headID>0) {
 					// create annotation for pointing relation
-					sAnnotation = SaltCommonFactory.eINSTANCE.createSAnnotation();
+					sAnnotation = SaltFactory.eINSTANCE.createSAnnotation();
 					sAnnotation.setSName(DEPREL);
 					sAnnotation.setValueString(fieldValues.get(ConllDataField.DEPREL.getFieldNum()-1));
 
-					SPointingRelation sPointingRelation = SaltCommonFactory.eINSTANCE.createSPointingRelation();
+					SPointingRelation sPointingRelation = SaltFactory.eINSTANCE.createSPointingRelation();
 					sPointingRelation.setSDocumentGraph(sDocumentGraph);
 					sPointingRelation.addSAnnotation(sAnnotation);
 					sPointingRelation.addSType(DEP);
@@ -604,7 +604,7 @@ public class Conll2SaltMapper{
 						proheadID = Integer.parseInt(proheadIDStr);
 					}
 					catch (NumberFormatException e) {
-						String errorMessage = String.format("invalid integer value '%s' for PHEAD in line %d of input file. abort conversion.",proheadIDStr,rowIndex+1); 
+						String errorMessage = String.format("invalid integer value '%s' for PHEAD in line %d of input file. Abort conversion of file "+inFileURI+".",proheadIDStr,rowIndex+1); 
 						logError(errorMessage);
 						throw new ConllConversionInputFileException();
 					}
@@ -612,11 +612,11 @@ public class Conll2SaltMapper{
 					// create pointing relation, pointing from phead to dependent
 					if (proheadID>0) {
 						// create annotation for pointing relation
-						sAnnotation = SaltCommonFactory.eINSTANCE.createSAnnotation();
+						sAnnotation = SaltFactory.eINSTANCE.createSAnnotation();
 						sAnnotation.setSName(DEPREL);
 						sAnnotation.setValueString(fieldValues.get(ConllDataField.PDEPREL.getFieldNum()-1));
 
-						SPointingRelation sPointingRelation = SaltCommonFactory.eINSTANCE.createSPointingRelation();
+						SPointingRelation sPointingRelation = SaltFactory.eINSTANCE.createSPointingRelation();
 						sPointingRelation.setSDocumentGraph(sDocumentGraph);
 						sPointingRelation.addSAnnotation(sAnnotation);
 						sPointingRelation.setTarget(sToken);
