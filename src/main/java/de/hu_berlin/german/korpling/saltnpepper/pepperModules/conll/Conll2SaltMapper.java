@@ -521,7 +521,9 @@ public class Conll2SaltMapper{
 
 				// features
 				String featureString = fieldValues.get(ConllDataField.FEATS.getFieldNum()-1);
-				if (featureString!=null) {
+				if (	(featureString!=null)&&
+						(featureString.length()>0))
+				{// (featureString!=null)
 					// check whether rule for feature category is defined. POSTAG (fine grained) gets priority over
 					// CPOSTAG (coarse grained). if neither one is defined, use default
 					String key = PROPERTYKEY_FIELD6_POSTAG_ + fieldValues.get(ConllDataField.POSTAG.getFieldNum()-1);
@@ -531,7 +533,10 @@ public class Conll2SaltMapper{
 							key = PROPERTYKEY_FIELD6_DEFAULT;
 						}
 					}
-					// TODO: check if default is defined! 
+					//TODO FloZi added this, to annotate tokens with morph=..|..|.. and so on, often this is what the user want, we have to make sure, that it is possible and we can flag the eparation into several values. May be I missed sth. than I am sorry.
+					sToken.createSAnnotation(null, MORPH, featureString);
+					
+					/*// TODO: check if default is defined! 
 					String[] featureKeys = properties.getProperty(key, MORPH).split(MORPHSEPARATOR); 
 					String[] featureValues = featureString.split(MORPHSEPARATOR);
 
@@ -544,7 +549,7 @@ public class Conll2SaltMapper{
 					if (featureKeys.length!=featureValues.length)	{
 						logWarning(String.format("Number of feature values doesn't match number of categories in line %d of input file!", rowIndex+1));
 					}
-				
+*/				
 				} // (featureString!=null)
 				
 				// get ID of current token
