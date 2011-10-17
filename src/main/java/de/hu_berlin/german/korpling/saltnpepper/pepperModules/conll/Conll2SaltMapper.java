@@ -67,6 +67,7 @@ public class Conll2SaltMapper{
 	public final static String PROPERTYKEY_FIELD6_POSTAG_  = "conll.field6.POSTAG.";  //the dot at the end is correct
 	public final static String PROPERTYKEY_FIELD6_CPOSTAG_ = "conll.field6.CPOSTAG."; //the dot at the end is correct	
 	public final static String PROPERTYKEY_FIELD6_DEFAULT  = "conll.field6.default";
+	public final static String PROPERTYKEY_SPLIT_FEATURES  = "conll.splitFeatures";	
 	
 	private final String PROPERTYVAL_NONE            = "NONE";
 	private final String PROPERTYVAL_POSTAG          = "POSTAG";
@@ -89,10 +90,10 @@ public class Conll2SaltMapper{
 	public static final String TRUE       			  = "true";
 	public static final String FALSE       		  	  = "false";	
 	public static final String TYPE       			  = "TYPE";
-	private final String MORPH          			  = "morph";	
+	public static final String DEFAULT_FEATURE		  = "morph";	
 	
-	//separator for morphological annotation values
-	private final String MORPHSEPARATOR = "\\|";
+	//separator for feature annotation values
+	private final String FEATURESEPARATOR = "\\|";
 	
 	
 	//----------------------------------------------------------
@@ -230,6 +231,15 @@ public class Conll2SaltMapper{
 	@SuppressWarnings("unused")
 	private void logDebug  (String logText) { this.log(LogService.LOG_DEBUG,   logText); }
 	//----------------------------------------------------------
+	
+	
+	
+	boolean splitFeatures;
+	//retrieves whether to split pipe separated feature values or not
+	private boolean getSplitFeatures() {
+		String propVal = properties.getProperty(PROPERTYKEY_SPLIT_FEATURES, FALSE);
+		return (propVal==TRUE);
+	}
 	
 	boolean useSLemmaAnnotation;
 	//retrieves whether or not to use SLemmaAnnoations  
@@ -417,7 +427,8 @@ public class Conll2SaltMapper{
 
 		this.useSLemmaAnnotation = getUseSLemmaAnnotation();
 		this.useSPOSAnnotation   = getUseSPOSAnnotation();
-		
+		this.splitFeatures       = getSplitFeatures();
+				
 		// using a StringBuilder for the iteratively updated raw text 
 		int stringBuilderCharBufferSize = tupleReader.characterSize(ConllDataField.FORM.getFieldNum()-1) + numOfTuples;
 		StringBuilder primaryText = new StringBuilder(stringBuilderCharBufferSize);
@@ -520,36 +531,33 @@ public class Conll2SaltMapper{
 				sSpanningRelation.setTarget(sToken);
 
 				// features
-				String featureString = fieldValues.get(ConllDataField.FEATS.getFieldNum()-1);
-				if (	(featureString!=null)&&
-						(featureString.length()>0))
-				{// (featureString!=null)
+				String featureValue = fieldValues.get(ConllDataField.FEATS.getFieldNum()-1);
+				if ((featureValue!=null)&&(featureValue.length()>0)) {// (featureString!=null)
 					// check whether rule for feature category is defined. POSTAG (fine grained) gets priority over
 					// CPOSTAG (coarse grained). if neither one is defined, use default
-					String key = PROPERTYKEY_FIELD6_POSTAG_ + fieldValues.get(ConllDataField.POSTAG.getFieldNum()-1);
-					if (!properties.containsKey(key)) {
-						key = PROPERTYKEY_FIELD6_CPOSTAG_ + fieldValues.get(ConllDataField.CPOSTAG.getFieldNum()-1);
-						if (!properties.containsKey(key)) {
-							key = PROPERTYKEY_FIELD6_DEFAULT;
+					String ruleKey = PROPERTYKEY_FIELD6_POSTAG_ + fieldValues.get(ConllDataField.POSTAG.getFieldNum()-1);
+					if (!properties.containsKey(ruleKey)) {
+						ruleKey = PROPERTYKEY_FIELD6_CPOSTAG_ + fieldValues.get(ConllDataField.CPOSTAG.getFieldNum()-1);
+						if (!properties.containsKey(ruleKey)) {
+							ruleKey = PROPERTYKEY_FIELD6_DEFAULT;
 						}
 					}
-					//TODO FloZi added this, to annotate tokens with morph=..|..|.. and so on, often this is what the user want, we have to make sure, that it is possible and we can flag the eparation into several values. May be I missed sth. than I am sorry.
-					sToken.createSAnnotation(null, MORPH, featureString);
+					String featureKey = properties.getProperty(ruleKey, DEFAULT_FEATURE);
+					if (this.splitFeatures) {						
+						String[] featureKeys = featureKey.split(FEATURESEPARATOR); 
+						String[] featureValues = featureValue.split(FEATURESEPARATOR);
+						for (int idx=0; idx<Math.min(featureKeys.length,featureValues.length); idx++) {
+							sToken.createSAnnotation(null, featureKeys[idx], featureValues[idx]);
+						}
+						if (featureKeys.length!=featureValues.length)	{
+							logWarning(String.format("Number of feature values doesn't match number of categories in line %d of input file!", rowIndex+1));
+						}
+					}
+					else { // (if not this.splitFeatures)
+						//the complete, possibly pipe separated string is not splitted
+						sToken.createSAnnotation(null, featureKey, featureValue);	
+					}
 					
-					/*// TODO: check if default is defined! 
-					String[] featureKeys = properties.getProperty(key, MORPH).split(MORPHSEPARATOR); 
-					String[] featureValues = featureString.split(MORPHSEPARATOR);
-
-					for (int idx=0; idx<Math.min(featureKeys.length,featureValues.length); idx++) {
-						sAnnotation = SaltFactory.eINSTANCE.createSAnnotation();
-						sAnnotation.setName(featureKeys[idx]);
-						sAnnotation.setValueString(featureValues[idx]);
-						sToken.addSAnnotation(sAnnotation);
-					}
-					if (featureKeys.length!=featureValues.length)	{
-						logWarning(String.format("Number of feature values doesn't match number of categories in line %d of input file!", rowIndex+1));
-					}
-*/				
 				} // (featureString!=null)
 				
 				// get ID of current token
