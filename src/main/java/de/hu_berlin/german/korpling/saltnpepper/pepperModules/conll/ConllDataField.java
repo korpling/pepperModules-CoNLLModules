@@ -17,6 +17,8 @@
  */
 package de.hu_berlin.german.korpling.saltnpepper.pepperModules.conll;
 
+import java.util.ArrayList;
+
 public enum ConllDataField {
 	
 	ID		( 1,true),
@@ -54,6 +56,18 @@ public enum ConllDataField {
 	
 	public String getDummyValue() {
 		return dummyValue;
+	}
+	
+	private static String[] names = null;
+	public static String[] getNames() {
+		if (names==null) {
+			ArrayList<String> namesList = new ArrayList<String>();
+			for (ConllDataField field : ConllDataField.values()) {
+				namesList.add(field.name());
+			}
+			names = (String[])namesList.toArray();			
+		}
+		return names;
 	}
 	
 	public String getPropertyKey_Name() {
