@@ -90,11 +90,11 @@ public class Conll2SaltMapper{
 	public static final String TRUE       			  = "true";
 	public static final String FALSE       		  	  = "false";	
 	public static final String TYPE       			  = "TYPE";
+	public static final String NAMESPACE			  = "NAMESPACE";
 	public static final String DEFAULT_FEATURE		  = "morph";	
 	
 	//separator for feature annotation values
 	private final String FEATURESEPARATOR = "\\|";
-	
 	
 	//----------------------------------------------------------
 	private Properties properties = new Properties();
@@ -112,8 +112,8 @@ public class Conll2SaltMapper{
 			try {
 				logInfo(String.format("Trying to read property file '%s'",propertyFile.toFileString()));
 				properties.load(new FileInputStream(propertyFile.toFileString()));
-				considerProjectivity = !properties.getProperty(PROPERTYKEY_PROJECTIVITY, TRUE).equals(TRUE);
-				projectiveModeIsType = properties.getProperty(PROPERTYKEY_PROJECTIVEMODE, TYPE).equals(TYPE);
+				considerProjectivity = !properties.getProperty(PROPERTYKEY_PROJECTIVITY, TRUE).equalsIgnoreCase(TRUE);
+				projectiveModeIsType = !properties.getProperty(PROPERTYKEY_PROJECTIVEMODE, TYPE).equalsIgnoreCase(NAMESPACE);
 			} catch (IOException e) {
 				logWarning("property file for mapping CoNLL to Salt could not be read; default values are used");
 			}
@@ -220,7 +220,11 @@ public class Conll2SaltMapper{
 	//used by logError, logWarning, logInfo and logDebug
 	private void log(int logLevel, String logText) {
 		if (this.getLogService()!=null) {
-			this.getLogService().log(logLevel, logText);
+			String fileInfo = "";
+			if (this.getInFileURI()!=null) {
+				fileInfo = "<" + this.getInFileURI().toFileString() + "> "; 
+			}
+			this.getLogService().log(logLevel, fileInfo + logText);
 		}
 	}
 	
@@ -238,7 +242,7 @@ public class Conll2SaltMapper{
 	//retrieves whether to split pipe separated feature values or not
 	private boolean getSplitFeatures() {
 		String propVal = properties.getProperty(PROPERTYKEY_SPLIT_FEATURES, FALSE);
-		return (propVal==TRUE);
+		return (propVal.equalsIgnoreCase(TRUE));
 	}
 	
 	boolean useSLemmaAnnotation;
@@ -334,7 +338,6 @@ public class Conll2SaltMapper{
 	
 	private void createPOSandCPOSAnnotation(ArrayList<String> fieldValues, SToken sToken) {
 		{
-		
 			if (!this.useSPOSAnnotation) {			
 				ConllDataField[] posFields = {ConllDataField.POSTAG,ConllDataField.CPOSTAG};
 				for (int index=0; index<posFields.length; index++) {
@@ -428,7 +431,10 @@ public class Conll2SaltMapper{
 		this.useSLemmaAnnotation = getUseSLemmaAnnotation();
 		this.useSPOSAnnotation   = getUseSPOSAnnotation();
 		this.splitFeatures       = getSplitFeatures();
-				
+		
+		//this list is used to collect lines numbers where number of categories does not match expected number of categories 
+		ArrayList<Integer> nonMatchingCategoryNumberLines = new ArrayList<Integer>();
+		
 		// using a StringBuilder for the iteratively updated raw text 
 		int stringBuilderCharBufferSize = tupleReader.characterSize(ConllDataField.FORM.getFieldNum()-1) + numOfTuples;
 		StringBuilder primaryText = new StringBuilder(stringBuilderCharBufferSize);
@@ -543,21 +549,26 @@ public class Conll2SaltMapper{
 						}
 					}
 					String featureKey = properties.getProperty(ruleKey, DEFAULT_FEATURE);
-					if (this.splitFeatures) {						
-						String[] featureKeys = featureKey.split(FEATURESEPARATOR); 
+					boolean doSplit = this.splitFeatures;
+					String[] featureKeys=null;
+					if (doSplit) {
+						featureKeys = featureKey.split(FEATURESEPARATOR);
+						if (ruleKey==PROPERTYKEY_FIELD6_DEFAULT) {
+							doSplit = (featureKeys.length>1);
+						}
+					}
+					if (doSplit) {
 						String[] featureValues = featureValue.split(FEATURESEPARATOR);
 						for (int idx=0; idx<Math.min(featureKeys.length,featureValues.length); idx++) {
 							sToken.createSAnnotation(null, featureKeys[idx], featureValues[idx]);
 						}
 						if (featureKeys.length!=featureValues.length)	{
-							logWarning(String.format("Number of feature values doesn't match number of categories in line %d of input file!", rowIndex+1));
+							nonMatchingCategoryNumberLines.add(rowIndex+1);							
 						}
-					}
-					else { // (if not this.splitFeatures)
-						//the complete, possibly pipe separated string is not splitted
+					} else {
+						//no splitting
 						sToken.createSAnnotation(null, featureKey, featureValue);	
 					}
-					
 				} // (featureString!=null)
 				
 				// get ID of current token
@@ -571,8 +582,6 @@ public class Conll2SaltMapper{
 					logError(errorMessage);
 					throw new ConllConversionInputFileException();
 				}
-
-
 				
 				// get ID of current token�s head token
 				String headIDStr = fieldValues.get(ConllDataField.HEAD.getFieldNum()-1);
@@ -606,8 +615,6 @@ public class Conll2SaltMapper{
 						pointingRelationMap.put(sPointingRelation,headID);						
 					}
 				}
-				
-				
 				
 				if (considerProjectivity){
 					// get ID of current token�s projective head token
@@ -670,6 +677,10 @@ public class Conll2SaltMapper{
 		// delete last char of primary text (a space character) and set it as text for TextualDS
 		primaryText.deleteCharAt(primaryText.length()-1);
 		sTextualDS.setSText(primaryText.toString());
+		
+		if (nonMatchingCategoryNumberLines.size()>0) {
+			logWarning("Number of feature values doesn't match number of categories in lines: " + nonMatchingCategoryNumberLines.toString());			
+		}
 		
 	} // map
 
