@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>de.hu_berlin.german.korpling.saltnpepper</groupId>
   <artifactId>pepperModules-CoNLLModules</artifactId>
-  <version>1.1.39-SNAPSHOT</version>
+  <version>1.1.39</version>
   <packaging>bundle</packaging>
   <repositories>
     <repository>
@@ -17,7 +17,7 @@
     <version>1.1.2</version>
   </parent>
   <scm>
-    <developerConnection>scm:svn:https://korpling.german.hu-berlin.de/svn/saltnpepper/PepperModules/CoNLLModules/trunk</developerConnection>
+    <developerConnection>scm:svn:https://korpling.german.hu-berlin.de/svn/saltnpepper/PepperModules/CoNLLModules/tags/pepperModules-CoNLLModules-1.1.39</developerConnection>
   </scm>
   <dependencies>
     <dependency>
