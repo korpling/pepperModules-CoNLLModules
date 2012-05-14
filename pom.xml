@@ -36,8 +36,8 @@
     <version>1.1.3</version>
   </parent>
   <scm>
-    <developerConnection>scm:svn:https://korpling.german.hu-berlin.de/svn/saltnpepper/PepperModules/CoNLLModules/trunk</developerConnection>
-    <url>scm:svn:https://korpling.german.hu-berlin.de/svn/saltnpepper/pepper/tags/pepper-1.1.3/pepper-parentModule/pepperModules-CoNLLModules</url>
+    <developerConnection>scm:svn:https://korpling.german.hu-berlin.de/svn/saltnpepper/PepperModules/CoNLLModules/tags/pepperModules-CoNLLModules-1.1.1</developerConnection>
+    <url>scm:svn:https://korpling.german.hu-berlin.de/svn/saltnpepper/PepperModules/CoNLLModules/tags/pepperModules-CoNLLModules-1.1.1</url>
   </scm>  
   <dependencies>
     <dependency>
