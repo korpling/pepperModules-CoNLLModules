@@ -50,7 +50,7 @@ public class CoNLLImporter extends PepperImporterImpl implements PepperImporter
 	{
 		super();
 		//setting name of module
-		this.name= FORMATNAME;
+		this.name= NAME;
 		//set list of formats supported by this module
 		this.addSupportedFormat(FORMATNAME, FORMATVERSION, null);
 	}
