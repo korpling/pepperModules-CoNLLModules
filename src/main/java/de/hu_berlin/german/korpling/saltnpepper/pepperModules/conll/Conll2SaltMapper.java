@@ -626,7 +626,7 @@ public class Conll2SaltMapper{
 					catch (NumberFormatException e) {
 						String errorMessage = String.format("invalid integer value '%s' for PHEAD in line %d of input file. Abort conversion of file "+inFileURI+".",proheadIDStr,rowIndex+1); 
 						logError(errorMessage);
-						throw new ConllConversionInputFileException();
+						throw new ConllConversionInputFileException(errorMessage, e);
 					}
 					
 					// create pointing relation, pointing from phead to dependent
