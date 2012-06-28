@@ -346,12 +346,20 @@ public class Conll2SaltMapper{
 					if (fieldValue!=null) {
 						SAnnotation sAnnotation = SaltFactory.eINSTANCE.createSAnnotation();
 						sAnnotation.setSName(properties.getProperty(field.getPropertyKey_Name(), field.name())); //use user specified name for field, or default: the field�s ConLL name
-						sAnnotation.setValueString(fieldValue);
+						sAnnotation.setSValue(fieldValue);
 						sToken.addSAnnotation(sAnnotation);
 					}
 				}
 			}
 			else {
+				
+//				if (this.firstSPOSField!=null)
+//					System.out.println(this.firstSPOSField.toString());
+				
+//				if (this.secondSPOSField!=null)
+//					System.out.println(this.secondSPOSField.toString());
+				
+				
 				int SPOSAnnotationIndex = -1;
 				ConllDataField[] bothFields = {this.firstSPOSField,this.secondSPOSField};
 				ConllDataField field = null;				
@@ -362,7 +370,7 @@ public class Conll2SaltMapper{
 							String fieldVal = fieldValues.get(field.getFieldNum()-1);
 							if (fieldVal!=null) {
 								SPOSAnnotation anno = SaltSemanticsFactory.eINSTANCE.createSPOSAnnotation();
-								anno.setValueString(fieldVal);
+								anno.setSValue(fieldVal);
 								sToken.addSAnnotation(anno);
 								SPOSAnnotationIndex=index;
 							}
@@ -378,7 +386,7 @@ public class Conll2SaltMapper{
 							if (fieldVal!=null) {
 								SAnnotation anno = SaltFactory.eINSTANCE.createSAnnotation();
 								anno.setSName(properties.getProperty(field.getPropertyKey_Name(), field.name())); //use user specified name for field, or default: the field�s ConLL name
-								anno.setValueString(fieldVal);
+								anno.setSValue(fieldVal);
 								sToken.addSAnnotation(anno);
 								SPOSAnnotationIndex=index;
 							}
@@ -489,12 +497,11 @@ public class Conll2SaltMapper{
 
 				// create textual relation
 				STextualRelation sTextualRelation = SaltFactory.eINSTANCE.createSTextualRelation();
-				sTextualRelation.setSource(sToken);
-				sTextualRelation.setTarget(sTextualDS);
+				sTextualRelation.setSSource(sToken);
+				sTextualRelation.setSTarget(sTextualDS);
 				sTextualRelation.setSStart(tokenTextStartOffset);
 				sTextualRelation.setSEnd(tokenTextEndOffset);
 				sTextualRelation.setSDocumentGraph(sDocumentGraph);
-
 
 				//Lemma
 				{
@@ -507,9 +514,10 @@ public class Conll2SaltMapper{
 						}
 						else {
 							sAnnotation = SaltFactory.eINSTANCE.createSAnnotation();
-							sAnnotation.setName(properties.getProperty(field.getPropertyKey_Name(), field.name())); //use user specified name for field, or default: the field�s ConLL name								
+							sAnnotation.setSName(properties.getProperty(field.getPropertyKey_Name(), field.name())); //use user specified name for field, or default: the field�s ConLL name								
 						}
-						sAnnotation.setValueString(fieldValue);
+						
+						sAnnotation.setSValue(fieldValue);
 						sToken.addSAnnotation(sAnnotation);					
 					}
 				}
@@ -522,8 +530,8 @@ public class Conll2SaltMapper{
 					
 				// create annotation for span
 				SAnnotation sAnnotation = SaltFactory.eINSTANCE.createSAnnotation();
-				sAnnotation.setName(CAT);
-				sAnnotation.setValueString(S);
+				sAnnotation.setSName(CAT);
+				sAnnotation.setSValue(S);
 				
 				// create span and add span annotation
 				SSpan sSpan = SaltFactory.eINSTANCE.createSSpan();
@@ -538,6 +546,7 @@ public class Conll2SaltMapper{
 
 				// features
 				String featureValue = fieldValues.get(ConllDataField.FEATS.getFieldNum()-1);
+				
 				if ((featureValue!=null)&&(featureValue.length()>0)) {// (featureString!=null)
 					// check whether rule for feature category is defined. POSTAG (fine grained) gets priority over
 					// CPOSTAG (coarse grained). if neither one is defined, use default
@@ -549,6 +558,7 @@ public class Conll2SaltMapper{
 						}
 					}
 					String featureKey = properties.getProperty(ruleKey, DEFAULT_FEATURE);
+
 					boolean doSplit = this.splitFeatures;
 					String[] featureKeys=null;
 					if (doSplit) {
@@ -570,7 +580,7 @@ public class Conll2SaltMapper{
 						sToken.createSAnnotation(null, featureKey, featureValue);	
 					}
 				} // (featureString!=null)
-				
+
 				// get ID of current token
 				String tokenIDStr = fieldValues.get(ConllDataField.ID.getFieldNum()-1);
 				Integer tokenID = null;
@@ -600,13 +610,16 @@ public class Conll2SaltMapper{
 					// create annotation for pointing relation
 					sAnnotation = SaltFactory.eINSTANCE.createSAnnotation();
 					sAnnotation.setSName(DEPREL);
-					sAnnotation.setValueString(fieldValues.get(ConllDataField.DEPREL.getFieldNum()-1));
-
+					
+					String annoValue = fieldValues.get(ConllDataField.DEPREL.getFieldNum()-1);
+					sAnnotation.setSValue(annoValue);
+					
 					SPointingRelation sPointingRelation = SaltFactory.eINSTANCE.createSPointingRelation();
+					//sAnnotation.setSAnnotatableElement(sPointingRelation);
 					sPointingRelation.setSDocumentGraph(sDocumentGraph);
-					sPointingRelation.addSAnnotation(sAnnotation);
 					sPointingRelation.addSType(DEP);
 					sPointingRelation.setTarget(sToken);
+					sPointingRelation.addSAnnotation(sAnnotation);
 					
 					if (headID<=tokenID) {
 						sPointingRelation.setSource(tokenList.get(headID-1));
@@ -616,7 +629,8 @@ public class Conll2SaltMapper{
 					}
 				}
 				
-				if (considerProjectivity){
+				if (considerProjectivity)
+				{
 					// get ID of current token�s projective head token
 					String proheadIDStr = fieldValues.get(ConllDataField.PHEAD.getFieldNum()-1);
 					Integer proheadID = null;
@@ -626,7 +640,7 @@ public class Conll2SaltMapper{
 					catch (NumberFormatException e) {
 						String errorMessage = String.format("invalid integer value '%s' for PHEAD in line %d of input file. Abort conversion of file "+inFileURI+".",proheadIDStr,rowIndex+1); 
 						logError(errorMessage);
-						throw new ConllConversionInputFileException(errorMessage, e);
+						throw new ConllConversionInputFileException();
 					}
 					
 					// create pointing relation, pointing from phead to dependent
@@ -634,7 +648,7 @@ public class Conll2SaltMapper{
 						// create annotation for pointing relation
 						sAnnotation = SaltFactory.eINSTANCE.createSAnnotation();
 						sAnnotation.setSName(DEPREL);
-						sAnnotation.setValueString(fieldValues.get(ConllDataField.PDEPREL.getFieldNum()-1));
+						sAnnotation.setSValue(fieldValues.get(ConllDataField.PDEPREL.getFieldNum()-1));
 
 						SPointingRelation sPointingRelation = SaltFactory.eINSTANCE.createSPointingRelation();
 						sPointingRelation.setSDocumentGraph(sDocumentGraph);
