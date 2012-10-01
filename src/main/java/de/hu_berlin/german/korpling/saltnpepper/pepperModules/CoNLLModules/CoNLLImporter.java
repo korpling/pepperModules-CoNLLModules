@@ -22,15 +22,12 @@ import java.util.Map;
 
 import org.apache.felix.scr.annotations.Component;
 import org.apache.felix.scr.annotations.Service;
-import org.eclipse.emf.common.util.BasicEList;
 import org.eclipse.emf.common.util.URI;
 import org.osgi.service.component.ComponentContext;
 import org.osgi.service.log.LogService;
 
 import de.hu_berlin.german.korpling.saltnpepper.pepper.pepperExceptions.PepperModuleException;
-import de.hu_berlin.german.korpling.saltnpepper.pepper.pepperModules.FormatDefinition;
 import de.hu_berlin.german.korpling.saltnpepper.pepper.pepperModules.PepperImporter;
-import de.hu_berlin.german.korpling.saltnpepper.pepper.pepperModules.PepperInterfaceFactory;
 import de.hu_berlin.german.korpling.saltnpepper.pepper.pepperModules.RETURNING_MODE;
 import de.hu_berlin.german.korpling.saltnpepper.pepper.pepperModules.impl.PepperImporterImpl;
 import de.hu_berlin.german.korpling.saltnpepper.pepperModules.conll.Conll2SaltMapper;
@@ -44,37 +41,18 @@ import de.hu_berlin.german.korpling.saltnpepper.salt.saltCore.SElementId;
 public class CoNLLImporter extends PepperImporterImpl implements PepperImporter
 {
 	//-------------------------------------------------------------------------
-	private final String NAME          = "CoNLLImporter";
-	private final String SYMBOLICNAME  = "de.hu_berlin.german.korpling.saltnpepper.pepperModules.CoNLLModules";
-	private final String FORMATNAME    = "CoNLL";
-	private final String FORMATVERSION = "1.0"; //TODO: What version? 
+	public static final String NAME          = "CoNLLImporter";
+	public static final String FORMATNAME    = "CoNLL";
+	public static final String FORMATVERSION = "1.0"; //TODO: What version? 
 	//-------------------------------------------------------------------------
 	
 	public CoNLLImporter()
 	{
 		super();
-		{//setting name of module
-			this.name= NAME;
-		}//setting name of module
-		
-		{//for testing the symbolic name has to be set without osgi
-			if (	(this.getSymbolicName()==  null) ||
-					(this.getSymbolicName().equalsIgnoreCase("")))
-				this.setSymbolicName(SYMBOLICNAME);
-		}//for testing the symbolic name has to be set without osgi
-		
-		{//set list of formats supported by this module
-			this.supportedFormats= new BasicEList<FormatDefinition>();
-			FormatDefinition formatDef= PepperInterfaceFactory.eINSTANCE.createFormatDefinition();
-			formatDef.setFormatName(FORMATNAME);
-			formatDef.setFormatVersion(FORMATVERSION); 
-			this.supportedFormats.add(formatDef);
-		}
-		
-		{//just for logging: to say, that the current module has been loaded
-			if (this.getLogService()!= null)
-				this.getLogService().log(LogService.LOG_DEBUG,this.getName()+" is created...");
-		}//just for logging: to say, that the current module has been loaded
+		//setting name of module
+		this.name= NAME;
+		//set list of formats supported by this module
+		this.addSupportedFormat(FORMATNAME, FORMATVERSION, null);
 	}
 
 	

@@ -1,0 +1,379 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-model href="http://www.oasis-open.org/docbook/xml/5.0/rng/docbook.rng" schematypens="http://relaxng.org/ns/structure/1.0"?>
+<book xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink" version="5.0">
+    <info>
+        <title>CoNLLModules</title>
+        <subtitle>User's Guide</subtitle>
+        <authorgroup>
+            <author>
+                <personname>
+                    <firstname>Andreas</firstname>
+                    <surname>Hildebrandt</surname>
+                </personname>
+                <email>saltnpepper@lists.hu-berlin.de</email>
+            </author>
+			<author>
+				<orgname xml:id="org1">SFB 632 Information Structure / D1 Linguistic Database</orgname>
+			</author>
+			<author>
+				<orgname xml:id="org2">Humboldt-Universität zu Berlin</orgname>
+			</author>
+			<author>
+				<orgname xml:id="org3">Universität Potsdam</orgname>
+			</author>
+		</authorgroup>
+        <copyright>
+            <year>2012</year>
+            <holder><xref linkend="org1" endterm="org1"/>, <xref linkend="org2" endterm="org2"/>, <xref linkend="org3" endterm="org3"/>. All rights reserved.</holder>
+        </copyright>
+        <releaseinfo>Version ${project.version}</releaseinfo>
+    </info>
+	<preface>
+        <title>Foreword</title>
+		<para>This document provides a guide on the usage of the described pepper modules and on how
+            to utilize a mapping performed by them. Also, a closer view on the details of such a
+            mapping is given in a declarative way, allowing the user to understand how specific data
+            will be processed by the modules.</para>
+    </preface>
+    <chapter>
+        <title>Overview</title>
+        <para>This project contains the pepper modules listed in <xref linkend="table_overview"/>. A
+            single module can be identified via its coordinates (module name, format name,
+            format version) also given in the table. You can use these
+            coordinates in a pepper workflow description file to identify the modules in a pepper
+            conversion process. A description of how to model a workflow description file can be
+            found <ulink url="https://korpling.german.hu-berlin.de/saltnpepper/">here</ulink>.</para>
+        <table xml:id="table_overview" frame="all">
+            <title>pepper modules contained in this project</title>
+            <tgroup cols="3" align="left" colsep="1" rowsep="1">
+                <thead>
+                    <row>
+                        <entry>module name</entry>
+                        <entry>module type</entry>
+                        <entry>format (importers and exporters only)</entry>
+                    </row>
+                </thead>
+                <tbody>
+                    <row>
+                        <entry><xref linkend="conll_importer" endterm="conll_importer_name"/></entry>
+                        <entry>importer</entry>
+                        <entry>1.0</entry>
+                    </row>
+                </tbody>
+            </tgroup>
+        </table>
+    </chapter>
+<!-- 
+    <chapter xml:id="changes">
+        <title>Changes</title>
+        <para> This chapter contains the changes in version ${project.version} compared to the
+            previous version.</para>
+        <section>
+            <title><xref linkend="conll_importer_name"/></title>
+            <itemizedlist spacing="compact">
+                <listitem>
+                    <para>changes</para>
+                </listitem>
+            </itemizedlist>
+        </section>
+    </chapter>
+-->
+    <chapter>
+        <title>CoNLL format</title>
+        <para> A CoNLL file as defined here contains one tab separated row per token. Each row
+            contains exactly 10 columns. No blank characters are allowed in column entries.
+            Sentences are separated by an empty row. The columns are listed in <xref
+                linkend="table_conllfields"/>. <table xml:id="table_conllfields" frame="all">
+                <title>CoNLL fields</title>
+                <tgroup cols="3">
+                    <colspec colwidth="1*"/>
+                    <colspec colwidth="3*"/>
+                    <colspec colwidth="16*"/>
+                    <tbody>
+                        <row>
+                            <entry>1</entry>
+                            <entry>ID</entry>
+                            <entry>The number of the token in the current sentence, starting with
+                                1</entry>
+                        </row>
+                        <row>
+                            <entry>2</entry>
+                            <entry>FORM</entry>
+                            <entry>The form of the token</entry>
+                        </row>
+                        <row>
+                            <entry>3</entry>
+                            <entry>LEMMA</entry>
+                            <entry>The lemma of the token</entry>
+                        </row>
+                        <row>
+                            <entry>4</entry>
+                            <entry>CPOSTAG</entry>
+                            <entry>Coarse-grained part-of-speech tag</entry>
+                        </row>
+                        <row>
+                            <entry>5</entry>
+                            <entry>POSTAG</entry>
+                            <entry>Fine-grained part-of-speech tag</entry>
+                        </row>
+                        <row>
+                            <entry>6</entry>
+                            <entry>FEATS</entry>
+                            <entry>Syntactic/morphological/miscellaneous features, separated by the
+                                pipe character</entry>
+                        </row>
+                        <row>
+                            <entry>7</entry>
+                            <entry>HEAD</entry>
+                            <entry>The ID of this token´s head token (or 0 for none)</entry>
+                        </row>
+                        <row>
+                            <entry>8</entry>
+                            <entry>DEPREL</entry>
+                            <entry>Dependency relation to HEAD</entry>
+                        </row>
+                        <row>
+                            <entry>9</entry>
+                            <entry>PHEAD</entry>
+                            <entry>The projective head of the token: an ID or 0 for none</entry>
+                        </row>
+                        <row>
+                            <entry>10</entry>
+                            <entry>PDEPREL</entry>
+                            <entry>Dependency relation to PHEAD</entry>
+                        </row>
+                    </tbody>
+                </tgroup>
+            </table> All fields except 1, 2 and 7 may contain dummy value (an underscore _).
+            <programlisting>
+1  Cathy    Cathy  N     N     eigen|ev|neut         2  su     _  _
+2  zag      zie    V     V     trans|ovt|1of2of3|ev  0  ROOT   _  _
+3  hen      hen    Pron  Pron  per|3|mv|datofacc     2  obj1   _  _
+4  wild     wild   Adj   Adj   attr|stell|onverv     5  mod    _  _
+5  zwaaien  zwaai  N     N     soort|mv|neut         2  vc     _  _
+6  .        .      Punc  Punc  punct                 5  punct  _  _
+            </programlisting>
+            Example 1: sample input file content </para>
+    </chapter>
+    <chapter xml:id="conll_importer">
+        <title xml:id="conll_importer_name">CoNLLImporter</title>
+        <sect1>
+            <title>Properties</title>
+			<sect2>
+				<title>Properties file</title>
+				<para>
+					A property file is used to set certain options for the conversion process. Since all options have default settings, this file
+					is not mandatory. A property file has to be given as a special parameter in the Pepper workflow description and needs to be conform to a <ulink url="http://en.wikipedia.org/wiki/.properties">java property file</ulink>.
+					To use such a file, expand the Pepper workflow description file via the xml attribute "specialParams" as shown here:</para>
+				<para>
+					<code>&lt;importerParams moduleName="CoNLLImporter" sourcePath="[PROP_FILE]" /&gt;</code>
+				</para>
+				<para>
+					Note that <code>[PROP_FILE]</code> has to be conform to the URI notation. On a local file system, this means adding the prefix <code>file:/</code> to the filepath. The declaration of a property file is the same when using the format description for identifying the Pepper module.
+				</para>
+				<para>
+					Example:				
+				</para>
+				<para>
+					<code>&lt;importerParams moduleName="CoNLLImporter" sourcePath="file:/d:/corpora/CoNLL" /&gt;</code>
+				</para>
+			</sect2>
+			<sect2>
+				<title>All properties</title>
+				<para><xref linkend="property_overview"/> contains
+					an overview of all usable properties to customize the behaviour of this pepper
+					module. The following section contains a close description to each single property
+					and describes the resulting differences in the mapping to the salt model. </para>
+				<table xml:id="property_overview" frame="all">
+					<title>pepper modules contained in this project</title>
+					<tgroup cols="3" align="left" colsep="1" rowsep="1">
+						<colspec colwidth="3*"/>
+						<colspec colwidth="3*"/>
+						<colspec colwidth="1*"/>					
+						<thead>
+							<row>
+								<entry>Name of property</entry>
+								<entry>possible values</entry>
+								<entry>default value</entry>
+							</row>
+						</thead>
+						<tbody>
+							<row>
+								<entry><xref linkend="prop_spos" endterm="prop_spos_name"/></entry>
+								<entry>POSTAG, CPOSTAG, NONE</entry>
+								<entry>POSTAG</entry>
+							</row>
+							<row>
+								<entry><link linkend="prop_lemma">conll.SLEMMA</link></entry>
+								<entry>LEMMA, NONE</entry>
+								<entry>LEMMA</entry>
+							</row>
+							<row>
+								<entry><xref linkend="prop_considerProjectivity" endterm="prop_considerProjectivity_name"/></entry>
+								<entry>TRUE, FALSE</entry>
+								<entry>TRUE</entry>
+							</row>
+							<row>
+								<entry><xref linkend="prop_projectiveMode" endterm="prop_projectiveMode_name"/></entry>
+								<entry>TYPE, NAMESPACE</entry>
+								<entry>TYPE</entry>
+							</row>
+							<row>
+								<entry><xref linkend="prop_splitFeatures" endterm="prop_splitFeatures_name"/></entry>
+								<entry>TRUE, FALSE</entry>
+								<entry>TRUE</entry>
+							</row>
+							<row>
+								<entry><xref linkend="prop_postag_tag" endterm="prop_postag_tag_name"/></entry>
+								<entry>any</entry>
+								<entry/>
+							</row>
+							<row>
+								<entry><xref linkend="prop_cpostag_tag" endterm="prop_cpostag_tag_name"/></entry>
+								<entry>any</entry>
+								<entry/>
+							</row>
+							<row>
+								<entry><xref linkend="prop_field6_default" endterm="prop_field6_default_name"/></entry>
+								<entry>a single category name or a pipe separated sequence of category names</entry>
+								<entry>morph</entry>
+							</row>
+						</tbody>
+					</tgroup>
+				</table>
+            
+			
+			
+			<sect3 xml:id="prop_spos">
+                <title xml:id="prop_spos_name">conll.SPOS</title>
+                <para>Usage: <code>conll.SPOS=[FIELD](,[ALTERNATIVEFIELD])</code></para>
+                <para>Possible values are <code>POSTAG</code>, <code>CPOSTAG</code>, <code>NONE</code></para>
+				<para>Default value for this attribute is <code>POSTAG</code></para>
+				<para>States which CoNLL field´s data (see <xref linkend="table_conllfields"/>) to use for the SPOSAnnotation of salt tokens,
+                    or, if <code>[FIELD]</code> is <code>NONE</code>, not to create SPOSAnnotations at all. If the field
+                    designated by <code>[FIELD]</code> contains no data, <code>[ALTERNATIVEFIELD]</code> (if given), is used. If
+                    that field contains no data, no SPOSAnnotation is created for the particular salt token.</para>
+					<para>Example:</para>
+					<para><code>conll.SPOS=POSTAG,CPOSTAG</code></para>
+					<para>With this example setting, all input tokens with a value for the field POSTAG will be assigned a SPOSAnnotation with that value in their salt representation. If there is no value for the field POSTAG,
+					the value of the field CPOSTAG is used. If that is empty, too, no SPOSAnnotation is created.</para>
+            </sect3>
+            
+			
+			
+			<sect3 xml:id="prop_lemma">
+                <title xml:id="prop_lemma_name">conll.SLEMMA</title>
+                <para>Usage: <code>conll.SLEMMA=[FIELD]</code></para>
+                <para>Possible values are <code>LEMMA</code>, <code>NONE</code></para>
+				<para>Default value for this attribute is <code>LEMMA</code></para>
+                <para>States which CoNLL field´s data to use for the SLemmaAnnotation of salt
+                    tokens, or, if <code>[FIELD]</code> is <code>NONE</code>, not to create SLemmaAnnotations at all. If the
+                    field designated by <code>[FIELD]</code> contains no data, no SLemmaAnnotation is created for
+                    the particular salt token. The default value for this attribute is <code>LEMMA</code>.</para>
+				<para>Example:</para>
+				<para><code>conll.SLEMMA=LEMMA</code></para>
+				<para>With this example setting, all input tokens with a value for the field LEMMA will be assigned a SLemmaAnnotation with that value in their salt representation.</para>
+            </sect3>
+			
+			
+            
+			<sect3 xml:id="prop_considerProjectivity">
+                <title xml:id="prop_considerProjectivity_name">conll.considerProjectivity</title>
+                <para>Usage: <code>conll.considerProjectivity=[VALUE]</code></para>
+				<para>Possible values are <code>TRUE</code> and <code>FALSE</code></para>
+				<para>Default value for this attribute is <code>FALSE</code></para>
+				<para>States whether to create a salt pointing relation from projective head of tokens to the dependent.</para>
+            </sect3>
+            
+			
+			
+			<sect3 xml:id="prop_projectiveMode">
+                <title xml:id="prop_projectiveMode_name">conll.projectiveMode</title>
+                <para>This attribute only applies if <xref linkend="prop_considerProjectivity" endterm="prop_considerProjectivity_name"/> is set <code>TRUE</code>!</para>
+				<para>Usage: <code>conll.projectiveMode=[VALUE]</code></para>
+				<para>Possible values are <code>TYPE</code> and <code>NAMESPACE</code></para>
+				<para>Default value for this attribute is <code>TYPE</code></para>
+				<para>
+				<xref linkend="prop_projectiveMode" endterm="prop_projectiveMode_name"/> configures how projectivity is modelled in the salt representation. 
+				Generally, there will be a salt pointing relation and an annotation with the name "deprel" on that relation.
+				If the mode is set <code>TYPE</code>, the relation´s type will be "prodep".
+				If the mode is set <code>NAMESPACE</code>, the relation´s type will be "dep" and the annotation´s namespace will be set to "projective".
+				</para>
+            </sect3>
+			
+			
+			
+            <sect3 xml:id="prop_postag_tag">
+                <title xml:id="prop_postag_tag_name">conll.field6.POSTAG.TAG</title>
+                <para>Note: The name segment <code>field6</code> refers to sixth of the CoNLL fields (FEATS, see <xref linkend="table_conllfields"/>)</para>
+				<para>Usage: <code>conll.field6.POSTAG.[TAG]=[VALUE]</code></para>
+				<para>This is not only a single property, but a class of properties. Multiple entries of this type may be given in a properties file, but <code>[TAG]</code> must be unique.</para>
+				<para>A property of this type applies for any input data row that contains the given <code>[TAG]</code> as value for the POSTAG field.
+				The corresponding salt token will get a SAnnotation with <code>[VALUE]</code> as name and the input data row´s FEATS field as value.</para>
+				<para>Example:</para>
+				<para><code>conll.field6.POSTAG.NE=case|number|gender
+conll.field6.POSTAG.VF=tense|person|number</code></para>				
+				<para>input data row excerpt:</para>
+				<para>
+					<programlisting>2  mag    mögen  V    VF  pres|3|sg    0  _  _  _
+3  Peter  Peter  N    NE  acc|sg|masc  2  _  _  _
+4  sehr   sehr   Adv  Adv _            2  _  _  _</programlisting>
+				</para>
+				<para>
+				Since the POSTAG of the first input data row matches the second property´s TAG (both are <code>VF</code>), the salt token that represents this data row will get an Annotation that has "tense|person|number" as name and "pres|3|sg" as value.
+				The second data row´s TAG matches the first property´s TAG, so the corresponding salt token will get an Annotation with "case|number|gender" and "acc|sg|masc".
+				There is no entry for the TAG "Adv" of the third input row. In that case, a default value is used (see <xref linkend="prop_field6_default" endterm="prop_field6_default_name"/>).
+				</para>
+				<para>If the <xref linkend="prop_splitFeatures" endterm="prop_splitFeatures_name"/> property is set <code>FALSE</code>,
+				a single SAnnotation is created. If it is set <code>TRUE</code>, both <code>VALUE</code> and the FEATS value are split
+				into their pipe separated elements. Each element will be represented as one SAnnotation. For the first data row above, three
+				SAnnotations are created: 'tense':'gen', 'person':'3' and 'number':'sg'.</para>
+			</sect3>
+            
+			
+			
+			<sect3 xml:id="prop_cpostag_tag">
+                <title xml:id="prop_cpostag_tag_name">conll.field6.CPOSTAG.TAG</title>
+                <para>
+				This attribute works like <xref linkend="prop_postag_tag" endterm="prop_postag_tag_name"/>,
+				but instead of POSTAG, the CPOSTAG value of data rows is utilized.
+				</para>
+                <para>
+				Note: A configuration may contain both attribute types, even the same <code>[TAG]</code>s can be used, but 
+				if a data row is matching conditions for both a POSTAG and a CPOSTAG attribute, the one for the POSTAG attribute is used!
+				</para>
+            </sect3>
+			
+            
+			
+			<sect3 xml:id="prop_field6_default">
+                <title xml:id="prop_field6_default_name">conll.field6.default</title>
+                <para>Usage: <code>conll.field6.default=[VALUE]</code></para>
+                <para>Allowed values are any single category name or pipe separated sequences of category names</para>
+				<para>The default value for this attribute is <code>morph</code> (for 'morphological annotation').</para>
+                <para>If no <xref linkend="prop_postag_tag" endterm="prop_postag_tag_name"/>/<xref linkend="prop_cpostag_tag" endterm="prop_cpostag_tag_name"/> attribute
+				    is defined for both the POSTAG and the CPOSTAG value of a data row, the default name <code>[VALUE]</code> is used for the Annotation (or Annotations, see <xref linkend="prop_splitFeatures" endterm="prop_splitFeatures_name"/>)
+					of the corresponding salt token. The data row´s FEATS field is used as the value of the annotation(s).
+				</para>
+            </sect3>
+          
+			
+			
+			<sect3 xml:id="prop_splitFeatures">
+                <title xml:id="prop_splitFeatures_name">conll.splitFeatures</title>
+                <para>Usage: <code>conll.splitFeatures=[VALUE]</code></para>
+				<para>
+					If <code>[VALUE]</code> is set TRUE, any data row´s FEATS field will be split into it´s pipe separated elements to create multiple
+					annotations on the corresponding salt token (see <link linkend="prop_postag_tag">POSTAG</link>, <link linkend="prop_cpostag_tag">CPOSTAG</link>
+					and <link linkend="prop_field6_default">default</link>). If a field contains a different number of pipe separated elements than defined 
+					in the POSTAG, CPOSTAG or default attribute, the lesser number of annotations will be created, while the additional elements will be lost!
+				</para>
+				<para>If VALUE is FALSE, no splitting is done.</para>
+			</sect3>
+
+			</sect2>
+			
+		</sect1>
+    </chapter>  
+
+</book>
