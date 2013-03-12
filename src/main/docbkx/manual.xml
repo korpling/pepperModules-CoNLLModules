@@ -42,7 +42,7 @@
             format version) also given in the table. You can use these
             coordinates in a pepper workflow description file to identify the modules in a pepper
             conversion process. A description of how to model a workflow description file can be
-            found <ulink url="https://korpling.german.hu-berlin.de/saltnpepper/">here</ulink>.</para>
+            found <link xlink:href="https://korpling.german.hu-berlin.de/saltnpepper/">https://korpling.german.hu-berlin.de/saltnpepper/</link>.</para>
         <table xml:id="table_overview" frame="all">
             <title>pepper modules contained in this project</title>
             <tgroup cols="3" align="left" colsep="1" rowsep="1">
@@ -161,10 +161,12 @@
             <title>Properties</title>
 			<sect2>
 				<title>Properties file</title>
-				<para>
-					A property file is used to set certain options for the conversion process. Since all options have default settings, this file
-					is not mandatory. A property file has to be given as a special parameter in the Pepper workflow description and needs to be conform to a <ulink url="http://en.wikipedia.org/wiki/.properties">java property file</ulink>.
-					To use such a file, expand the Pepper workflow description file via the xml attribute "specialParams" as shown here:</para>
+				<para>A property file is used to set certain options for the conversion process. Since all
+                    options have default settings, this file is not mandatory. A property file has
+                    to be given as a special parameter in the Pepper workflow description and needs
+                    to be conform to a <link xlink:href="http://en.wikipedia.org/wiki/.properties">java
+                        property file</link>. To use such a file, expand the Pepper workflow
+                    description file via the xml attribute "specialParams" as shown here:</para>
 				<para>
 					<code>&lt;importerParams moduleName="CoNLLImporter" sourcePath="[PROP_FILE]" /&gt;</code>
 				</para>
