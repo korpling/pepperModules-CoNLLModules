@@ -20,10 +20,9 @@ package de.hu_berlin.german.korpling.saltnpepper.pepperModules.CoNLLModules;
 import java.io.IOException;
 import java.util.Map;
 
-import org.apache.felix.scr.annotations.Component;
-import org.apache.felix.scr.annotations.Service;
 import org.eclipse.emf.common.util.URI;
 import org.osgi.service.component.ComponentContext;
+import org.osgi.service.component.annotations.Component;
 import org.osgi.service.log.LogService;
 
 import de.hu_berlin.german.korpling.saltnpepper.pepper.pepperExceptions.PepperModuleException;
@@ -37,7 +36,6 @@ import de.hu_berlin.german.korpling.saltnpepper.salt.saltCommon.sCorpusStructure
 import de.hu_berlin.german.korpling.saltnpepper.salt.saltCore.SElementId;
 
 @Component(name="CoNLLImporterComponent", factory="PepperImporterComponentFactory")
-@Service(value=PepperImporter.class)
 public class CoNLLImporter extends PepperImporterImpl implements PepperImporter
 {
 	//-------------------------------------------------------------------------
