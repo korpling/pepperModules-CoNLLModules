@@ -1,24 +1,43 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>de.hu_berlin.german.korpling.saltnpepper</groupId>
   <artifactId>pepperModules-CoNLLModules</artifactId>
   <version>1.1.3</version>
   <packaging>bundle</packaging>
+  <description>This project provides a Pepper importer for CoNLL data.</description>
+  <url>https://korpling.german.hu-berlin.de/p/projects/peppermodules-conllmodules</url>
+  <issueManagement>
+  	<system>Redmine</system>
+  	<url>https://korpling.german.hu-berlin.de/p/projects/peppermodules-conllmodules/issues</url>
+  </issueManagement>
+  <ciManagement>
+  	<system>Jenkins</system>
+  	<url>https://korpling.german.hu-berlin.de/jenkins/</url>
+  </ciManagement>
+  <inceptionYear>2010</inceptionYear>
+  <distributionManagement>
+    <repository>
+      <id>korpling</id>
+      <name>korpling maven repo</name>
+      <url>file:///srv/www/maven2/</url>
+    </repository>
+  </distributionManagement>
   <repositories>
     <repository>
-      <id>SaltNPepper Repository</id>
-      <url>https://korpling.german.hu-berlin.de/~annis/maven2/saltnpepper/</url>
+      <id>korpling</id>
+      <name>korpling maven repo</name>
+      <url>http://korpling.german.hu-berlin.de/maven2</url>
     </repository>
   </repositories>
   <parent>
     <groupId>de.hu_berlin.german.korpling.saltnpepper</groupId>
     <artifactId>pepper-parentModule</artifactId>
-    <version>1.1.2</version>
+    <version>1.1.5</version>
   </parent>
   <scm>
     <developerConnection>scm:svn:https://korpling.german.hu-berlin.de/svn/saltnpepper/PepperModules/CoNLLModules/tags/pepperModules-CoNLLModules-1.1.3</developerConnection>
-  </scm>
+    <url>scm:svn:https://korpling.german.hu-berlin.de/svn/saltnpepper/PepperModules/CoNLLModules/tags/pepperModules-CoNLLModules-1.1.3</url>
+  </scm>  
   <dependencies>
     <dependency>
       <groupId>org.apache.commons</groupId>
@@ -26,10 +45,9 @@
       <version>1.3.2</version>
     </dependency>
     <dependency>
-      <groupId>de.hu_berlin.german.korpling.saltnpepper.misc</groupId>
-      <artifactId>TupleConnector</artifactId>
+      <groupId>de.hu_berlin.german.korpling.saltnpepper</groupId>
+      <artifactId>misc-TupleConnector</artifactId>
       <version>[1.1.0,)</version>
-      <type>bundle</type>
       <scope>compile</scope>
     </dependency>
   </dependencies>
@@ -38,7 +56,7 @@
        <!-- start: Plugin for automatic releasing -->
       <plugin>
         <artifactId>maven-release-plugin</artifactId>
-        <version>2.1</version>
+        <version>${maven-release-plugin.version}</version>
         <configuration>
           <tagBase>
 
@@ -46,14 +64,14 @@
 
           </tagBase>
           <releaseProfiles>release</releaseProfiles>
-          <goals>assembly:single deploy</goals>
+          <goals>package assembly:single deploy</goals>
         </configuration>
       </plugin>
       <!-- start: creation of bundle jar -->
       <plugin>
         <groupId>org.apache.felix</groupId>
         <artifactId>maven-bundle-plugin</artifactId>
-        <version>2.1.0</version>
+        <version>${maven-bundle-plugin.version}</version>
         <extensions>true</extensions>
         <executions>
           <execution>
@@ -64,7 +82,7 @@
           </execution>
         </executions>
         <configuration>
-          <manifestLocation>${basedir}/META-INF</manifestLocation>
+          <manifestLocation>${META-INF}</manifestLocation>
           <source>1.6</source>
           <target>1.6</target>
           <instructions>
@@ -72,7 +90,7 @@
             <Bundle-SymbolicName>${project.groupId}.${project.artifactId};singleton:=true</Bundle-SymbolicName>
             <Bundle-Version>${project.version}</Bundle-Version>
             <Bundle-RequiredExecutionEnvironment>JavaSE-1.6</Bundle-RequiredExecutionEnvironment>
-            <Service-Component>OSGI-INF/${component.descriptor.name}</Service-Component>
+            <Service-Component>${allServiceComponents}</Service-Component>
             <Include-Resource>{maven-resources}, LICENSE, NOTICE</Include-Resource>
           </instructions>
         </configuration>
