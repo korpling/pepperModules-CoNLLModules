@@ -283,7 +283,7 @@
                 <title xml:id="prop_considerProjectivity_name">conll.considerProjectivity</title>
                 <para>Usage: <code>conll.considerProjectivity=[VALUE]</code></para>
 				<para>Possible values are <code>TRUE</code> and <code>FALSE</code></para>
-				<para>Default value for this attribute is <code>FALSE</code></para>
+				<para>Default value for this attribute is <code>TRUE</code></para>
 				<para>States whether to create a salt pointing relation from projective head of tokens to the dependent.</para>
             </sect3>
             

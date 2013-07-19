@@ -24,6 +24,7 @@ import org.eclipse.emf.common.util.EList;
 import org.eclipse.emf.common.util.URI;
 
 import de.hu_berlin.german.korpling.saltnpepper.pepperModules.conll.Conll2SaltMapper;
+import de.hu_berlin.german.korpling.saltnpepper.salt.SaltFactory;
 import de.hu_berlin.german.korpling.saltnpepper.salt.saltCommon.SaltCommonFactory;
 import de.hu_berlin.german.korpling.saltnpepper.salt.saltCommon.sDocumentStructure.SDocumentGraph;
 import de.hu_berlin.german.korpling.saltnpepper.salt.saltCommon.sDocumentStructure.SPointingRelation;
@@ -232,7 +233,9 @@ public class Conll2SaltMapperTest extends TestCase {
 	
 	public final void testAll() 
 	{
-		getFixture().map(testFileURI, SaltCommonFactory.eINSTANCE.createSDocument());
+		getFixture().setResourceURI(testFileURI);
+		getFixture().setSDocument(SaltFactory.eINSTANCE.createSDocument());
+		getFixture().mapSDocument();
 
 		SToken[] tokens = new SToken[8];
 		for (int i=0;i<8;i++)

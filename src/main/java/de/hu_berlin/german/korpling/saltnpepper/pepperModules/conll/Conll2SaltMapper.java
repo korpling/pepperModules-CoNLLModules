@@ -32,11 +32,11 @@ import org.osgi.service.log.LogService;
 
 import de.hu_berlin.german.korpling.saltnpepper.misc.tupleconnector.TupleConnectorFactory;
 import de.hu_berlin.german.korpling.saltnpepper.misc.tupleconnector.TupleReader;
+import de.hu_berlin.german.korpling.saltnpepper.pepper.pepperModules.MAPPING_RESULT;
+import de.hu_berlin.german.korpling.saltnpepper.pepper.pepperModules.impl.PepperMapperImpl;
 import de.hu_berlin.german.korpling.saltnpepper.pepperModules.conll.exception.ConllConversionInputFileException;
 import de.hu_berlin.german.korpling.saltnpepper.pepperModules.conll.exception.ConllConversionMandatoryValueMissingException;
 import de.hu_berlin.german.korpling.saltnpepper.salt.SaltFactory;
-import de.hu_berlin.german.korpling.saltnpepper.salt.saltCommon.sCorpusStructure.SDocument;
-import de.hu_berlin.german.korpling.saltnpepper.salt.saltCommon.sDocumentStructure.SDocumentGraph;
 import de.hu_berlin.german.korpling.saltnpepper.salt.saltCommon.sDocumentStructure.SPointingRelation;
 import de.hu_berlin.german.korpling.saltnpepper.salt.saltCommon.sDocumentStructure.SSpan;
 import de.hu_berlin.german.korpling.saltnpepper.salt.saltCommon.sDocumentStructure.SSpanningRelation;
@@ -52,7 +52,7 @@ import de.hu_berlin.german.korpling.saltnpepper.salt.saltSemantics.SaltSemantics
  * @author hildebax
  *
  */
-public class Conll2SaltMapper{
+public class Conll2SaltMapper extends PepperMapperImpl{
 
 	//property defaults
 	private final boolean defaultUseSPOSAnnoation    = true;
@@ -81,12 +81,12 @@ public class Conll2SaltMapper{
 	private final ConllDataField DEFAULT_SPOS   = ConllDataField.POSTAG;
 	//private final ConllDataField DEFAULT_SLEMMA = ConllDataField.LEMMA;	
 	
-	private final String PROJECTIVE     			  = "projective";
-	private final String PRODEP         			  = "prodep";
-	private final String DEP            			  = "dep";
-	private final String DEPREL         			  = "deprel";
-	private final String CAT            			  = "cat";
-	private final String S              			  = "S";	
+	private static final String PROJECTIVE     			  = "projective";
+	private static final String PRODEP         			  = "prodep";
+	private static final String DEP            			  = "dep";
+	private static final String DEPREL         			  = "deprel";
+	private static final String CAT            			  = "cat";
+	private static final String S              			  = "S";	
 	public static final String TRUE       			  = "true";
 	public static final String FALSE       		  	  = "false";	
 	public static final String TYPE       			  = "TYPE";
@@ -110,133 +110,21 @@ public class Conll2SaltMapper{
 	public void setProperties(URI propertyFile) {
 		if (propertyFile!=null) {
 			try {
-				logInfo(String.format("Trying to read property file '%s'",propertyFile.toFileString()));
+				if (getLogService()!= null)
+					getLogService().log(LogService.LOG_WARNING, String.format("Trying to read property file '%s'",propertyFile.toFileString()));
 				properties.load(new FileInputStream(propertyFile.toFileString()));
 				considerProjectivity = !properties.getProperty(PROPERTYKEY_PROJECTIVITY, TRUE).equalsIgnoreCase(TRUE);
 				projectiveModeIsType = !properties.getProperty(PROPERTYKEY_PROJECTIVEMODE, TYPE).equalsIgnoreCase(NAMESPACE);
 			} catch (IOException e) {
-				logWarning("property file for mapping CoNLL to Salt could not be read; default values are used");
+				if (getLogService()!= null)
+					getLogService().log(LogService.LOG_WARNING, "property file for mapping CoNLL to Salt could not be read; default values are used");
 			}
 		}
 		else {
-			logWarning("URI of property file for mapping CoNLL to Salt is NULL; default values are used");
+			if (getLogService()!= null)
+				getLogService().log(LogService.LOG_WARNING, "URI of property file for mapping CoNLL to Salt is NULL; default values are used");
 		}
 	}
-
-	/**
-	 * Getter for the properties file
-	 * @return properties the Properties
-	 */
-	public Properties getProperties() {
-		return properties;
-	}
-	//----------------------------------------------------------
-
-	//the Salt document graph; it will contain the data after conversion
-	private SDocumentGraph sDocumentGraph = null; 
-
-	/**
-	 * Getter for the Salt document graph
-	 * @return sDocumentGraph the Salt document graph
-	 */
-	public SDocumentGraph getSDocumentGraph() {
-		return sDocumentGraph;
-	}
-	//----------------------------------------------------------
-	
-	//the URI for the CoNLL file
-	private URI inFileURI = null;
-
-	//setter for the URI
-	private void setInFileURI(URI inFileURI) {
-		this.inFileURI = inFileURI;
-	}
-	
-	/**
-	 * Getter for the URI for the CoNLL (input) file
-	 * @return inFileURI the URI
-	 */
-	public URI getInFileURI() {
-		return inFileURI;
-	}
-	//----------------------------------------------------------
-
-	//the Salt document 
-	private SDocument sDocument = null;
-	
-	//Setter for the Salt document
-	private void setSDocument(SDocument sDocument) {
-		this.sDocument = sDocument;
-	}
-	
-	/**
-	 * Getter for the Salt document
-	 * @return sDocument the Salt document
-	 */
-	public SDocument getSDocument() {
-		return this.sDocument;
-	}
-	//----------------------------------------------------------
-	
-	//the name of the Salt document graph
-	private String sDocumentGraphName = null;
-	
-	/**
-	 * Setter for the name of the Salt document graph
-	 * @param sDocumentGraphName the name
-	 */
-	public void setSDocumentGraphName(String sDocumentGraphName) {
-		this.sDocumentGraphName = sDocumentGraphName;
-	}
-	
-	/**
-	 * Getter for the name of the Salt document graph
-	 * @return sDocumentGraphName the name
-	 */
-	public String getSDocumentGraphName() {
-		return sDocumentGraphName;
-	}
-	//----------------------------------------------------------
-	
-	// the log service
-	private LogService logService = null;
-	
-	/**
-	 * Getter for the log service
-	 * @return logService the log service
-	 */
-	public LogService getLogService() {
-		return logService;
-	}
-
-	/**
-	 * Setter for the log service
-	 * @param logService the log service
-	 */
-	public void setLogService(LogService logService) {
-		this.logService = logService;
-	}
-
-	//used by logError, logWarning, logInfo and logDebug
-	private void log(int logLevel, String logText) {
-		if (this.getLogService()!=null) {
-			String fileInfo = "";
-			if (this.getInFileURI()!=null) {
-				fileInfo = "<" + this.getInFileURI().toFileString() + "> "; 
-			}
-			this.getLogService().log(logLevel, fileInfo + logText);
-		}
-	}
-	
-	//logging methods
-	private void logError  (String logText) { this.log(LogService.LOG_ERROR,   logText); }
-	private void logWarning(String logText) { this.log(LogService.LOG_WARNING, logText); }
-	private void logInfo   (String logText) { this.log(LogService.LOG_INFO,    logText); }
-	@SuppressWarnings("unused")
-	private void logDebug  (String logText) { this.log(LogService.LOG_DEBUG,   logText); }
-	//----------------------------------------------------------
-	
-	
 	
 	boolean splitFeatures;
 	//retrieves whether to split pipe separated feature values or not
@@ -251,7 +139,8 @@ public class Conll2SaltMapper{
 		String propVal = properties.getProperty(PROPERTYKEY_SLEMMA, PROPERTYVAL_LEMMA); 
 		if (propVal.equals(PROPERTYVAL_LEMMA))	return true;
 		if (propVal.equals(PROPERTYVAL_NONE))	return false;
-		logWarning(String.format("Invalid value '%s' for property '%s'. Default value '%s' is used.",propVal,PROPERTYKEY_SLEMMA,PROPERTYVAL_LEMMA));
+		if (getLogService()!= null)
+			getLogService().log(LogService.LOG_WARNING, String.format("Invalid value '%s' for property '%s'. Default value '%s' is used.",propVal,PROPERTYKEY_SLEMMA,PROPERTYVAL_LEMMA)); 
 		return defaultUseSLemmaAnnoation;
 	}
 
@@ -272,11 +161,12 @@ public class Conll2SaltMapper{
 		String[] propVals = propVal.split(",");
 		
 		if (propVals.length>2) {
-			logWarning(String.format("Found '%s' for property '%s'. Only two values are regarded, the rest will be ignored.",propVal,PROPERTYKEY_SPOS));
+			if (getLogService()!= null)getLogService().log(LogService.LOG_WARNING, String.format("Found '%s' for property '%s'. Only two values are regarded, the rest will be ignored.",propVal,PROPERTYKEY_SPOS));
 		}
 		
 		if ((propVals.length>1) && (propVals[0].equals(PROPERTYVAL_NONE))) {
-			logWarning(String.format("Found '%s' for property '%s'. With this setting, no SPOSAnnotation will ever be created.",propVal,PROPERTYKEY_SPOS));
+			if (getLogService()!= null)
+				getLogService().log(LogService.LOG_WARNING, String.format("Found '%s' for property '%s'. With this setting, no SPOSAnnotation will ever be created.",propVal,PROPERTYKEY_SPOS));
 		}
 		
 		String val = propVals[0].trim();
@@ -293,11 +183,13 @@ public class Conll2SaltMapper{
 		}
 		else {
 			if (propVals.length==1) {
-				logWarning(String.format("Invalid value '%s' for property '%s'. Using default value.",val,PROPERTYKEY_SPOS));
+				if (getLogService()!= null)
+					getLogService().log(LogService.LOG_WARNING, String.format("Invalid value '%s' for property '%s'. Using default value.",val,PROPERTYKEY_SPOS));
 				this.firstSPOSField=DEFAULT_SPOS;
 			}
 			else {
-				logWarning(String.format("Invalid value '%s' for property '%s'. Using alternative value.",val,PROPERTYKEY_SPOS));	
+				if (getLogService()!= null)
+					getLogService().log(LogService.LOG_WARNING, String.format("Invalid value '%s' for property '%s'. Using alternative value.",val,PROPERTYKEY_SPOS));	
 			}
 		}
 		
@@ -323,11 +215,13 @@ public class Conll2SaltMapper{
 			}
 			else {
 				if (this.firstSPOSField==null) {
-					logWarning(String.format("Invalid alternative value '%s' for property '%s'. Using default value.",val,PROPERTYKEY_SPOS));	
+					if (getLogService()!= null)
+						getLogService().log(LogService.LOG_WARNING, String.format("Invalid alternative value '%s' for property '%s'. Using default value.",val,PROPERTYKEY_SPOS));	
 					this.firstSPOSField=DEFAULT_SPOS;
 				} 
 				else {
-					logWarning(String.format("Invalid alternative value '%s' for property '%s'.",val,PROPERTYKEY_SPOS));
+					if (getLogService()!= null)
+						getLogService().log(LogService.LOG_WARNING, String.format("Invalid alternative value '%s' for property '%s'.",val,PROPERTYKEY_SPOS));
 				}
 			}
 		}
@@ -352,14 +246,6 @@ public class Conll2SaltMapper{
 				}
 			}
 			else {
-				
-//				if (this.firstSPOSField!=null)
-//					System.out.println(this.firstSPOSField.toString());
-				
-//				if (this.secondSPOSField!=null)
-//					System.out.println(this.secondSPOSField.toString());
-				
-				
 				int SPOSAnnotationIndex = -1;
 				ConllDataField[] bothFields = {this.firstSPOSField,this.secondSPOSField};
 				ConllDataField field = null;				
@@ -398,32 +284,35 @@ public class Conll2SaltMapper{
 	}
 	
 	/**
-	 * Maps the content of an input file (given as URI) in CoNLL format to a Salt document
-	 * @param CoNLLFileURI the file URI containing the input data
-	 * @param sDocument the Salt document; destination of the conversion
+	 * {@inheritDoc PepperMapper#setSDocument(SDocument)}
+	 * 
+	 * OVERRIDE THIS METHOD FOR CUSTOMIZED MAPPING.
 	 */
-	public void map(URI inFileURI, SDocument sDocument) {
+	@Override
+	public MAPPING_RESULT mapSDocument() {	
+		if (getSDocument().getSDocumentGraph()== null)
+			getSDocument().setSDocumentGraph(SaltFactory.eINSTANCE.createSDocumentGraph());
 		
-		setInFileURI(inFileURI);
-		setSDocument(sDocument);
+		//TODO remove this when Property handling is switched to PepperProperties
+		if (getProperties()!= null)
+			properties= getProperties().getProperties();
+		else properties= new Properties();
 		
 		TupleReader tupleReader = TupleConnectorFactory.fINSTANCE.createTupleReader();
 		// try reading the input file 
 		try   {
-			tupleReader.setFile(new File(this.getInFileURI().toFileString()));
+			tupleReader.setFile(new File(this.getResourceURI().toFileString()));
 			tupleReader.readFile();
 		}
 		catch (IOException e) {
-			String errorMessage = "input file could not be read. Abort conversion of file "+inFileURI+".";
-			logError(errorMessage);
+			String errorMessage = "input file could not be read. Abort conversion of file "+this.getResourceURI()+".";
+			if (getLogService()!= null)
+				getLogService().log(LogService.LOG_ERROR, errorMessage);
 			throw new ConllConversionInputFileException(errorMessage); 
 		}
 
-		sDocumentGraph = SaltFactory.eINSTANCE.createSDocumentGraph();
-		sDocumentGraph.setSName(getSDocumentGraphName());
-		getSDocument().setSDocumentGraph(sDocumentGraph);
 		STextualDS sTextualDS = SaltFactory.eINSTANCE.createSTextualDS();
-		sTextualDS.setSDocumentGraph(sDocumentGraph);
+		sTextualDS.setSDocumentGraph(getSDocument().getSDocumentGraph());
  
 		ArrayList<SToken> tokenList = new ArrayList<SToken>();
 		HashMap<SPointingRelation,Integer> pointingRelationMap = new HashMap<SPointingRelation,Integer>();
@@ -453,8 +342,9 @@ public class Conll2SaltMapper{
 				tuple = tupleReader.getTuple();
 			} 
 			catch (IOException e) {
-				String errorMessage = String.format("line %d of input file could not be read. Abort conversion of file "+inFileURI+".",rowIndex+1);
-				logError(errorMessage);
+				String errorMessage = String.format("line %d of input file could not be read. Abort conversion of file "+this.getResourceURI()+".",rowIndex+1);
+				if (getLogService()!= null)
+					getLogService().log(LogService.LOG_ERROR, errorMessage);
 				throw new ConllConversionInputFileException(errorMessage);
 			}
 			
@@ -462,8 +352,9 @@ public class Conll2SaltMapper{
 			fieldValues.clear();
 
 			if (!((tupleSize==1)||(tupleSize==numOfColumnsExpected))) {
-				String errorMessage = String.format("invalid format in line %d of input file. lines must be empty or contain %d columns of data. Abort conversion of file "+inFileURI+".",rowIndex+1,numOfColumnsExpected);
-				logError(errorMessage);
+				String errorMessage = String.format("invalid format in line %d of input file. lines must be empty or contain %d columns of data. Abort conversion of file "+this.getResourceURI()+".",rowIndex+1,numOfColumnsExpected);
+				if (getLogService()!= null)
+					getLogService().log(LogService.LOG_ERROR,errorMessage);
 				throw new ConllConversionInputFileException(errorMessage);
 			}
 			
@@ -477,8 +368,9 @@ public class Conll2SaltMapper{
 					if (fieldValue.equals(field.getDummyValue())) {
 						fieldValue = null;
 						if (field.isMandatory()) {
-							String errorMessage = String.format("mandatory value for %s missing in line %d of input file '"+inFileURI+"'!",field.toString(),rowIndex+1);
-							logError(errorMessage);
+							String errorMessage = String.format("mandatory value for %s missing in line %d of input file '"+this.getResourceURI()+"'!",field.toString(),rowIndex+1);
+							if (getLogService()!= null)
+								getLogService().log(LogService.LOG_ERROR,errorMessage);
 							throw new ConllConversionMandatoryValueMissingException(errorMessage);
 						}
 					}
@@ -487,7 +379,7 @@ public class Conll2SaltMapper{
 				
 				// create token and add to local token list
 				SToken sToken = SaltFactory.eINSTANCE.createSToken();
-				sToken.setSDocumentGraph(sDocumentGraph);
+				sToken.setSDocumentGraph(getSDocument().getSDocumentGraph());
 				tokenList.add(sToken);
 				
 				// update primary text (sTextualDS.sText will be set after completely reading the input file)
@@ -501,7 +393,7 @@ public class Conll2SaltMapper{
 				sTextualRelation.setSTarget(sTextualDS);
 				sTextualRelation.setSStart(tokenTextStartOffset);
 				sTextualRelation.setSEnd(tokenTextEndOffset);
-				sTextualRelation.setSDocumentGraph(sDocumentGraph);
+				sTextualRelation.setSDocumentGraph(getSDocument().getSDocumentGraph());
 
 				//Lemma
 				{
@@ -535,12 +427,12 @@ public class Conll2SaltMapper{
 				
 				// create span and add span annotation
 				SSpan sSpan = SaltFactory.eINSTANCE.createSSpan();
-				sSpan.setGraph(sDocumentGraph);
+				sSpan.setGraph(getSDocument().getSDocumentGraph());
 				sSpan.addSAnnotation(sAnnotation);
 
 				// create spanning relation, set span as source and token as target
 				SSpanningRelation sSpanningRelation = SaltFactory.eINSTANCE.createSSpanningRelation();
-				sSpanningRelation.setGraph(sDocumentGraph);
+				sSpanningRelation.setGraph(getSDocument().getSDocumentGraph());
 				sSpanningRelation.setSource(sSpan);
 				sSpanningRelation.setTarget(sToken);
 
@@ -588,8 +480,9 @@ public class Conll2SaltMapper{
 					tokenID = Integer.parseInt(tokenIDStr);
 				}
 				catch (NumberFormatException e) {
-					String errorMessage = String.format("Invalid integer value '%s' for ID in line %d of input file. Abort conversion of file "+inFileURI+".",tokenIDStr,rowIndex+1); 
-					logError(errorMessage);
+					String errorMessage = String.format("Invalid integer value '%s' for ID in line %d of input file. Abort conversion of file "+this.getResourceURI()+".",tokenIDStr,rowIndex+1); 
+					if (getLogService()!= null)
+						getLogService().log(LogService.LOG_ERROR,errorMessage);
 					throw new ConllConversionInputFileException();
 				}
 				
@@ -600,8 +493,9 @@ public class Conll2SaltMapper{
 					headID = Integer.parseInt(headIDStr);
 				}
 				catch (NumberFormatException e) {
-					String errorMessage = String.format("Invalid integer value '%s' for HEAD in line %d of input file '"+inFileURI+"'. Abort conversion of file "+inFileURI+".",headIDStr,rowIndex+1); 
-					logError(errorMessage);
+					String errorMessage = String.format("Invalid integer value '%s' for HEAD in line %d of input file '"+this.getResourceURI()+"'. Abort conversion of file "+this.getResourceURI()+".",headIDStr,rowIndex+1); 
+					if (getLogService()!= null)
+						getLogService().log(LogService.LOG_ERROR,errorMessage);
 					throw new ConllConversionInputFileException(errorMessage);
 				}
 				
@@ -616,7 +510,7 @@ public class Conll2SaltMapper{
 					
 					SPointingRelation sPointingRelation = SaltFactory.eINSTANCE.createSPointingRelation();
 					//sAnnotation.setSAnnotatableElement(sPointingRelation);
-					sPointingRelation.setSDocumentGraph(sDocumentGraph);
+					sPointingRelation.setSDocumentGraph(getSDocument().getSDocumentGraph());
 					sPointingRelation.addSType(DEP);
 					sPointingRelation.setTarget(sToken);
 					sPointingRelation.addSAnnotation(sAnnotation);
@@ -638,8 +532,9 @@ public class Conll2SaltMapper{
 						proheadID = Integer.parseInt(proheadIDStr);
 					}
 					catch (NumberFormatException e) {
-						String errorMessage = String.format("invalid integer value '%s' for PHEAD in line %d of input file. Abort conversion of file "+inFileURI+".",proheadIDStr,rowIndex+1); 
-						logError(errorMessage);
+						String errorMessage = String.format("invalid integer value '%s' for PHEAD in line %d of input file. Abort conversion of file "+this.getResourceURI()+".",proheadIDStr,rowIndex+1); 
+						if (getLogService()!= null)
+							getLogService().log(LogService.LOG_ERROR, errorMessage);
 						throw new ConllConversionInputFileException();
 					}
 					
@@ -651,7 +546,7 @@ public class Conll2SaltMapper{
 						sAnnotation.setSValue(fieldValues.get(ConllDataField.PDEPREL.getFieldNum()-1));
 
 						SPointingRelation sPointingRelation = SaltFactory.eINSTANCE.createSPointingRelation();
-						sPointingRelation.setSDocumentGraph(sDocumentGraph);
+						sPointingRelation.setSDocumentGraph(getSDocument().getSDocumentGraph());
 						sPointingRelation.addSAnnotation(sAnnotation);
 						sPointingRelation.setTarget(sToken);
 						
@@ -693,9 +588,10 @@ public class Conll2SaltMapper{
 		sTextualDS.setSText(primaryText.toString());
 		
 		if (nonMatchingCategoryNumberLines.size()>0) {
-			logWarning("Number of feature values doesn't match number of categories in lines: " + nonMatchingCategoryNumberLines.toString());			
+			if (getLogService()!= null)
+				getLogService().log(LogService.LOG_WARNING, "Number of feature values doesn't match number of categories in lines: " + nonMatchingCategoryNumberLines.toString());			
 		}
-		
+		return(MAPPING_RESULT.FINISHED);
 	} // map
 
 } // ConllDep2SaltMapper
