@@ -28,14 +28,15 @@ import java.util.Map.Entry;
 import java.util.Properties;
 
 import org.eclipse.emf.common.util.URI;
-import org.osgi.service.log.LogService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import de.hu_berlin.german.korpling.saltnpepper.misc.tupleconnector.TupleConnectorFactory;
 import de.hu_berlin.german.korpling.saltnpepper.misc.tupleconnector.TupleReader;
-import de.hu_berlin.german.korpling.saltnpepper.pepper.pepperModules.MAPPING_RESULT;
-import de.hu_berlin.german.korpling.saltnpepper.pepper.pepperModules.impl.PepperMapperImpl;
-import de.hu_berlin.german.korpling.saltnpepper.pepperModules.conll.exception.ConllConversionInputFileException;
-import de.hu_berlin.german.korpling.saltnpepper.pepperModules.conll.exception.ConllConversionMandatoryValueMissingException;
+import de.hu_berlin.german.korpling.saltnpepper.pepper.common.DOCUMENT_STATUS;
+import de.hu_berlin.german.korpling.saltnpepper.pepper.modules.exceptions.PepperModuleDataException;
+import de.hu_berlin.german.korpling.saltnpepper.pepper.modules.impl.PepperMapperImpl;
+import de.hu_berlin.german.korpling.saltnpepper.pepperModules.CoNLLModules.CoNLLImporterProperties;
 import de.hu_berlin.german.korpling.saltnpepper.salt.SaltFactory;
 import de.hu_berlin.german.korpling.saltnpepper.salt.saltCommon.sDocumentStructure.SPointingRelation;
 import de.hu_berlin.german.korpling.saltnpepper.salt.saltCommon.sDocumentStructure.SSpan;
@@ -53,27 +54,8 @@ import de.hu_berlin.german.korpling.saltnpepper.salt.saltSemantics.SaltSemantics
  *
  */
 public class Conll2SaltMapper extends PepperMapperImpl{
-
-	//property defaults
-	private final boolean defaultUseSPOSAnnoation    = true;
-	private final boolean defaultUseSLemmaAnnoation  = true;
+	private static final Logger logger= LoggerFactory.getLogger(Conll2SaltMapper.class);
 	
-	//some values and keys used in this class
-	public final static String PROPERTYKEY_PROJECTIVITY    = "conll.considerProjectivity";
-	public final static String PROPERTYKEY_PROJECTIVEMODE  = "conll.projectiveMode";
-	public final static String PROPERTYKEY_SPOS            = "conll.SPOS";
-	public final static String PROPERTYKEY_SLEMMA          = "conll.SLEMMA";
-
-	public final static String PROPERTYKEY_FIELD6_POSTAG_  = "conll.field6.POSTAG.";  //the dot at the end is correct
-	public final static String PROPERTYKEY_FIELD6_CPOSTAG_ = "conll.field6.CPOSTAG."; //the dot at the end is correct	
-	public final static String PROPERTYKEY_FIELD6_DEFAULT  = "conll.field6.default";
-	public final static String PROPERTYKEY_SPLIT_FEATURES  = "conll.splitFeatures";	
-	
-	private final String PROPERTYVAL_NONE            = "NONE";
-	private final String PROPERTYVAL_POSTAG          = "POSTAG";
-	private final String PROPERTYVAL_CPOSTAG         = "CPOSTAG";
-	private final String PROPERTYVAL_LEMMA           = "LEMMA";	
-
 	//
 	private ConllDataField firstSPOSField = null;
 	private ConllDataField secondSPOSField = null;
@@ -110,38 +92,34 @@ public class Conll2SaltMapper extends PepperMapperImpl{
 	public void setProperties(URI propertyFile) {
 		if (propertyFile!=null) {
 			try {
-				if (getLogService()!= null)
-					getLogService().log(LogService.LOG_WARNING, String.format("Trying to read property file '%s'",propertyFile.toFileString()));
+				logger.warn(String.format("Trying to read property file '%s'",propertyFile.toFileString()));
 				properties.load(new FileInputStream(propertyFile.toFileString()));
-				considerProjectivity = !properties.getProperty(PROPERTYKEY_PROJECTIVITY, TRUE).equalsIgnoreCase(TRUE);
-				projectiveModeIsType = !properties.getProperty(PROPERTYKEY_PROJECTIVEMODE, TYPE).equalsIgnoreCase(NAMESPACE);
+				considerProjectivity = !properties.getProperty(CoNLLImporterProperties.PROP_PROJECTIVE_MODE, TRUE).equalsIgnoreCase(TRUE);
+				projectiveModeIsType = !properties.getProperty(CoNLLImporterProperties.PROP_PROJECTIVE_MODE, TYPE).equalsIgnoreCase(NAMESPACE);
 			} catch (IOException e) {
-				if (getLogService()!= null)
-					getLogService().log(LogService.LOG_WARNING, "property file for mapping CoNLL to Salt could not be read; default values are used");
+				logger.warn("property file for mapping CoNLL to Salt could not be read; default values are used");
 			}
 		}
 		else {
-			if (getLogService()!= null)
-				getLogService().log(LogService.LOG_WARNING, "URI of property file for mapping CoNLL to Salt is NULL; default values are used");
+			logger.warn("URI of property file for mapping CoNLL to Salt is NULL; default values are used");
 		}
 	}
 	
 	boolean splitFeatures;
 	//retrieves whether to split pipe separated feature values or not
 	private boolean getSplitFeatures() {
-		String propVal = properties.getProperty(PROPERTYKEY_SPLIT_FEATURES, FALSE);
+		String propVal = properties.getProperty(CoNLLImporterProperties.PROP_SPLIT_FEATURES, FALSE);
 		return (propVal.equalsIgnoreCase(TRUE));
 	}
 	
 	boolean useSLemmaAnnotation;
 	//retrieves whether or not to use SLemmaAnnoations  
 	private boolean getUseSLemmaAnnotation() {
-		String propVal = properties.getProperty(PROPERTYKEY_SLEMMA, PROPERTYVAL_LEMMA); 
-		if (propVal.equals(PROPERTYVAL_LEMMA))	return true;
-		if (propVal.equals(PROPERTYVAL_NONE))	return false;
-		if (getLogService()!= null)
-			getLogService().log(LogService.LOG_WARNING, String.format("Invalid value '%s' for property '%s'. Default value '%s' is used.",propVal,PROPERTYKEY_SLEMMA,PROPERTYVAL_LEMMA)); 
-		return defaultUseSLemmaAnnoation;
+		String propVal = properties.getProperty(CoNLLImporterProperties.PROP_SLEMMA, CoNLLImporterProperties.PROPERTYVAL_LEMMA); 
+		if (propVal.equals(CoNLLImporterProperties.PROPERTYVAL_LEMMA))	return true;
+		if (propVal.equals(CoNLLImporterProperties.PROPERTYVAL_NONE))	return false;
+		logger.warn(String.format("Invalid value '%s' for property '%s'. Default value '%s' is used.",propVal,CoNLLImporterProperties.PROP_SLEMMA,CoNLLImporterProperties.PROPERTYVAL_LEMMA)); 
+		return CoNLLImporterProperties.defaultUseSLemmaAnnoation;
 	}
 
 	
@@ -151,58 +129,55 @@ public class Conll2SaltMapper extends PepperMapperImpl{
 		this.firstSPOSField=null;		
 		this.secondSPOSField=null;
 
-		if (!properties.containsKey(PROPERTYKEY_SPOS)) {
-			if (defaultUseSPOSAnnoation) {
+		if (!properties.containsKey(CoNLLImporterProperties.PROP_SPOS)) {
+			if (CoNLLImporterProperties.defaultUseSPOSAnnoation) {
 				this.firstSPOSField=DEFAULT_SPOS;
 			}
-			return defaultUseSPOSAnnoation;
+			return CoNLLImporterProperties.defaultUseSPOSAnnoation;
 		}
-		String propVal = properties.getProperty(PROPERTYKEY_SPOS);
+		String propVal = properties.getProperty(CoNLLImporterProperties.PROP_SPOS);
 		String[] propVals = propVal.split(",");
 		
 		if (propVals.length>2) {
-			if (getLogService()!= null)getLogService().log(LogService.LOG_WARNING, String.format("Found '%s' for property '%s'. Only two values are regarded, the rest will be ignored.",propVal,PROPERTYKEY_SPOS));
+			logger.warn(String.format("Found '%s' for property '%s'. Only two values are regarded, the rest will be ignored.",propVal,CoNLLImporterProperties.PROP_SPOS));
 		}
 		
-		if ((propVals.length>1) && (propVals[0].equals(PROPERTYVAL_NONE))) {
-			if (getLogService()!= null)
-				getLogService().log(LogService.LOG_WARNING, String.format("Found '%s' for property '%s'. With this setting, no SPOSAnnotation will ever be created.",propVal,PROPERTYKEY_SPOS));
+		if ((propVals.length>1) && (propVals[0].equals(CoNLLImporterProperties.PROPERTYVAL_NONE))) {
+			logger.warn(String.format("Found '%s' for property '%s'. With this setting, no SPOSAnnotation will ever be created.",propVal,CoNLLImporterProperties.PROP_SPOS));
 		}
 		
 		String val = propVals[0].trim();
-		if (val.equals(PROPERTYVAL_NONE)) {
+		if (val.equals(CoNLLImporterProperties.PROPERTYVAL_NONE)) {
 			return false;
 		}
-		else if ((val.equals(PROPERTYVAL_POSTAG))||(val.equals(PROPERTYVAL_CPOSTAG))) {
-			if (val.equals(PROPERTYVAL_POSTAG)) {
+		else if ((val.equals(CoNLLImporterProperties.PROPERTYVAL_POSTAG))||(val.equals(CoNLLImporterProperties.PROPERTYVAL_CPOSTAG))) {
+			if (val.equals(CoNLLImporterProperties.PROPERTYVAL_POSTAG)) {
 				this.firstSPOSField = ConllDataField.POSTAG;
 			}
-			else if (val.equals(PROPERTYVAL_CPOSTAG)) {
+			else if (val.equals(CoNLLImporterProperties.PROPERTYVAL_CPOSTAG)) {
 				this.firstSPOSField = ConllDataField.CPOSTAG;	
 			}
 		}
 		else {
 			if (propVals.length==1) {
-				if (getLogService()!= null)
-					getLogService().log(LogService.LOG_WARNING, String.format("Invalid value '%s' for property '%s'. Using default value.",val,PROPERTYKEY_SPOS));
+				logger.warn(String.format("Invalid value '%s' for property '%s'. Using default value.",val,CoNLLImporterProperties.PROP_SPOS));
 				this.firstSPOSField=DEFAULT_SPOS;
 			}
 			else {
-				if (getLogService()!= null)
-					getLogService().log(LogService.LOG_WARNING, String.format("Invalid value '%s' for property '%s'. Using alternative value.",val,PROPERTYKEY_SPOS));	
+				logger.warn(String.format("Invalid value '%s' for property '%s'. Using alternative value.",val,CoNLLImporterProperties.PROP_SPOS));	
 			}
 		}
 		
 		if (propVals.length>=2) {
 			val = propVals[1].trim();
-			if (val.equals(PROPERTYVAL_NONE)) {
+			if (val.equals(CoNLLImporterProperties.PROPERTYVAL_NONE)) {
 			}
-			else if ((val.equals(PROPERTYVAL_POSTAG))||(val.equals(PROPERTYVAL_CPOSTAG))) {
+			else if ((val.equals(CoNLLImporterProperties.PROPERTYVAL_POSTAG))||(val.equals(CoNLLImporterProperties.PROPERTYVAL_CPOSTAG))) {
 				ConllDataField field = null; 
-				if (val.equals(PROPERTYVAL_POSTAG)) {
+				if (val.equals(CoNLLImporterProperties.PROPERTYVAL_POSTAG)) {
 					field = ConllDataField.POSTAG;	
 				}
-				else if (val.equals(PROPERTYVAL_CPOSTAG)) {
+				else if (val.equals(CoNLLImporterProperties.PROPERTYVAL_CPOSTAG)) {
 					field = ConllDataField.CPOSTAG;
 				}
 
@@ -215,13 +190,11 @@ public class Conll2SaltMapper extends PepperMapperImpl{
 			}
 			else {
 				if (this.firstSPOSField==null) {
-					if (getLogService()!= null)
-						getLogService().log(LogService.LOG_WARNING, String.format("Invalid alternative value '%s' for property '%s'. Using default value.",val,PROPERTYKEY_SPOS));	
+					logger.warn(String.format("Invalid alternative value '%s' for property '%s'. Using default value.",val,CoNLLImporterProperties.PROP_SPOS));	
 					this.firstSPOSField=DEFAULT_SPOS;
 				} 
 				else {
-					if (getLogService()!= null)
-						getLogService().log(LogService.LOG_WARNING, String.format("Invalid alternative value '%s' for property '%s'.",val,PROPERTYKEY_SPOS));
+					logger.warn(String.format("Invalid alternative value '%s' for property '%s'.",val,CoNLLImporterProperties.PROP_SPOS));
 				}
 			}
 		}
@@ -289,7 +262,7 @@ public class Conll2SaltMapper extends PepperMapperImpl{
 	 * OVERRIDE THIS METHOD FOR CUSTOMIZED MAPPING.
 	 */
 	@Override
-	public MAPPING_RESULT mapSDocument() {	
+	public DOCUMENT_STATUS mapSDocument() {	
 		if (getSDocument().getSDocumentGraph()== null)
 			getSDocument().setSDocumentGraph(SaltFactory.eINSTANCE.createSDocumentGraph());
 		
@@ -306,9 +279,8 @@ public class Conll2SaltMapper extends PepperMapperImpl{
 		}
 		catch (IOException e) {
 			String errorMessage = "input file could not be read. Abort conversion of file "+this.getResourceURI()+".";
-			if (getLogService()!= null)
-				getLogService().log(LogService.LOG_ERROR, errorMessage);
-			throw new ConllConversionInputFileException(errorMessage); 
+			logger.error(errorMessage);
+			throw new PepperModuleDataException(this, errorMessage); 
 		}
 
 		STextualDS sTextualDS = SaltFactory.eINSTANCE.createSTextualDS();
@@ -343,9 +315,7 @@ public class Conll2SaltMapper extends PepperMapperImpl{
 			} 
 			catch (IOException e) {
 				String errorMessage = String.format("line %d of input file could not be read. Abort conversion of file "+this.getResourceURI()+".",rowIndex+1);
-				if (getLogService()!= null)
-					getLogService().log(LogService.LOG_ERROR, errorMessage);
-				throw new ConllConversionInputFileException(errorMessage);
+				throw new PepperModuleDataException(this, errorMessage);
 			}
 			
 			tupleSize = tuple.size();
@@ -353,9 +323,7 @@ public class Conll2SaltMapper extends PepperMapperImpl{
 
 			if (!((tupleSize==1)||(tupleSize==numOfColumnsExpected))) {
 				String errorMessage = String.format("invalid format in line %d of input file. lines must be empty or contain %d columns of data. Abort conversion of file "+this.getResourceURI()+".",rowIndex+1,numOfColumnsExpected);
-				if (getLogService()!= null)
-					getLogService().log(LogService.LOG_ERROR,errorMessage);
-				throw new ConllConversionInputFileException(errorMessage);
+				throw new PepperModuleDataException(this, errorMessage);
 			}
 			
 			if (tupleSize>1) { //if true, this is a data row, else it is a sentence separating line
@@ -369,9 +337,7 @@ public class Conll2SaltMapper extends PepperMapperImpl{
 						fieldValue = null;
 						if (field.isMandatory()) {
 							String errorMessage = String.format("mandatory value for %s missing in line %d of input file '"+this.getResourceURI()+"'!",field.toString(),rowIndex+1);
-							if (getLogService()!= null)
-								getLogService().log(LogService.LOG_ERROR,errorMessage);
-							throw new ConllConversionMandatoryValueMissingException(errorMessage);
+							throw new PepperModuleDataException(this, errorMessage);
 						}
 					}
 					fieldValues.add(fieldValue);
@@ -442,11 +408,11 @@ public class Conll2SaltMapper extends PepperMapperImpl{
 				if ((featureValue!=null)&&(featureValue.length()>0)) {// (featureString!=null)
 					// check whether rule for feature category is defined. POSTAG (fine grained) gets priority over
 					// CPOSTAG (coarse grained). if neither one is defined, use default
-					String ruleKey = PROPERTYKEY_FIELD6_POSTAG_ + fieldValues.get(ConllDataField.POSTAG.getFieldNum()-1);
+					String ruleKey = CoNLLImporterProperties.PROP_FIELD6_POSTAG+ fieldValues.get(ConllDataField.POSTAG.getFieldNum()-1);
 					if (!properties.containsKey(ruleKey)) {
-						ruleKey = PROPERTYKEY_FIELD6_CPOSTAG_ + fieldValues.get(ConllDataField.CPOSTAG.getFieldNum()-1);
+						ruleKey = CoNLLImporterProperties.PROP_FIELD6_CPOSTAG + fieldValues.get(ConllDataField.CPOSTAG.getFieldNum()-1);
 						if (!properties.containsKey(ruleKey)) {
-							ruleKey = PROPERTYKEY_FIELD6_DEFAULT;
+							ruleKey = CoNLLImporterProperties.PROP_FIELD6_DEFAULT;
 						}
 					}
 					String featureKey = properties.getProperty(ruleKey, DEFAULT_FEATURE);
@@ -455,7 +421,7 @@ public class Conll2SaltMapper extends PepperMapperImpl{
 					String[] featureKeys=null;
 					if (doSplit) {
 						featureKeys = featureKey.split(FEATURESEPARATOR);
-						if (ruleKey==PROPERTYKEY_FIELD6_DEFAULT) {
+						if (ruleKey==CoNLLImporterProperties.PROP_FIELD6_DEFAULT) {
 							doSplit = (featureKeys.length>1);
 						}
 					}
@@ -481,9 +447,8 @@ public class Conll2SaltMapper extends PepperMapperImpl{
 				}
 				catch (NumberFormatException e) {
 					String errorMessage = String.format("Invalid integer value '%s' for ID in line %d of input file. Abort conversion of file "+this.getResourceURI()+".",tokenIDStr,rowIndex+1); 
-					if (getLogService()!= null)
-						getLogService().log(LogService.LOG_ERROR,errorMessage);
-					throw new ConllConversionInputFileException();
+
+					throw new PepperModuleDataException(this, errorMessage);
 				}
 				
 				// get ID of current token�s head token
@@ -494,9 +459,7 @@ public class Conll2SaltMapper extends PepperMapperImpl{
 				}
 				catch (NumberFormatException e) {
 					String errorMessage = String.format("Invalid integer value '%s' for HEAD in line %d of input file '"+this.getResourceURI()+"'. Abort conversion of file "+this.getResourceURI()+".",headIDStr,rowIndex+1); 
-					if (getLogService()!= null)
-						getLogService().log(LogService.LOG_ERROR,errorMessage);
-					throw new ConllConversionInputFileException(errorMessage);
+					throw new PepperModuleDataException(this, errorMessage);
 				}
 				
 				// create pointing relation, pointing from head to dependent
@@ -533,9 +496,7 @@ public class Conll2SaltMapper extends PepperMapperImpl{
 					}
 					catch (NumberFormatException e) {
 						String errorMessage = String.format("invalid integer value '%s' for PHEAD in line %d of input file. Abort conversion of file "+this.getResourceURI()+".",proheadIDStr,rowIndex+1); 
-						if (getLogService()!= null)
-							getLogService().log(LogService.LOG_ERROR, errorMessage);
-						throw new ConllConversionInputFileException();
+						throw new PepperModuleDataException(this, errorMessage);
 					}
 					
 					// create pointing relation, pointing from phead to dependent
@@ -588,10 +549,9 @@ public class Conll2SaltMapper extends PepperMapperImpl{
 		sTextualDS.setSText(primaryText.toString());
 		
 		if (nonMatchingCategoryNumberLines.size()>0) {
-			if (getLogService()!= null)
-				getLogService().log(LogService.LOG_WARNING, "Number of feature values doesn't match number of categories in lines: " + nonMatchingCategoryNumberLines.toString());			
+			logger.warn("Number of feature values doesn't match number of categories in lines: " + nonMatchingCategoryNumberLines.toString());			
 		}
-		return(MAPPING_RESULT.FINISHED);
+		return(DOCUMENT_STATUS.COMPLETED);
 	} // map
 
 } // ConllDep2SaltMapper

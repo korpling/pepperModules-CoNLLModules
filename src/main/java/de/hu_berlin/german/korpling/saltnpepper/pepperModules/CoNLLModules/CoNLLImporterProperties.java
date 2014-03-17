@@ -17,12 +17,8 @@
  */
 package de.hu_berlin.german.korpling.saltnpepper.pepperModules.CoNLLModules;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Vector;
-
-import de.hu_berlin.german.korpling.saltnpepper.pepper.pepperModules.PepperModuleProperties;
-import de.hu_berlin.german.korpling.saltnpepper.pepper.pepperModules.PepperModuleProperty;
+import de.hu_berlin.german.korpling.saltnpepper.pepper.modules.PepperModuleProperties;
+import de.hu_berlin.german.korpling.saltnpepper.pepper.modules.PepperModuleProperty;
 
 /**
  * Defines the properties to be used for the {@link EXMARaLDAImporter}. 
@@ -44,7 +40,7 @@ public class CoNLLImporterProperties extends PepperModuleProperties
 	public final static String PROP_PROJECTIVE_MODE  = PREFIX+ "projectiveMode";
 	
 	public final static String PROP_FIELD6_POSTAG  = PREFIX+ "field6.POSTAG.";  //the dot at the end is correct
-	public final static String PROP_FIELD6_CPOSTAG_ = PREFIX+ "field6.CPOSTAG."; //the dot at the end is correct	
+	public final static String PROP_FIELD6_CPOSTAG = PREFIX+ "field6.CPOSTAG."; //the dot at the end is correct	
 	public final static String PROP_FIELD6_DEFAULT  = PREFIX+ "field6.default";
 	public final static String PROP_SPLIT_FEATURES  = PREFIX+ "splitFeatures";	
 	
@@ -61,7 +57,7 @@ public class CoNLLImporterProperties extends PepperModuleProperties
 		this.addProperty(new PepperModuleProperty<String>(PROP_PROJECTIVE_MODE, String.class, "This attribute only applies if  is set TRUE! Usage: conll.projectiveMode=[VALUE] Possible values are TYPE and NAMESPACE Default value for this attribute is TYPE configures how projectivity is modelled in the salt representation. Generally, there will be a salt pointing relation and an annotation with the name 'deprel' on that relation. If the mode is set TYPE, the relation´s type will be 'prodep'. If the mode is set NAMESPACE, the relation´s type will be 'dep' and the annotation´s namespace will be set to 'projective'. ", "TYPE", false));
 		
 		this.addProperty(new PepperModuleProperty<String>(PROP_FIELD6_POSTAG, String.class, "This is not only a single property, but a class of properties. Multiple entries of this type may be given in a properties file, but [TAG] must be unique. A property of this type applies for any input data row that contains the given [TAG] as value for the POSTAG field. The corresponding salt token will get a SAnnotation with [VALUE] as name and the input data row´s FEATS field as value.", false));
-		this.addProperty(new PepperModuleProperty<String>(PROP_FIELD6_CPOSTAG_, String.class, "This attribute works like , but instead of POSTAG, the CPOSTAG value of data rows is utilized. ", false));
+		this.addProperty(new PepperModuleProperty<String>(PROP_FIELD6_CPOSTAG, String.class, "This attribute works like , but instead of POSTAG, the CPOSTAG value of data rows is utilized. ", false));
 		this.addProperty(new PepperModuleProperty<String>(PROP_FIELD6_DEFAULT, String.class, "Allowed values are any single category name or pipe separated sequences of category names", false));
 		this.addProperty(new PepperModuleProperty<Boolean>(PROP_SPLIT_FEATURES, Boolean.class, "If [VALUE] is set TRUE, any data row´s FEATS field will be split into it´s pipe separated elements to create multiple annotations on the corresponding salt token (see POSTAG, CPOSTAG and default). If a field contains a different number of pipe separated elements than defined in the POSTAG, CPOSTAG or default attribute, the lesser number of annotations will be created, while the additional elements will be lost! If VALUE is FALSE, no splitting is done.", true, false));
 		
@@ -89,7 +85,7 @@ public class CoNLLImporterProperties extends PepperModuleProperties
 	}
 	public String getField6CPostag()
 	{
-		return((String)this.getProperty(PROP_FIELD6_CPOSTAG_).getValue());
+		return((String)this.getProperty(PROP_FIELD6_CPOSTAG).getValue());
 	}
 	public String getFiel6dDefault()
 	{

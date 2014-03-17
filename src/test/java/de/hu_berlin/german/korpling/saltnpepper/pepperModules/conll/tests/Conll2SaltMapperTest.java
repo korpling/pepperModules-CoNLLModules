@@ -17,15 +17,19 @@
  */
 package de.hu_berlin.german.korpling.saltnpepper.pepperModules.conll.tests;
 
-import junit.framework.TestCase;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 import org.eclipse.emf.common.util.BasicEList;
 import org.eclipse.emf.common.util.EList;
 import org.eclipse.emf.common.util.URI;
+import org.junit.Before;
+import org.junit.Test;
 
 import de.hu_berlin.german.korpling.saltnpepper.pepperModules.conll.Conll2SaltMapper;
 import de.hu_berlin.german.korpling.saltnpepper.salt.SaltFactory;
-import de.hu_berlin.german.korpling.saltnpepper.salt.saltCommon.SaltCommonFactory;
+import de.hu_berlin.german.korpling.saltnpepper.salt.saltCommon.sCorpusStructure.SCorpusGraph;
+import de.hu_berlin.german.korpling.saltnpepper.salt.saltCommon.sCorpusStructure.SDocument;
 import de.hu_berlin.german.korpling.saltnpepper.salt.saltCommon.sDocumentStructure.SDocumentGraph;
 import de.hu_berlin.german.korpling.saltnpepper.salt.saltCommon.sDocumentStructure.SPointingRelation;
 import de.hu_berlin.german.korpling.saltnpepper.salt.saltCommon.sDocumentStructure.STextualDS;
@@ -35,12 +39,13 @@ import de.hu_berlin.german.korpling.saltnpepper.salt.saltCore.SAnnotation;
 import de.hu_berlin.german.korpling.saltnpepper.salt.saltSemantics.SLemmaAnnotation;
 import de.hu_berlin.german.korpling.saltnpepper.salt.saltSemantics.SPOSAnnotation;
 
-public class Conll2SaltMapperTest extends TestCase {
+public class Conll2SaltMapperTest{
 
 	private Conll2SaltMapper fixture = null;
 	private Conll2SaltMapper getFixture() {return fixture;}
 	private void setFixture(Conll2SaltMapper fixture) {this.fixture = fixture;}
 
+	@Before
 	public void setUp() {
 		this.setFixture(new Conll2SaltMapper());
 		this.getFixture().setProperties(URI.createFileURI("./src/test/resources/ConllModules_feats.properties"));
@@ -230,11 +235,13 @@ public class Conll2SaltMapperTest extends TestCase {
 			fail("textualDS or textualRelation for token missing");
 	}
 	
-	
+	@Test
 	public final void testAll() 
 	{
 		getFixture().setResourceURI(testFileURI);
-		getFixture().setSDocument(SaltFactory.eINSTANCE.createSDocument());
+		SCorpusGraph graph= SaltFactory.eINSTANCE.createSCorpusGraph();
+		SDocument sDoc= graph.createSDocument(URI.createURI("c1/d1"));
+		getFixture().setSDocument(sDoc);
 		getFixture().mapSDocument();
 
 		SToken[] tokens = new SToken[8];
@@ -256,7 +263,7 @@ public class Conll2SaltMapperTest extends TestCase {
 	
 	
 	
-	
+	@Test
 	public final void testTokens() {
 //		getFixture().map(testFileURI, SaltCommonFactory.eINSTANCE.createSDocument());
 //		
@@ -305,7 +312,7 @@ public class Conll2SaltMapperTest extends TestCase {
 	}
 
 	
-	
+	@Test
 	public final void testTextualRelations() {
 //		getFixture().map(testFileURI,SaltCommonFactory.eINSTANCE.createSDocument());
 //
@@ -325,7 +332,7 @@ public class Conll2SaltMapperTest extends TestCase {
 //		};
 	}
 		
-	
+	@Test
 	public final void testSpans() {
 //		getFixture().map(testFileURI,SaltCommonFactory.eINSTANCE.createSDocument());
 //		
@@ -342,7 +349,7 @@ public class Conll2SaltMapperTest extends TestCase {
 //		};
 	}
 			
-	
+	@Test
 	public final void testSpanningRelations() {
 //		getFixture().map(testFileURI,SaltCommonFactory.eINSTANCE.createSDocument());		
 //		
@@ -358,7 +365,7 @@ public class Conll2SaltMapperTest extends TestCase {
 //		}
 	}
 	
-	
+	@Test
 	public final void testPointingRelations() {
 //		getFixture().map(testFileURI,SaltCommonFactory.eINSTANCE.createSDocument());
 //		
@@ -414,17 +421,6 @@ public class Conll2SaltMapperTest extends TestCase {
 //
 //			pointRelIndex++;
 //		}
-//		
-//	
-//		
-//		
-//		
-//		
-//		
-	}
-	
-	
-	
-	
-	
+
+	}	
 }
