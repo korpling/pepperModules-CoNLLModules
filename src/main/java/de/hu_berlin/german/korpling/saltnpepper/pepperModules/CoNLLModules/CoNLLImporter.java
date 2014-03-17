@@ -19,10 +19,12 @@ package de.hu_berlin.german.korpling.saltnpepper.pepperModules.CoNLLModules;
 
 import org.osgi.service.component.annotations.Component;
 
+import de.hu_berlin.german.korpling.saltnpepper.pepper.pepperExceptions.PepperModuleException;
 import de.hu_berlin.german.korpling.saltnpepper.pepper.pepperModules.PepperImporter;
 import de.hu_berlin.german.korpling.saltnpepper.pepper.pepperModules.PepperMapper;
 import de.hu_berlin.german.korpling.saltnpepper.pepper.pepperModules.impl.PepperImporterImpl;
 import de.hu_berlin.german.korpling.saltnpepper.pepperModules.conll.Conll2SaltMapper;
+import de.hu_berlin.german.korpling.saltnpepper.salt.saltCommon.sCorpusStructure.SCorpusGraph;
 import de.hu_berlin.german.korpling.saltnpepper.salt.saltCore.SElementId;
 
 @Component(name="CoNLLImporterComponent", factory="PepperImporterComponentFactory")
@@ -41,7 +43,7 @@ public class CoNLLImporter extends PepperImporterImpl implements PepperImporter
 		this.name= NAME;
 		//set list of formats supported by this module
 		this.addSupportedFormat(FORMATNAME, FORMATVERSION, null);
-		getSCorpusEndings().add(PepperImporter.ENDING_ALL_FILES);
+		getSDocumentEndings().add(PepperImporter.ENDING_ALL_FILES);
 		setProperties(new CoNLLImporterProperties());
 	}
 	
