@@ -26,6 +26,7 @@ import org.eclipse.emf.common.util.URI;
 import org.junit.Before;
 import org.junit.Test;
 
+import de.hu_berlin.german.korpling.saltnpepper.pepperModules.CoNLLModules.CoNLLImporterProperties;
 import de.hu_berlin.german.korpling.saltnpepper.pepperModules.conll.Conll2SaltMapper;
 import de.hu_berlin.german.korpling.saltnpepper.salt.SaltFactory;
 import de.hu_berlin.german.korpling.saltnpepper.salt.saltCommon.sCorpusStructure.SCorpusGraph;
@@ -49,6 +50,10 @@ public class Conll2SaltMapperTest{
 	public void setUp() {
 		this.setFixture(new Conll2SaltMapper());
 		this.getFixture().setProperties(URI.createFileURI("./src/test/resources/ConllModules_feats.properties"));
+		SDocument sDoc= SaltFactory.eINSTANCE.createSDocument();
+		sDoc.setSElementId(SaltFactory.eINSTANCE.createSElementId());
+		getFixture().setSDocument(sDoc);
+		getFixture().getSDocument().setSDocumentGraph(SaltFactory.eINSTANCE.createSDocumentGraph());
 	}
 	
 // the following property values are specific for the input file 
@@ -186,16 +191,6 @@ public class Conll2SaltMapperTest{
 		{
 			assertEquals(form, textDS.getSText().subSequence(textRel.getSStart(),textRel.getSEnd()));
 			
-//			System.out.println(String.format("Head of '%s' is '%s'", getTokenForm(token) , getTokenForm(head)));
-			
-
-			
-			
-			
-			//assertEquals(head, getPointingRelationTarget(token));
-			
-			
-			
 			SPOSAnnotation     posAnno   = null;
 			SLemmaAnnotation   lemmaAnno = null;
 			EList<SAnnotation> annos     = new BasicEList<SAnnotation>();
@@ -224,10 +219,6 @@ public class Conll2SaltMapperTest{
 				fail("unexpected lemma found");
 			else if ((lemma!=null)&&(lemmaAnno==null))
 				fail("lemma expected, but not found");
-
-			
-			
-			
 		}
 		
 		
@@ -261,20 +252,19 @@ public class Conll2SaltMapperTest{
 		
 	}
 	
-	
-	
-	@Test
-	public final void testTokens() {
-//		getFixture().map(testFileURI, SaltCommonFactory.eINSTANCE.createSDocument());
+//	@Test
+//	public final void testTokens() {
+//		getFixture().setResourceURI(testFileURI);
+//		getFixture().mapSDocument();
 //		
 //		//check whetcher number of tokens is correct
-//		assertEquals(Array.getLength(tokenAnnotationNamesExpected), getFixture().getSDocumentGraph().getSTokens().size());
+//		assertEquals(8, getFixture().getSDocument().getSDocumentGraph().getSTokens().size());
 //		
 //		//iterate over tokens
 //		int tokenIndex=0;
-//		for (SToken token : getFixture().getSDocumentGraph().getSTokens()) {
+//		for (SToken token : getFixture().getSDocument().getSDocumentGraph().getSTokens()) {
 //			// check sDocumentGraph
-//			assertEquals(getFixture().getSDocumentGraph(), token.getSDocumentGraph());
+//			assertEquals(getFixture().getSDocument().getSDocumentGraph(), token.getSDocumentGraph());
 //
 //			//check annotations
 //			int annotationIndex=0;
@@ -286,13 +276,14 @@ public class Conll2SaltMapperTest{
 //			}
 //
 //			//check associated textual relation (linear order -> same index as token)
-//			assertEquals(token, getFixture().getSDocumentGraph().getSTextualRelations().get(tokenIndex).getSource());
+//			assertEquals(token, getFixture().getSDocument().getSDocumentGraph().getSTextualRelations().get(tokenIndex).getSource());
 //
 //			//check associated spanning relation (linear order -> same index as token)
-//			assertEquals(token, getFixture().getSDocumentGraph().getSSpanningRelations().get(tokenIndex).getTarget());
+//			assertEquals(token, getFixture().getSDocument().getSDocumentGraph().getSSpanningRelations().get(tokenIndex).getTarget());
 //
 //			//check associated pointing relations; tests depend on properties...
-//			boolean projectivity = getFixture().getProperties().getProperty(Conll2SaltMapper.PROPERTYKEY_PROJECTIVITY, "NO").equals("YES");
+////			boolean projectivity = getFixture().getProperties().getProperty(CoNLLImporterProperties.PROP_CONSIDER_PROJECTIVITY, "NO").equals("YES");
+//			boolean projectivity = getFixture().getProperties().getProperty(CoNLLImporterProperties.PROP_CONSIDER_PROJECTIVITY).getType().equals("YES");
 //			int proFactor = 2; //proFactor is the factor that tokenIndex has to be multiplied with if projectivity is considered (double number of pointingRels)
 //			if (!projectivity) {
 //				proFactor = 1;
@@ -302,14 +293,14 @@ public class Conll2SaltMapperTest{
 //				if (tokenIndex>rootTokenIndex) {
 //					pointingRelationIndex = proFactor * (tokenIndex-1);
 //				}
-//				assertEquals(token, getFixture().getSDocumentGraph().getSPointingRelations().get(pointingRelationIndex).getTarget());
+//				assertEquals(token, getFixture().getSDocument().getSDocumentGraph().getSPointingRelations().get(pointingRelationIndex).getTarget());
 //				if (projectivity) {
-//					assertEquals(token, getFixture().getSDocumentGraph().getSPointingRelations().get(pointingRelationIndex+1).getTarget());
+//					assertEquals(token, getFixture().getSDocument().getSDocumentGraph().getSPointingRelations().get(pointingRelationIndex+1).getTarget());
 //				}
 //			}
 //			tokenIndex++;
 //		}
-	}
+//	}
 
 	
 	@Test
