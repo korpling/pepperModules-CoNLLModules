@@ -7,9 +7,9 @@
   <description>This project provides a Pepper importer for CoNLL data.</description>
   <url>https://korpling.german.hu-berlin.de/p/projects/peppermodules-conllmodules</url>
   <issueManagement>
-  	<system>Redmine</system>
-  	<url>https://korpling.german.hu-berlin.de/p/projects/peppermodules-conllmodules/issues</url>
-  </issueManagement>
+        <system>GitHub</system>
+		<url>https://github.com/korpling/pepperModules-CoNLLModules/issues</url>
+    </issueManagement>
   <ciManagement>
   	<system>Jenkins</system>
   	<url>https://korpling.german.hu-berlin.de/jenkins/</url>
@@ -35,9 +35,10 @@
     <version>2.0.0</version>
   </parent>
   <scm>
-    <developerConnection>scm:svn:https://korpling.german.hu-berlin.de/svn/saltnpepper/PepperModules/CoNLLModules/trunk</developerConnection>
-    <url>scm:svn:https://korpling.german.hu-berlin.de/svn/saltnpepper/pepperModules-CoNLLModules</url>
-  </scm>  
+  	<connection>scm:git:git://github.com/github.com:korpling/pepperModules-CoNLLModules.git</connection>
+    <developerConnection>scm:git:git@github.com:korpling/pepperModules-CoNLLModules.git</developerConnection>
+    <url>https://github.com/korpling/pepperModules-CoNLLModules.git</url>
+  </scm> 
   <dependencies>
   <!-- 
     <dependency>
@@ -58,13 +59,19 @@
        <!-- start: Plugin for automatic releasing -->
       <plugin>
         <artifactId>maven-release-plugin</artifactId>
-        <version>${maven-release-plugin.version}</version>
+        <version>2.1</version>
+        <executions>
+        	<execution>
+        		<id>default</id>
+        		<goals>
+        			<goal>perform</goal>        			
+        		</goals>
+        		<configuration>
+        			<pomFileName>pepperModules-CoNLLModules/pom.xml</pomFileName>
+        		</configuration>
+        	</execution>
+        </executions>
         <configuration>
-          <tagBase>
-
-           https://korpling.german.hu-berlin.de/svn/saltnpepper/PepperModules/CoNLLModules/tags/
-
-          </tagBase>
           <releaseProfiles>release</releaseProfiles>
           <goals>package assembly:single deploy</goals>
         </configuration>
