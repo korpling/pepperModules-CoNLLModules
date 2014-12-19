@@ -87,6 +87,7 @@ This project has been funded by the [department of corpus linguistics and morpho
 ## supported CoNLL format
 A CoNLL file as defined here contains one tab separated row per token. Each row contains exactly 10 columns. No blank characters are allowed in column entries. Sentences are separated by an empty row. 
 
+|   |       |																					|
 |---|-------|-----------------------------------------------------------------------------------|
 |1	|ID	    |The number of the token in the current sentence, starting with 1					|
 |2	|FORM	|The form of the token																|
