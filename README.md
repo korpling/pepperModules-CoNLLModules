@@ -87,7 +87,7 @@ This project has been funded by the [department of corpus linguistics and morpho
 ## supported CoNLL format
 A CoNLL file as defined here contains one tab separated row per token. Each row contains exactly 10 columns. No blank characters are allowed in column entries. Sentences are separated by an empty row. 
 
-|   |       |																					|
+|   |       |																					|	
 |---|-------|-----------------------------------------------------------------------------------|
 |1	|ID	    |The number of the token in the current sentence, starting with 1					|
 |2	|FORM	|The form of the token																|
@@ -168,8 +168,10 @@ Usage: conll.field6.POSTAG.[TAG]=[VALUE]
 This is not only a single property, but a class of properties. Multiple entries of this type may be given in a properties file, but [TAG] must be unique.
 A property of this type applies for any input data row that contains the given [TAG] as value for the POSTAG field. The corresponding salt token will get a SAnnotation with [VALUE] as name and the input data row´s FEATS field as value.
 Example:
-
-### conll.field6.POSTAG.NE=case|number|gender conll.field6.POSTAG.VF=tense|person|number
+```
+conll.field6.POSTAG.NE=case|number|gender 
+conll.field6.POSTAG.VF=tense|person|number
+```
 input data row excerpt:
 ```
 2  mag    mögen  V    VF  pres|3|sg    0  _  _  _
