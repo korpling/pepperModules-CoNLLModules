@@ -17,6 +17,7 @@
  */
 package de.hu_berlin.german.korpling.saltnpepper.pepperModules.CoNLLModules;
 
+import org.eclipse.emf.common.util.URI;
 import org.osgi.service.component.annotations.Component;
 
 import de.hu_berlin.german.korpling.saltnpepper.pepper.modules.PepperImporter;
@@ -39,6 +40,9 @@ public class CoNLLImporter extends PepperImporterImpl implements PepperImporter
 		super();
 		//setting name of module
 		this.setName(NAME);
+		setSupplierContact(URI.createURI("saltnpepper@lists.hu-berlin.de"));
+		setSupplierHomepage(URI.createURI("https://github.com/korpling/pepperModules-CoNLLModules"));
+		setDesc("This importer transforms data in CoNLL format to a Salt model. ");
 		//set list of formats supported by this module
 		this.addSupportedFormat(FORMATNAME, FORMATVERSION, null);
 		getSDocumentEndings().add(PepperImporter.ENDING_ALL_FILES);
