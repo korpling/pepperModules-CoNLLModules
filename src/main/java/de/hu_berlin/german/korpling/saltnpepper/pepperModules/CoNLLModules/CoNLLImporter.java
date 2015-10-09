@@ -17,14 +17,14 @@
  */
 package de.hu_berlin.german.korpling.saltnpepper.pepperModules.CoNLLModules;
 
+import org.corpus_tools.pepper.impl.PepperImporterImpl;
+import org.corpus_tools.pepper.modules.PepperImporter;
+import org.corpus_tools.pepper.modules.PepperMapper;
+import org.corpus_tools.salt.graph.Identifier;
 import org.eclipse.emf.common.util.URI;
 import org.osgi.service.component.annotations.Component;
 
-import de.hu_berlin.german.korpling.saltnpepper.pepper.modules.PepperImporter;
-import de.hu_berlin.german.korpling.saltnpepper.pepper.modules.PepperMapper;
-import de.hu_berlin.german.korpling.saltnpepper.pepper.modules.impl.PepperImporterImpl;
 import de.hu_berlin.german.korpling.saltnpepper.pepperModules.conll.Conll2SaltMapper;
-import de.hu_berlin.german.korpling.saltnpepper.salt.saltCore.SElementId;
 
 @Component(name="CoNLLImporterComponent", factory="PepperImporterComponentFactory")
 public class CoNLLImporter extends PepperImporterImpl implements PepperImporter
@@ -45,16 +45,16 @@ public class CoNLLImporter extends PepperImporterImpl implements PepperImporter
 		setDesc("This importer transforms data in CoNLL format to a Salt model. ");
 		//set list of formats supported by this module
 		this.addSupportedFormat(FORMATNAME, FORMATVERSION, null);
-		getSDocumentEndings().add(PepperImporter.ENDING_ALL_FILES);
+		getDocumentEndings().add(PepperImporter.ENDING_ALL_FILES);
 		setProperties(new CoNLLImporterProperties());
 	}
 	
 	/**
 	 * Creates a mapper of type {@link EXMARaLDA2SaltMapper}.
-	 * {@inheritDoc PepperModule#createPepperMapper(SElementId)}
+	 * {@inheritDoc PepperModule#createPepperMapper(Identifier)}
 	 */
 	@Override
-	public PepperMapper createPepperMapper(SElementId sElementId)
+	public PepperMapper createPepperMapper(Identifier sElementId)
 	{
 		Conll2SaltMapper mapper = new Conll2SaltMapper();
 		return(mapper);

@@ -27,26 +27,25 @@ import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.Properties;
 
+import org.corpus_tools.pepper.common.DOCUMENT_STATUS;
+import org.corpus_tools.pepper.impl.PepperMapperImpl;
+import org.corpus_tools.pepper.modules.exceptions.PepperModuleDataException;
+import org.corpus_tools.salt.SaltFactory;
+import org.corpus_tools.salt.common.SPointingRelation;
+import org.corpus_tools.salt.common.SSpan;
+import org.corpus_tools.salt.common.SSpanningRelation;
+import org.corpus_tools.salt.common.STextualDS;
+import org.corpus_tools.salt.common.STextualRelation;
+import org.corpus_tools.salt.common.SToken;
+import org.corpus_tools.salt.core.SAnnotation;
+import org.corpus_tools.salt.semantics.SPOSAnnotation;
 import org.eclipse.emf.common.util.URI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import de.hu_berlin.german.korpling.saltnpepper.misc.tupleconnector.TupleConnectorFactory;
 import de.hu_berlin.german.korpling.saltnpepper.misc.tupleconnector.TupleReader;
-import de.hu_berlin.german.korpling.saltnpepper.pepper.common.DOCUMENT_STATUS;
-import de.hu_berlin.german.korpling.saltnpepper.pepper.modules.exceptions.PepperModuleDataException;
-import de.hu_berlin.german.korpling.saltnpepper.pepper.modules.impl.PepperMapperImpl;
 import de.hu_berlin.german.korpling.saltnpepper.pepperModules.CoNLLModules.CoNLLImporterProperties;
-import de.hu_berlin.german.korpling.saltnpepper.salt.SaltFactory;
-import de.hu_berlin.german.korpling.saltnpepper.salt.saltCommon.sDocumentStructure.SPointingRelation;
-import de.hu_berlin.german.korpling.saltnpepper.salt.saltCommon.sDocumentStructure.SSpan;
-import de.hu_berlin.german.korpling.saltnpepper.salt.saltCommon.sDocumentStructure.SSpanningRelation;
-import de.hu_berlin.german.korpling.saltnpepper.salt.saltCommon.sDocumentStructure.STextualDS;
-import de.hu_berlin.german.korpling.saltnpepper.salt.saltCommon.sDocumentStructure.STextualRelation;
-import de.hu_berlin.german.korpling.saltnpepper.salt.saltCommon.sDocumentStructure.SToken;
-import de.hu_berlin.german.korpling.saltnpepper.salt.saltCore.SAnnotation;
-import de.hu_berlin.german.korpling.saltnpepper.salt.saltSemantics.SPOSAnnotation;
-import de.hu_berlin.german.korpling.saltnpepper.salt.saltSemantics.SaltSemanticsFactory;
 
 /**
  * This class maps input data from CoNLL format to Salt format
@@ -211,10 +210,10 @@ public class Conll2SaltMapper extends PepperMapperImpl{
 					ConllDataField field      = posFields[index];
 					String         fieldValue = fieldValues.get(field.getFieldNum()-1);
 					if (fieldValue!=null) {
-						SAnnotation sAnnotation = SaltFactory.eINSTANCE.createSAnnotation();
-						sAnnotation.setSName(properties.getProperty(field.getPropertyKey_Name(), field.name())); //use user specified name for field, or default: the field�s ConLL name
-						sAnnotation.setSValue(fieldValue);
-						sToken.addSAnnotation(sAnnotation);
+						SAnnotation sAnnotation = SaltFactory.createSAnnotation();
+						sAnnotation.setName(properties.getProperty(field.getPropertyKey_Name(), field.name())); //use user specified name for field, or default: the field�s ConLL name
+						sAnnotation.setValue(fieldValue);
+						sToken.addAnnotation(sAnnotation);
 					}
 				}
 			}
@@ -228,9 +227,9 @@ public class Conll2SaltMapper extends PepperMapperImpl{
 						if (field!=null) {
 							String fieldVal = fieldValues.get(field.getFieldNum()-1);
 							if (fieldVal!=null) {
-								SPOSAnnotation anno = SaltSemanticsFactory.eINSTANCE.createSPOSAnnotation();
-								anno.setSValue(fieldVal);
-								sToken.addSAnnotation(anno);
+								SPOSAnnotation anno = SaltFactory.createSPOSAnnotation();
+								anno.setValue(fieldVal);
+								sToken.addAnnotation(anno);
 								SPOSAnnotationIndex=index;
 							}
 						}
@@ -243,10 +242,10 @@ public class Conll2SaltMapper extends PepperMapperImpl{
 						if (field!=null) {
 							String fieldVal = fieldValues.get(field.getFieldNum()-1);
 							if (fieldVal!=null) {
-								SAnnotation anno = SaltFactory.eINSTANCE.createSAnnotation();
-								anno.setSName(properties.getProperty(field.getPropertyKey_Name(), field.name())); //use user specified name for field, or default: the field�s ConLL name
-								anno.setSValue(fieldVal);
-								sToken.addSAnnotation(anno);
+								SAnnotation anno = SaltFactory.createSAnnotation();
+								anno.setName(properties.getProperty(field.getPropertyKey_Name(), field.name())); //use user specified name for field, or default: the field�s ConLL name
+								anno.setValue(fieldVal);
+								sToken.addAnnotation(anno);
 								SPOSAnnotationIndex=index;
 							}
 						}
@@ -257,14 +256,14 @@ public class Conll2SaltMapper extends PepperMapperImpl{
 	}
 	
 	/**
-	 * {@inheritDoc PepperMapper#setSDocument(SDocument)}
+	 * {@inheritDoc PepperMapper#setDocument(SDocument)}
 	 * 
 	 * OVERRIDE THIS METHOD FOR CUSTOMIZED MAPPING.
 	 */
 	@Override
 	public DOCUMENT_STATUS mapSDocument() {	
-		if (getSDocument().getSDocumentGraph()== null)
-			getSDocument().setSDocumentGraph(SaltFactory.eINSTANCE.createSDocumentGraph());
+		if (getDocument().getDocumentGraph()== null)
+			getDocument().setDocumentGraph(SaltFactory.createSDocumentGraph());
 		
 		//TODO remove this when Property handling is switched to PepperProperties
 		if (getProperties()!= null)
@@ -283,8 +282,8 @@ public class Conll2SaltMapper extends PepperMapperImpl{
 			throw new PepperModuleDataException(this, errorMessage); 
 		}
 
-		STextualDS sTextualDS = SaltFactory.eINSTANCE.createSTextualDS();
-		sTextualDS.setSDocumentGraph(getSDocument().getSDocumentGraph());
+		STextualDS sTextualDS = SaltFactory.createSTextualDS();
+		sTextualDS.setGraph(getDocument().getDocumentGraph());
  
 		ArrayList<SToken> tokenList = new ArrayList<SToken>();
 		HashMap<SPointingRelation,Integer> pointingRelationMap = new HashMap<SPointingRelation,Integer>();
@@ -344,8 +343,8 @@ public class Conll2SaltMapper extends PepperMapperImpl{
 				} // for (Iterator<String> iter=tuple.iterator(); iter.hasNext(); fieldNum++)
 				
 				// create token and add to local token list
-				SToken sToken = SaltFactory.eINSTANCE.createSToken();
-				sToken.setSDocumentGraph(getSDocument().getSDocumentGraph());
+				SToken sToken = SaltFactory.createSToken();
+				sToken.setGraph(getDocument().getDocumentGraph());
 				tokenList.add(sToken);
 				
 				// update primary text (sTextualDS.sText will be set after completely reading the input file)
@@ -354,12 +353,12 @@ public class Conll2SaltMapper extends PepperMapperImpl{
 				int tokenTextEndOffset = primaryText.length()-1;
 
 				// create textual relation
-				STextualRelation sTextualRelation = SaltFactory.eINSTANCE.createSTextualRelation();
-				sTextualRelation.setSSource(sToken);
-				sTextualRelation.setSTarget(sTextualDS);
-				sTextualRelation.setSStart(tokenTextStartOffset);
-				sTextualRelation.setSEnd(tokenTextEndOffset);
-				sTextualRelation.setSDocumentGraph(getSDocument().getSDocumentGraph());
+				STextualRelation sTextualRelation = SaltFactory.createSTextualRelation();
+				sTextualRelation.setSource(sToken);
+				sTextualRelation.setTarget(sTextualDS);
+				sTextualRelation.setStart(tokenTextStartOffset);
+				sTextualRelation.setEnd(tokenTextEndOffset);
+				sTextualRelation.setGraph(getDocument().getDocumentGraph());
 
 				//Lemma
 				{
@@ -368,15 +367,15 @@ public class Conll2SaltMapper extends PepperMapperImpl{
 					if (fieldValue!=null) {
 						SAnnotation sAnnotation = null;
 						if (useSLemmaAnnotation) {
-							sAnnotation = SaltSemanticsFactory.eINSTANCE.createSLemmaAnnotation();
+							sAnnotation = SaltFactory.createSLemmaAnnotation();
 						}
 						else {
-							sAnnotation = SaltFactory.eINSTANCE.createSAnnotation();
-							sAnnotation.setSName(properties.getProperty(field.getPropertyKey_Name(), field.name())); //use user specified name for field, or default: the field�s ConLL name								
+							sAnnotation = SaltFactory.createSAnnotation();
+							sAnnotation.setName(properties.getProperty(field.getPropertyKey_Name(), field.name())); //use user specified name for field, or default: the field�s ConLL name								
 						}
 						
-						sAnnotation.setSValue(fieldValue);
-						sToken.addSAnnotation(sAnnotation);					
+						sAnnotation.setValue(fieldValue);
+						sToken.addAnnotation(sAnnotation);					
 					}
 				}
 					
@@ -387,20 +386,21 @@ public class Conll2SaltMapper extends PepperMapperImpl{
 				///POS and CPOS
 					
 				// create annotation for span
-				SAnnotation sAnnotation = SaltFactory.eINSTANCE.createSAnnotation();
-				sAnnotation.setSName(CAT);
-				sAnnotation.setSValue(S);
+				SAnnotation sAnnotation = SaltFactory.createSAnnotation();
+				sAnnotation.setName(CAT);
+				sAnnotation.setValue(S);
 				
 				// create span and add span annotation
-				SSpan sSpan = SaltFactory.eINSTANCE.createSSpan();
-				sSpan.setGraph(getSDocument().getSDocumentGraph());
-				sSpan.addSAnnotation(sAnnotation);
+				SSpan sSpan = SaltFactory.createSSpan();
+				sSpan.setGraph(getDocument().getDocumentGraph());
+				sSpan.addAnnotation(sAnnotation);
 
 				// create spanning relation, set span as source and token as target
-				SSpanningRelation sSpanningRelation = SaltFactory.eINSTANCE.createSSpanningRelation();
-				sSpanningRelation.setGraph(getSDocument().getSDocumentGraph());
+				SSpanningRelation sSpanningRelation = SaltFactory.createSSpanningRelation();
 				sSpanningRelation.setSource(sSpan);
 				sSpanningRelation.setTarget(sToken);
+				sSpanningRelation.setGraph(getDocument().getDocumentGraph());
+				
 
 				// features
 				String featureValue = fieldValues.get(ConllDataField.FEATS.getFieldNum()-1);
@@ -428,14 +428,14 @@ public class Conll2SaltMapper extends PepperMapperImpl{
 					if (doSplit) {
 						String[] featureValues = featureValue.split(FEATURESEPARATOR);
 						for (int idx=0; idx<Math.min(featureKeys.length,featureValues.length); idx++) {
-							sToken.createSAnnotation(null, featureKeys[idx], featureValues[idx]);
+							sToken.createAnnotation(null, featureKeys[idx], featureValues[idx]);
 						}
 						if (featureKeys.length!=featureValues.length)	{
 							nonMatchingCategoryNumberLines.add(rowIndex+1);							
 						}
 					} else {
 						//no splitting
-						sToken.createSAnnotation(null, featureKey, featureValue);	
+						sToken.createAnnotation(null, featureKey, featureValue);	
 					}
 				} // (featureString!=null)
 
@@ -465,18 +465,18 @@ public class Conll2SaltMapper extends PepperMapperImpl{
 				// create pointing relation, pointing from head to dependent
 				if (headID>0) {
 					// create annotation for pointing relation
-					sAnnotation = SaltFactory.eINSTANCE.createSAnnotation();
-					sAnnotation.setSName(DEPREL);
+					sAnnotation = SaltFactory.createSAnnotation();
+					sAnnotation.setName(DEPREL);
 					
 					String annoValue = fieldValues.get(ConllDataField.DEPREL.getFieldNum()-1);
-					sAnnotation.setSValue(annoValue);
+					sAnnotation.setValue(annoValue);
 					
-					SPointingRelation sPointingRelation = SaltFactory.eINSTANCE.createSPointingRelation();
-					//sAnnotation.setSAnnotatableElement(sPointingRelation);
-					sPointingRelation.setSDocumentGraph(getSDocument().getSDocumentGraph());
-					sPointingRelation.addSType(DEP);
+					SPointingRelation sPointingRelation = SaltFactory.createSPointingRelation();
+					sPointingRelation.setType(DEP);
+					sPointingRelation.setSource(sToken);
 					sPointingRelation.setTarget(sToken);
-					sPointingRelation.addSAnnotation(sAnnotation);
+					sPointingRelation.addAnnotation(sAnnotation);
+					sPointingRelation.setGraph(getDocument().getDocumentGraph());
 					
 					if (headID<=tokenID) {
 						sPointingRelation.setSource(tokenList.get(headID-1));
@@ -502,21 +502,22 @@ public class Conll2SaltMapper extends PepperMapperImpl{
 					// create pointing relation, pointing from phead to dependent
 					if (proheadID>0) {
 						// create annotation for pointing relation
-						sAnnotation = SaltFactory.eINSTANCE.createSAnnotation();
-						sAnnotation.setSName(DEPREL);
-						sAnnotation.setSValue(fieldValues.get(ConllDataField.PDEPREL.getFieldNum()-1));
+						sAnnotation = SaltFactory.createSAnnotation();
+						sAnnotation.setName(DEPREL);
+						sAnnotation.setValue(fieldValues.get(ConllDataField.PDEPREL.getFieldNum()-1));
 
-						SPointingRelation sPointingRelation = SaltFactory.eINSTANCE.createSPointingRelation();
-						sPointingRelation.setSDocumentGraph(getSDocument().getSDocumentGraph());
-						sPointingRelation.addSAnnotation(sAnnotation);
+						SPointingRelation sPointingRelation = SaltFactory.createSPointingRelation();
+						sPointingRelation.addAnnotation(sAnnotation);
+						sPointingRelation.setSource(sToken);
 						sPointingRelation.setTarget(sToken);
+						sPointingRelation.setGraph(getDocument().getDocumentGraph());
 						
 						if (projectiveModeIsType) {
-							sPointingRelation.addSType(PRODEP);
+							sPointingRelation.setType(PRODEP);
 						}
 						else {
 							sAnnotation.setNamespace(PROJECTIVE);
-							sPointingRelation.addSType(DEP);
+							sPointingRelation.setType(DEP);
 						}
 						
 						if (proheadID<=tokenID) {
@@ -546,7 +547,7 @@ public class Conll2SaltMapper extends PepperMapperImpl{
 		
 		// delete last char of primary text (a space character) and set it as text for TextualDS
 		primaryText.deleteCharAt(primaryText.length()-1);
-		sTextualDS.setSText(primaryText.toString());
+		sTextualDS.setText(primaryText.toString());
 		
 		if (nonMatchingCategoryNumberLines.size()>0) {
 			logger.warn("Number of feature values doesn't match number of categories in lines: " + nonMatchingCategoryNumberLines.toString());			
