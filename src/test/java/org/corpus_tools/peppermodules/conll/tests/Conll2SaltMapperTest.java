@@ -15,7 +15,7 @@
  *
  *
  */
-package de.hu_berlin.german.korpling.saltnpepper.pepperModules.conll.tests;
+package org.corpus_tools.peppermodules.conll.tests;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
@@ -23,6 +23,7 @@ import static org.junit.Assert.fail;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.corpus_tools.peppermodules.conll.Conll2SaltMapper;
 import org.corpus_tools.salt.SaltFactory;
 import org.corpus_tools.salt.common.SCorpusGraph;
 import org.corpus_tools.salt.common.SDocument;
@@ -37,8 +38,6 @@ import org.corpus_tools.salt.semantics.SPOSAnnotation;
 import org.eclipse.emf.common.util.URI;
 import org.junit.Before;
 import org.junit.Test;
-
-import de.hu_berlin.german.korpling.saltnpepper.pepperModules.conll.Conll2SaltMapper;
 
 public class Conll2SaltMapperTest{
 

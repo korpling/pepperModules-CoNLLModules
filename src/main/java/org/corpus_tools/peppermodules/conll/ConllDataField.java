@@ -15,7 +15,7 @@
  *
  *
  */
-package de.hu_berlin.german.korpling.saltnpepper.pepperModules.conll;
+package org.corpus_tools.peppermodules.conll;
 
 import java.util.ArrayList;
 

@@ -15,7 +15,7 @@
  *
  *
  */
-package de.hu_berlin.german.korpling.saltnpepper.pepperModules.conll;
+package org.corpus_tools.peppermodules.conll;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -30,6 +30,7 @@ import java.util.Properties;
 import org.corpus_tools.pepper.common.DOCUMENT_STATUS;
 import org.corpus_tools.pepper.impl.PepperMapperImpl;
 import org.corpus_tools.pepper.modules.exceptions.PepperModuleDataException;
+import org.corpus_tools.peppermodules.CoNLLModules.CoNLLImporterProperties;
 import org.corpus_tools.salt.SaltFactory;
 import org.corpus_tools.salt.common.SPointingRelation;
 import org.corpus_tools.salt.common.SSpan;
@@ -45,7 +46,6 @@ import org.slf4j.LoggerFactory;
 
 import de.hu_berlin.german.korpling.saltnpepper.misc.tupleconnector.TupleConnectorFactory;
 import de.hu_berlin.german.korpling.saltnpepper.misc.tupleconnector.TupleReader;
-import de.hu_berlin.german.korpling.saltnpepper.pepperModules.CoNLLModules.CoNLLImporterProperties;
 
 /**
  * This class maps input data from CoNLL format to Salt format

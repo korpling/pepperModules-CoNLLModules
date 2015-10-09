@@ -15,16 +15,15 @@
  *
  *
  */
-package de.hu_berlin.german.korpling.saltnpepper.pepperModules.CoNLLModules;
+package org.corpus_tools.peppermodules.CoNLLModules;
 
 import org.corpus_tools.pepper.impl.PepperImporterImpl;
 import org.corpus_tools.pepper.modules.PepperImporter;
 import org.corpus_tools.pepper.modules.PepperMapper;
+import org.corpus_tools.peppermodules.conll.Conll2SaltMapper;
 import org.corpus_tools.salt.graph.Identifier;
 import org.eclipse.emf.common.util.URI;
 import org.osgi.service.component.annotations.Component;
-
-import de.hu_berlin.german.korpling.saltnpepper.pepperModules.conll.Conll2SaltMapper;
 
 @Component(name="CoNLLImporterComponent", factory="PepperImporterComponentFactory")
 public class CoNLLImporter extends PepperImporterImpl implements PepperImporter
