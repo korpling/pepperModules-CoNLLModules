@@ -20,13 +20,6 @@
 		<url>https://korpling.german.hu-berlin.de/jenkins/</url>
 	</ciManagement>
 	<inceptionYear>2010</inceptionYear>
-	<distributionManagement>
-		<repository>
-			<id>korpling</id>
-			<name>korpling maven repo</name>
-			<url>file:///srv/www/maven2/</url>
-		</repository>
-	</distributionManagement>
 	<repositories>
 		<repository>
 			<id>korpling</id>
@@ -39,66 +32,4 @@
 		<developerConnection>scm:git:git@github.com:korpling/pepperModules-CoNLLModules.git</developerConnection>
 		<url>https://github.com/korpling/pepperModules-CoNLLModules.git</url>
 	</scm>
-	<dependencies>
-
-		<dependency>
-			<groupId>de.hu_berlin.german.korpling.saltnpepper</groupId>
-			<artifactId>misc-TupleConnector</artifactId>
-			<version>[1.1.0,)</version>
-			<scope>compile</scope>
-		</dependency>
-	</dependencies>
-	<build>
-		<plugins>
-
-			<plugin>
-				<artifactId>maven-release-plugin</artifactId>
-				<version>2.1</version>
-				<executions>
-					<execution>
-						<id>default</id>
-						<goals>
-							<goal>perform</goal>
-						</goals>
-						<configuration>
-							<pomFileName>pepperModules-CoNLLModules/pom.xml</pomFileName>
-						</configuration>
-					</execution>
-				</executions>
-				<configuration>
-					<releaseProfiles>release</releaseProfiles>
-					<goals>package assembly:single deploy</goals>
-				</configuration>
-			</plugin>
-
-			<plugin>
-				<groupId>org.apache.felix</groupId>
-				<artifactId>maven-bundle-plugin</artifactId>
-				<version>${maven-bundle-plugin.version}</version>
-				<extensions>true</extensions>
-				<executions>
-					<execution>
-						<phase>process-classes</phase>
-						<goals>
-							<goal>bundle</goal>
-						</goals>
-					</execution>
-				</executions>
-				<configuration>
-					<manifestLocation>${META-INF}</manifestLocation>
-					<source>1.6</source>
-					<target>1.6</target>
-					<instructions>
-						<Bundle-Name>${project.artifactId}</Bundle-Name>
-						<Bundle-SymbolicName>${project.groupId}.${project.artifactId};singleton:=true</Bundle-SymbolicName>
-						<Bundle-Version>${project.version}</Bundle-Version>
-						<Bundle-RequiredExecutionEnvironment>JavaSE-1.6</Bundle-RequiredExecutionEnvironment>
-						<Service-Component>${allServiceComponents}</Service-Component>
-						<Include-Resource>{maven-resources}, LICENSE, NOTICE</Include-Resource>
-					</instructions>
-				</configuration>
-			</plugin>
-
-		</plugins>
-	</build>
 </project>

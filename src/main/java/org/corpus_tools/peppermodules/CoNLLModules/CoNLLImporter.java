@@ -25,37 +25,34 @@ import org.corpus_tools.salt.graph.Identifier;
 import org.eclipse.emf.common.util.URI;
 import org.osgi.service.component.annotations.Component;
 
-@Component(name="CoNLLImporterComponent", factory="PepperImporterComponentFactory")
-public class CoNLLImporter extends PepperImporterImpl implements PepperImporter
-{
-	//-------------------------------------------------------------------------
-	public static final String NAME          = "CoNLLImporter";
-	public static final String FORMATNAME    = "CoNLL";
-	public static final String FORMATVERSION = "1.0"; //TODO: What version? 
-	//-------------------------------------------------------------------------
-	
-	public CoNLLImporter()
-	{
+@Component(name = "CoNLLImporterComponent", factory = "PepperImporterComponentFactory")
+public class CoNLLImporter extends PepperImporterImpl implements PepperImporter {
+	// -------------------------------------------------------------------------
+	public static final String NAME = "CoNLLImporter";
+	public static final String FORMATNAME = "CoNLL";
+	public static final String FORMATVERSION = "1.0"; // TODO: What version?
+	// -------------------------------------------------------------------------
+
+	public CoNLLImporter() {
 		super();
-		//setting name of module
+		// setting name of module
 		this.setName(NAME);
 		setSupplierContact(URI.createURI("saltnpepper@lists.hu-berlin.de"));
 		setSupplierHomepage(URI.createURI("https://github.com/korpling/pepperModules-CoNLLModules"));
 		setDesc("This importer transforms data in CoNLL format to a Salt model. ");
-		//set list of formats supported by this module
+		// set list of formats supported by this module
 		this.addSupportedFormat(FORMATNAME, FORMATVERSION, null);
 		getDocumentEndings().add(PepperImporter.ENDING_ALL_FILES);
 		setProperties(new CoNLLImporterProperties());
 	}
-	
+
 	/**
 	 * Creates a mapper of type {@link EXMARaLDA2SaltMapper}.
 	 * {@inheritDoc PepperModule#createPepperMapper(Identifier)}
 	 */
 	@Override
-	public PepperMapper createPepperMapper(Identifier sElementId)
-	{
+	public PepperMapper createPepperMapper(Identifier sElementId) {
 		Conll2SaltMapper mapper = new Conll2SaltMapper();
-		return(mapper);
+		return (mapper);
 	}
 }
