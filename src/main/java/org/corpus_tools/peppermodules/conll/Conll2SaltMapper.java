@@ -60,7 +60,6 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 	private ConllDataField secondSPOSField = null;
 
 	private final ConllDataField DEFAULT_SPOS = ConllDataField.POSTAG;
-	// private final ConllDataField DEFAULT_SLEMMA = ConllDataField.LEMMA;
 
 	private static final String PROJECTIVE = "projective";
 	private static final String PRODEP = "prodep";
