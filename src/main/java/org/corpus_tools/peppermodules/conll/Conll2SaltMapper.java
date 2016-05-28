@@ -301,8 +301,9 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 		}
 
 		STextualDS sTextualDS = SaltFactory.createSTextualDS();
-		sTextualDS.setGraph(getDocument().getDocumentGraph());
-
+		getDocument().getDocumentGraph().addNode(sTextualDS);
+		getDocument().getDocumentGraph().addNode(sTextualDS);
+	
 		ArrayList<SToken> tokenList = new ArrayList<SToken>();
 		HashMap<SPointingRelation, Integer> pointingRelationMap = new HashMap<SPointingRelation, Integer>();
 		ArrayList<String> fieldValues = new ArrayList<String>();
@@ -364,7 +365,7 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 
 				// create token and add to local token list
 				SToken sToken = SaltFactory.createSToken();
-				sToken.setGraph(getDocument().getDocumentGraph());
+				getDocument().getDocumentGraph().addNode(sToken);
 				tokenList.add(sToken);
 
 				// update primary text (sTextualDS.sText will be set after
@@ -386,7 +387,7 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 				sTextualRelation.setTarget(sTextualDS);
 				sTextualRelation.setStart(tokenTextStartOffset);
 				sTextualRelation.setEnd(tokenTextEndOffset);
-				sTextualRelation.setGraph(getDocument().getDocumentGraph());
+				getDocument().getDocumentGraph().addRelation(sTextualRelation);
 
 				// Lemma
 				{
@@ -430,7 +431,7 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 
 				// create span and add span annotation
 				SSpan sSpan = SaltFactory.createSSpan();
-				sSpan.setGraph(getDocument().getDocumentGraph());
+				getDocument().getDocumentGraph().addNode(sSpan);
 				sSpan.addAnnotation(sAnnotation);
 
 				// create spanning relation, set span as source and token as
@@ -438,7 +439,7 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 				SSpanningRelation sSpanningRelation = SaltFactory.createSSpanningRelation();
 				sSpanningRelation.setSource(sSpan);
 				sSpanningRelation.setTarget(sToken);
-				sSpanningRelation.setGraph(getDocument().getDocumentGraph());
+				getDocument().getDocumentGraph().addRelation(sSpanningRelation);
 
 				// features
 				String featureValue = fieldValues.get(ConllDataField.FEATS.getFieldNum() - 1);
@@ -514,7 +515,7 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 					sPointingRelation.setSource(sToken);
 					sPointingRelation.setTarget(sToken);
 					sPointingRelation.addAnnotation(sAnnotation);
-					sPointingRelation.setGraph(getDocument().getDocumentGraph());
+					getDocument().getDocumentGraph().addRelation(sPointingRelation);
 
 					if (headID <= tokenID) {
 						sPointingRelation.setSource(tokenList.get(headID - 1));
@@ -546,7 +547,7 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 						sPointingRelation.addAnnotation(sAnnotation);
 						sPointingRelation.setSource(sToken);
 						sPointingRelation.setTarget(sToken);
-						sPointingRelation.setGraph(getDocument().getDocumentGraph());
+						getDocument().getDocumentGraph().addRelation(sPointingRelation);
 
 						if (projectiveModeIsType) {
 							sPointingRelation.setType(PRODEP);

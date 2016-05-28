@@ -110,12 +110,12 @@ public class Salt2ConllMapper extends PepperMapperImpl implements PepperMapper {
 				tuple.add(anno==null? NO_VALUE : (anno.getValue()==null? NO_VALUE : anno.getValue_STEXT()));
 			}
 			
-			Collection<SRelation> incoming = tok.getInRelations();//HEAD
+			Collection<SRelation<?,?>> incoming = tok.getInRelations();//HEAD
 			isDependency = false;
-			SRelation next=null;
+			SRelation<?,?> next=null;
 			if (!incoming.isEmpty()){
 				next=null;
-				for (Iterator<SRelation> iter=incoming.iterator();
+				for (Iterator<SRelation<?,?>> iter=incoming.iterator();
 						iter.hasNext()&&!isDependency;
 						next=iter.next(), isDependency=relType.equals(next.getType())){}				
 				tuple.add(isDependency? ((SToken)next.getSource()).getName().replaceAll("[^0-9]", "") : NO_VALUE);
