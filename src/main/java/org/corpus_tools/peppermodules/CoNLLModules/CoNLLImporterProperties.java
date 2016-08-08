@@ -60,6 +60,8 @@ public class CoNLLImporterProperties extends PepperModuleProperties {
 	public final static String PROPERTYVAL_POSTAG = "POSTAG";
 	public final static String PROPERTYVAL_CPOSTAG = "CPOSTAG";
 	public final static String PROPERTYVAL_LEMMA = "LEMMA";
+	
+	public final static String PROP_SENTENCE = PREFIX + "SENTENCE";
 
 	public CoNLLImporterProperties() {
 		this.addProperty(new PepperModuleProperty<String>(PROP_SPOS, String.class, "States which CoNLL field´s data to use for the SPOSAnnotation of salt tokens, or, if [FIELD] is NONE, not to create SPOSAnnotations at all. If the field designated by [FIELD] contains no data, [ALTERNATIVEFIELD] (if given), is used. If that field contains no data, no SPOSAnnotation is created for the particular salt token.", PROPERTYVAL_POSTAG, false));
@@ -70,7 +72,8 @@ public class CoNLLImporterProperties extends PepperModuleProperties {
 		this.addProperty(new PepperModuleProperty<String>(PROP_FIELD6_POSTAG, String.class, "This is not only a single property, but a class of properties. Multiple entries of this type may be given in a properties file, but [TAG] must be unique. A property of this type applies for any input data row that contains the given [TAG] as value for the POSTAG field. The corresponding salt token will get a SAnnotation with [VALUE] as name and the input data row´s FEATS field as value.", false));
 		this.addProperty(new PepperModuleProperty<String>(PROP_FIELD6_CPOSTAG, String.class, "This attribute works like , but instead of POSTAG, the CPOSTAG value of data rows is utilized. ", false));
 		this.addProperty(new PepperModuleProperty<String>(PROP_FIELD6_DEFAULT, String.class, "Allowed values are any single category name or pipe separated sequences of category names", false));
-		this.addProperty(new PepperModuleProperty<Boolean>(PROP_SPLIT_FEATURES, Boolean.class, "If [VALUE] is set TRUE, any data row´s FEATS field will be split into it´s pipe separated elements to create multiple annotations on the corresponding salt token (see POSTAG, CPOSTAG and default). If a field contains a different number of pipe separated elements than defined in the POSTAG, CPOSTAG or default attribute, the lesser number of annotations will be created, while the additional elements will be lost! If VALUE is FALSE, no splitting is done.", true, false));
+		this.addProperty(new PepperModuleProperty<Boolean>(PROP_SPLIT_FEATURES, Boolean.class, "If [VALUE] is set TRUE, any data row´s FEATS field will be split into it´s pipe separated elements to create multiple annotations on the corresponding salt token (see POSTAG, CPOSTAG and default). If a field contains a different number of pipe separated elements than defined in the POSTAG, CPOSTAG or default attribute, the lesser number of annotations will be created, while the additional elements will be lost! If VALUE is FALSE, no splitting is done.", false, false));
+		this.addProperty(new PepperModuleProperty<Boolean>(PROP_SENTENCE, Boolean.class, "If [VALUE] is set TRUE add a sentence annotation (cat=S) to the data.", true, false));
 
 	}
 
@@ -105,5 +108,9 @@ public class CoNLLImporterProperties extends PepperModuleProperties {
 	public Boolean isSplitFeatures() {
 		return ((Boolean) this.getProperty(PROP_SPLIT_FEATURES).getValue());
 	}
+	
+	public Boolean isSentence() {
+    return ((Boolean) this.getProperty(PROP_SENTENCE).getValue());
+  }
 
 }

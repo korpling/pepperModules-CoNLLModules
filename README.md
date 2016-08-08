@@ -126,6 +126,7 @@ pepper modules contained in this project
 |conll.field6.CPOSTAG.TAG	|any					| |
 |conll.field6.default		|any					| |
 |conll.splitFeatures		|a single category name or a pipe separated sequence of category names	| morph|
+|conll.SENTENCE		        |TRUE, FALSE	| TRUE|
 
 ### conll.SPOS
 Usage: conll.SPOS=[FIELD](,[ALTERNATIVEFIELD])
@@ -195,3 +196,7 @@ If no / attribute is defined for both the POSTAG and the CPOSTAG value of a data
 Usage: conll.splitFeatures=[VALUE]
  If [VALUE] is set TRUE, any data row´s FEATS field will be split into it´s pipe separated elements to create multiple annotations on the corresponding salt token (see POSTAG, CPOSTAG and default). If a field contains a different number of pipe separated elements than defined in the POSTAG, CPOSTAG or default attribute, the lesser number of annotations will be created, while the additional elements will be lost! 
 If VALUE is FALSE, no splitting is done.
+
+### conll.SENTENCE
+Usage: conll.SENTENCE=[VALUE]
+ If [VALUE] is set TRUE add a sentence annotation (cat=S) to the data.

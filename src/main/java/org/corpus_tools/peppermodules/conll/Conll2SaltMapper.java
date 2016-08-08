@@ -423,23 +423,26 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 				}
 				/// POS and CPOS
 
-				// create annotation for span
-				SAnnotation sAnnotation = SaltFactory.createSAnnotation();
-				sAnnotation.setName(CAT);
-				sAnnotation.setValue(S);
-
-				// create span and add span annotation
-				SSpan sSpan = SaltFactory.createSSpan();
-				sSpan.setGraph(getDocument().getDocumentGraph());
-				sSpan.addAnnotation(sAnnotation);
-
-				// create spanning relation, set span as source and token as
-				// target
-				SSpanningRelation sSpanningRelation = SaltFactory.createSSpanningRelation();
-				sSpanningRelation.setSource(sSpan);
-				sSpanningRelation.setTarget(sToken);
-				sSpanningRelation.setGraph(getDocument().getDocumentGraph());
-
+				if(Boolean.TRUE.equals(properties.get(CoNLLImporterProperties.PROP_SENTENCE) ))
+				{
+  				// create annotation for span
+  				SAnnotation sAnnotation = SaltFactory.createSAnnotation();
+  				sAnnotation.setName(CAT);
+  				sAnnotation.setValue(S);
+  
+  				// create span and add span annotation
+  				SSpan sSpan = SaltFactory.createSSpan();
+  				sSpan.setGraph(getDocument().getDocumentGraph());
+  				sSpan.addAnnotation(sAnnotation);
+  
+  				// create spanning relation, set span as source and token as
+  				// target
+  				SSpanningRelation sSpanningRelation = SaltFactory.createSSpanningRelation();
+  				sSpanningRelation.setSource(sSpan);
+  				sSpanningRelation.setTarget(sToken);
+  				sSpanningRelation.setGraph(getDocument().getDocumentGraph());
+				}
+				
 				// features
 				String featureValue = fieldValues.get(ConllDataField.FEATS.getFieldNum() - 1);
 
@@ -503,7 +506,7 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 				// create pointing relation, pointing from head to dependent
 				if (headID > 0) {
 					// create annotation for pointing relation
-					sAnnotation = SaltFactory.createSAnnotation();
+					SAnnotation sAnnotation = SaltFactory.createSAnnotation();
 					sAnnotation.setName(DEPREL);
 
 					String annoValue = fieldValues.get(ConllDataField.DEPREL.getFieldNum() - 1);
@@ -538,7 +541,7 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 					// dependent
 					if (proheadID > 0) {
 						// create annotation for pointing relation
-						sAnnotation = SaltFactory.createSAnnotation();
+						SAnnotation sAnnotation = SaltFactory.createSAnnotation();
 						sAnnotation.setName(DEPREL);
 						sAnnotation.setValue(fieldValues.get(ConllDataField.PDEPREL.getFieldNum() - 1));
 
