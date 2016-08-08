@@ -76,48 +76,24 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 	// separator for feature annotation values
 	private final String FEATURESEPARATOR = "\\|";
 
-	// ----------------------------------------------------------
-	private Properties properties = new Properties();
-
-	// property switches (initialized with default values)
-	private boolean considerProjectivity = false;
-	private boolean projectiveModeIsType = true; // if false, projective mode is
-													// "namespace"
-
-	/**
-	 * Setter for the properties file of the conversion
-	 * 
-	 * @param propertyFile
-	 *            URI for the properties file
-	 */
-	public void setProperties(URI propertyFile) {
-		if (propertyFile != null) {
-			try {
-				logger.warn(String.format("Trying to read property file '%s'", propertyFile.toFileString()));
-				properties.load(new FileInputStream(propertyFile.toFileString()));
-				considerProjectivity = !properties.getProperty(CoNLLImporterProperties.PROP_PROJECTIVE_MODE, TRUE).equalsIgnoreCase(TRUE);
-				projectiveModeIsType = !properties.getProperty(CoNLLImporterProperties.PROP_PROJECTIVE_MODE, TYPE).equalsIgnoreCase(NAMESPACE);
-			} catch (IOException e) {
-				logger.warn("property file for mapping CoNLL to Salt could not be read; default values are used");
-			}
-		} else {
-			logger.warn("URI of property file for mapping CoNLL to Salt is NULL; default values are used");
-		}
-	}
 
 	boolean splitFeatures;
+	
+	public Conll2SaltMapper()
+	{
+	  setProperties(new CoNLLImporterProperties());
+	}
 
 	// retrieves whether to split pipe separated feature values or not
 	private boolean getSplitFeatures() {
-		String propVal = properties.getProperty(CoNLLImporterProperties.PROP_SPLIT_FEATURES, FALSE);
-		return (propVal.equalsIgnoreCase(TRUE));
+	  return (Boolean) getProperties().getProperty(CoNLLImporterProperties.PROP_SPLIT_FEATURES).getValue();
 	}
 
 	boolean useSLemmaAnnotation;
 
 	// retrieves whether or not to use SLemmaAnnoations
 	private boolean getUseSLemmaAnnotation() {
-		String propVal = properties.getProperty(CoNLLImporterProperties.PROP_SLEMMA, CoNLLImporterProperties.PROPERTYVAL_LEMMA);
+		String propVal = (String) getProperties().getProperty(CoNLLImporterProperties.PROP_SLEMMA).getValue();
 		if (propVal.equals(CoNLLImporterProperties.PROPERTYVAL_LEMMA))
 			return true;
 		if (propVal.equals(CoNLLImporterProperties.PROPERTYVAL_NONE))
@@ -134,13 +110,13 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 		this.firstSPOSField = null;
 		this.secondSPOSField = null;
 
-		if (!properties.containsKey(CoNLLImporterProperties.PROP_SPOS)) {
+		if(getProperties().getProperty(CoNLLImporterProperties.PROP_SPOS) == null) {
 			if (CoNLLImporterProperties.defaultUseSPOSAnnoation) {
 				this.firstSPOSField = DEFAULT_SPOS;
 			}
 			return CoNLLImporterProperties.defaultUseSPOSAnnoation;
 		}
-		String propVal = properties.getProperty(CoNLLImporterProperties.PROP_SPOS);
+		String propVal = (String) getProperties().getProperty(CoNLLImporterProperties.PROP_SPOS).getValue();
 		String[] propVals = propVal.split(",");
 
 		if (propVals.length > 2) {
@@ -207,7 +183,7 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 					String fieldValue = fieldValues.get(field.getFieldNum() - 1);
 					if (fieldValue != null) {
 						SAnnotation sAnnotation = SaltFactory.createSAnnotation();
-						sAnnotation.setName(properties.getProperty(field.getPropertyKey_Name(), field.name())); // use
+						sAnnotation.setName(getProperties().getProperties().getProperty(field.getPropertyKey_Name(), field.name())); // use
 																												// user
 																												// specified
 																												// name
@@ -249,7 +225,7 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 							String fieldVal = fieldValues.get(field.getFieldNum() - 1);
 							if (fieldVal != null) {
 								SAnnotation anno = SaltFactory.createSAnnotation();
-								anno.setName(properties.getProperty(field.getPropertyKey_Name(), field.name())); // use
+								anno.setName(getProperties().getProperties().getProperty(field.getPropertyKey_Name(), field.name())); // use
 																													// user
 																													// specified
 																													// name
@@ -282,13 +258,6 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 		if (getDocument().getDocumentGraph() == null)
 			getDocument().setDocumentGraph(SaltFactory.createSDocumentGraph());
 
-		// TODO remove this when Property handling is switched to
-		// PepperProperties
-		if (getProperties() != null)
-			properties = getProperties().getProperties();
-		else
-			properties = new Properties();
-
 		TupleReader tupleReader = TupleConnectorFactory.fINSTANCE.createTupleReader();
 		// try reading the input file
 		try {
@@ -317,6 +286,11 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 		this.useSLemmaAnnotation = getUseSLemmaAnnotation();
 		this.useSPOSAnnotation = getUseSPOSAnnotation();
 		this.splitFeatures = getSplitFeatures();
+		
+
+    boolean considerProjectivity = !getProperties().getProperties().getProperty(CoNLLImporterProperties.PROP_PROJECTIVE_MODE, TRUE).equalsIgnoreCase(TRUE);
+    boolean projectiveModeIsType = !getProperties().getProperties().getProperty(CoNLLImporterProperties.PROP_PROJECTIVE_MODE, TYPE).equalsIgnoreCase(NAMESPACE);
+
 
 		// this list is used to collect lines numbers where number of categories
 		// does not match expected number of categories
@@ -398,7 +372,7 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 							sAnnotation = SaltFactory.createSLemmaAnnotation();
 						} else {
 							sAnnotation = SaltFactory.createSAnnotation();
-							sAnnotation.setName(properties.getProperty(field.getPropertyKey_Name(), field.name())); // use
+							sAnnotation.setName(getProperties().getProperties().getProperty(field.getPropertyKey_Name(), field.name())); // use
 																													// user
 																													// specified
 																													// name
@@ -423,7 +397,7 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 				}
 				/// POS and CPOS
 
-				if(Boolean.TRUE.equals(properties.get(CoNLLImporterProperties.PROP_SENTENCE) ))
+				if(((CoNLLImporterProperties) getProperties()).isSentence())
 				{
   				// create annotation for span
   				SAnnotation sAnnotation = SaltFactory.createSAnnotation();
@@ -452,13 +426,13 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 					// CPOSTAG (coarse grained). if neither one is defined, use
 					// default
 					String ruleKey = CoNLLImporterProperties.PROP_FIELD6_POSTAG + fieldValues.get(ConllDataField.POSTAG.getFieldNum() - 1);
-					if (!properties.containsKey(ruleKey)) {
+					if (!getProperties().getProperties().containsKey(ruleKey)) {
 						ruleKey = CoNLLImporterProperties.PROP_FIELD6_CPOSTAG + fieldValues.get(ConllDataField.CPOSTAG.getFieldNum() - 1);
-						if (!properties.containsKey(ruleKey)) {
+						if (!getProperties().getProperties().containsKey(ruleKey)) {
 							ruleKey = CoNLLImporterProperties.PROP_FIELD6_DEFAULT;
 						}
 					}
-					String featureKey = properties.getProperty(ruleKey, DEFAULT_FEATURE);
+					String featureKey = getProperties().getProperties().getProperty(ruleKey, DEFAULT_FEATURE);
 
 					boolean doSplit = this.splitFeatures;
 					String[] featureKeys = null;
@@ -525,7 +499,7 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 						pointingRelationMap.put(sPointingRelation, headID);
 					}
 				}
-
+				
 				if (considerProjectivity) {
 					// get ID of current token�s projective head token
 					String proheadIDStr = fieldValues.get(ConllDataField.PHEAD.getFieldNum() - 1);

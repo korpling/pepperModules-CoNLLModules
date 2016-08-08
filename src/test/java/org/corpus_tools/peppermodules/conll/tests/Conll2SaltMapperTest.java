@@ -20,6 +20,7 @@ package org.corpus_tools.peppermodules.conll.tests;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -54,7 +55,9 @@ public class Conll2SaltMapperTest {
 	@Before
 	public void setUp() {
 		this.setFixture(new Conll2SaltMapper());
-		getFixture().setProperties(URI.createFileURI("./src/test/resources/ConllModules_feats.properties"));
+		
+		URI propertiesLoc = URI.createFileURI("./src/test/resources/ConllModules_feats.properties");
+		getFixture().getProperties().setPropertyValues(new File(propertiesLoc.toFileString()));
 		SDocument sDoc = SaltFactory.createSDocument();
 		SaltFactory.createIdentifier(sDoc, "doc1");
 		getFixture().setDocument(sDoc);
