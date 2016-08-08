@@ -24,11 +24,14 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.Properties;
 
 import org.corpus_tools.pepper.common.DOCUMENT_STATUS;
 import org.corpus_tools.pepper.impl.PepperMapperImpl;
+import org.corpus_tools.pepper.modules.PepperModuleProperties;
 import org.corpus_tools.pepper.modules.exceptions.PepperModuleDataException;
 import org.corpus_tools.peppermodules.CoNLLModules.CoNLLImporterProperties;
 import org.corpus_tools.peppermodules.conll.tupleconnector.TupleConnectorFactory;
@@ -36,7 +39,6 @@ import org.corpus_tools.peppermodules.conll.tupleconnector.TupleReader;
 import org.corpus_tools.salt.SaltFactory;
 import org.corpus_tools.salt.common.SPointingRelation;
 import org.corpus_tools.salt.common.SSpan;
-import org.corpus_tools.salt.common.SSpanningRelation;
 import org.corpus_tools.salt.common.STextualDS;
 import org.corpus_tools.salt.common.STextualRelation;
 import org.corpus_tools.salt.common.SToken;
@@ -300,6 +302,9 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 		int stringBuilderCharBufferSize = tupleReader.characterSize(ConllDataField.FORM.getFieldNum() - 1) + numOfTuples;
 		StringBuilder primaryText = new StringBuilder(stringBuilderCharBufferSize);
 
+		List<SToken> sentenceToken = new LinkedList<>(); 
+
+		
 		// iteration over all data rows (the complete input-file)
 		for (int rowIndex = 0; rowIndex < numOfTuples; rowIndex++) {
 			try {
@@ -317,8 +322,7 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 				throw new PepperModuleDataException(this, errorMessage);
 			}
 
-			if (tupleSize > 1) { // if true, this is a data row, else it is a
-									// sentence separating line
+			if (tupleSize > 1) { // if true, this is a data row, else it is a sentence separating line
 
 				// read all field values
 				fieldNum = 1;
@@ -361,6 +365,8 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 				sTextualRelation.setStart(tokenTextStartOffset);
 				sTextualRelation.setEnd(tokenTextEndOffset);
 				sTextualRelation.setGraph(getDocument().getDocumentGraph());
+				
+				sentenceToken.add(sToken);
 
 				// Lemma
 				{
@@ -396,26 +402,6 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 					createPOSandCPOSAnnotation(fieldValues, sToken);
 				}
 				/// POS and CPOS
-
-				if(((CoNLLImporterProperties) getProperties()).isSentence())
-				{
-  				// create annotation for span
-  				SAnnotation sAnnotation = SaltFactory.createSAnnotation();
-  				sAnnotation.setName(CAT);
-  				sAnnotation.setValue(S);
-  
-  				// create span and add span annotation
-  				SSpan sSpan = SaltFactory.createSSpan();
-  				sSpan.setGraph(getDocument().getDocumentGraph());
-  				sSpan.addAnnotation(sAnnotation);
-  
-  				// create spanning relation, set span as source and token as
-  				// target
-  				SSpanningRelation sSpanningRelation = SaltFactory.createSSpanningRelation();
-  				sSpanningRelation.setSource(sSpan);
-  				sSpanningRelation.setTarget(sToken);
-  				sSpanningRelation.setGraph(getDocument().getDocumentGraph());
-				}
 				
 				// features
 				String featureValue = fieldValues.get(ConllDataField.FEATS.getFieldNum() - 1);
@@ -541,6 +527,18 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 				}
 
 			} // if (tupleSize>1)
+			else
+			{
+			  if(!sentenceToken.isEmpty() 
+			      && ((CoNLLImporterProperties) getProperties()).isSentence())
+        {
+          // create span and add span annotation
+          SSpan sSpan = getDocument().getDocumentGraph().createSpan(sentenceToken);
+          sSpan.createAnnotation(null, CAT, S);
+        }
+			  
+			  sentenceToken.clear();
+			} // end if/else tupleSize > 1
 
 			if ((tupleSize == 1) || (rowIndex == lastTupleIndex)) { // if true,
 																	// this is a
@@ -562,6 +560,15 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 			}
 
 		} // for (int rowIndex=0; rowIndex<numOfTuples; rowIndex++)
+		
+		// also add the last sentence
+		if(!sentenceToken.isEmpty() 
+        && ((CoNLLImporterProperties) getProperties()).isSentence())
+    {
+      // create span and add span annotation
+      SSpan sSpan = getDocument().getDocumentGraph().createSpan(sentenceToken);
+      sSpan.createAnnotation(null, CAT, S);
+    }
 
 		// ### file is completely read now
 

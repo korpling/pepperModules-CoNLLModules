@@ -30,6 +30,7 @@ import org.corpus_tools.salt.common.SCorpusGraph;
 import org.corpus_tools.salt.common.SDocument;
 import org.corpus_tools.salt.common.SDocumentGraph;
 import org.corpus_tools.salt.common.SPointingRelation;
+import org.corpus_tools.salt.common.SSpan;
 import org.corpus_tools.salt.common.STextualDS;
 import org.corpus_tools.salt.common.STextualRelation;
 import org.corpus_tools.salt.common.SToken;
@@ -37,6 +38,7 @@ import org.corpus_tools.salt.core.SAnnotation;
 import org.corpus_tools.salt.semantics.SLemmaAnnotation;
 import org.corpus_tools.salt.semantics.SPOSAnnotation;
 import org.eclipse.emf.common.util.URI;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -206,6 +208,38 @@ public class Conll2SaltMapperTest {
 		// printPointingRelations(getFixture().getDocumentGraph());
 
 	}
+	
+	@Test
+	public void testSentenceAnnotation()
+	{
+	  getFixture().setResourceURI(URI.createFileURI("src/test/resources/sentence.conll"));
+	  getFixture().mapSDocument();
+	  
+	  SDocumentGraph dg = getFixture().getDocument().getDocumentGraph();
+	  
+	  Assert.assertEquals(3, dg.getSpans().size());
+	  
+	  
+	  for(int i=0; i < 3; i++)
+	  {
+	    SSpan span = dg.getSpans().get(i);
+	    Assert.assertEquals(8, dg.getOverlappedTokens(span).size());
+	    Assert.assertEquals("S", span.getAnnotation(null, "cat").getValue());
+	  }
+	}
+	
+	@Test
+  public void testNoSentenceAnnotation()
+  {
+	  getFixture().getProperties().setPropertyValue("conll.SENTENCE", "FALSE");
+    getFixture().setResourceURI(URI.createFileURI("src/test/resources/sentence.conll"));
+    getFixture().mapSDocument();
+    
+    SDocumentGraph dg = getFixture().getDocument().getDocumentGraph();
+    
+    Assert.assertEquals(0, dg.getSpans().size());
+    
+  }
 
 	// @Test
 	// public final void testTokens() {
