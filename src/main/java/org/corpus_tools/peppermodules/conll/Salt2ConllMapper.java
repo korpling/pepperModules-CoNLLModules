@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.Map;
 
 import org.corpus_tools.pepper.common.DOCUMENT_STATUS;
 import org.corpus_tools.pepper.impl.PepperMapperImpl;
@@ -50,17 +51,20 @@ public class Salt2ConllMapper extends PepperMapperImpl implements PepperMapper {
 	
 	private static final String ERR_MSG_NO_DOCUMENT = "No document to convert.";
 	private static final String ERR_MSG_EMPTY_DOCUMENT = "Document is empty.";
-	private static final String NO_VALUE = "-";
+	private static final String NO_VALUE = "_";
 	private static final String ERR_MSG_ADD_TUPLE = "There was an error adding a tuple to the tuplewriter.";
 	private static final String ERR_MSG_OUTPUT_FILE = "An error occured creating the output file";
+	private static final String ERR_MSG_WRONG_COLUMN_FORMAT = "The column configuration provided in the job configuration does not match."+
+																" Make sure you use the right number of columns and you mark collapsing correctly.";
 	
 	/*properties*/
 	private String dependencyQName = null;
-	private String relType = null;
-	private boolean writeLemma = false;
-	private boolean writePos = false;
 	private String lemmaQName = null;
 	private String posQName = null;
+	private String cposQName = null;
+	private String featsQName = null;
+	private String miscQName = null;
+	private String tokinfoQName = null;
 	
 	private SDocumentGraph docGraph = null;
 	
@@ -100,29 +104,73 @@ public class Salt2ConllMapper extends PepperMapperImpl implements PepperMapper {
 			
 			tuple.add(docGraph.getText(tok));//FORM
 			
-			if (writeLemma) {//LEMMA
+			if (!lemmaQName.trim().isEmpty()) {//LEMMA
 				anno = tok.getAnnotation(lemmaQName);
-				tuple.add(anno==null? NO_VALUE : (anno.getValue()==null? NO_VALUE : anno.getValue().toString()));				
+				if (anno == null || NO_VALUE.equals(lemmaQName)){
+					tuple.add(NO_VALUE);
+				} else {
+					tuple.add(anno.getValue().toString());
+				}
 			}
 			
-			if (writePos) {//POS
+			if (!cposQName.trim().isEmpty()) {//CPOS
+				anno = tok.getAnnotation(cposQName);
+				if (anno == null || NO_VALUE.equals(cposQName)){
+					tuple.add(NO_VALUE);
+				} else {
+					tuple.add(anno.getValue().toString());
+				}
+			}
+			
+			if (!posQName.trim().isEmpty()) {//POS
 				anno = tok.getAnnotation(posQName);
-				tuple.add(anno==null? NO_VALUE : (anno.getValue()==null? NO_VALUE : anno.getValue_STEXT()));
+				if (anno == null || NO_VALUE.equals(posQName)){
+					tuple.add(NO_VALUE);
+				} else {
+					tuple.add(anno.getValue().toString());
+				}
 			}
 			
-			Collection<SRelation> incoming = tok.getInRelations();//HEAD
-			isDependency = false;
-			SRelation next=null;
-			if (!incoming.isEmpty()){
-				next=null;
-				for (Iterator<SRelation> iter=incoming.iterator();
-						iter.hasNext()&&!isDependency;
-						next=iter.next(), isDependency=relType.equals(next.getType())){}				
-				tuple.add(isDependency? ((SToken)next.getSource()).getName().replaceAll("[^0-9]", "") : NO_VALUE);
+			if (!featsQName.trim().isEmpty()) {//FEATS
+				anno = tok.getAnnotation(featsQName);
+				if (anno == null || NO_VALUE.equals(featsQName)){
+					tuple.add(NO_VALUE);
+				} else {
+					tuple.add(anno.getValue().toString());
+				}
 			}
 			
-			anno = next==null? null : next.getAnnotation(dependencyQName);//FUNC			
-			tuple.add(anno==null? NO_VALUE : (anno.getValue()==null? NO_VALUE : anno.getValue_STEXT()));
+			if (!dependencyQName.trim().isEmpty()){//DEPENDENCY
+				Collection<SRelation> incoming = tok.getInRelations();
+				isDependency = false;
+				SRelation next = null;
+				anno = null;
+				if (!incoming.isEmpty()){					
+					for (Iterator<SRelation> iter=incoming.iterator();
+							iter.hasNext()&&!isDependency;
+							next=iter.next(), isDependency=next.getAnnotation(dependencyQName)!=null, anno=next.getAnnotation(dependencyQName)){}				
+					tuple.add(isDependency? ((SToken)next.getSource()).getName().replaceAll("[^0-9]", "") : NO_VALUE);//HEAD
+					tuple.add(anno==null? NO_VALUE : (anno.getValue()==null? NO_VALUE : anno.getValue_STEXT()));//FUNC
+				}						
+			}
+			
+			if (!miscQName.trim().isEmpty()) {//MISC
+				anno = tok.getAnnotation(miscQName);
+				if (anno == null || NO_VALUE.equals(miscQName)){
+					tuple.add(NO_VALUE);
+				} else {
+					tuple.add(anno.getValue().toString());
+				}
+			}
+			
+			if (!tokinfoQName.trim().isEmpty()) {//TOK_INFO
+				anno = tok.getAnnotation(tokinfoQName);
+				if (anno == null || NO_VALUE.equals(tokinfoQName)){
+					tuple.add(NO_VALUE);
+				} else {
+					tuple.add(anno.getValue().toString());
+				}
+			}
 			
 			try {
 				tw.addTuple(tuple);
@@ -136,12 +184,16 @@ public class Salt2ConllMapper extends PepperMapperImpl implements PepperMapper {
 
 	private void readProperties(){
 		CoNLLExporterProperties properties = (CoNLLExporterProperties)this.getProperties();
-		String d = Label.NS_SEPERATOR;
-		this.dependencyQName = properties.getDependencyNamespace()+d+properties.getDependencyName(); 
-		this.relType = properties.getDependencyRelationType();
-		this.writeLemma = properties.isWriteLemma();
-		this.writePos = properties.isWritePos();
-		this.lemmaQName = properties.getLemmaNamespace()+d+properties.getLemmaName();
-		this.posQName = properties.getPosNamespace()+d+properties.getPosName();
+		Map<ConllDataField, String> columns = properties.getColumns();
+		if (columns == null){
+			throw new PepperModuleException(ERR_MSG_WRONG_COLUMN_FORMAT);
+		}
+		this.dependencyQName = columns.get(ConllDataField.DEPREL);
+		this.lemmaQName = columns.get(ConllDataField.LEMMA);
+		this.posQName = columns.get(ConllDataField.POSTAG);
+		this.cposQName = columns.get(ConllDataField.CPOSTAG);
+		this.featsQName = columns.get(ConllDataField.FEATS);
+		this.miscQName = columns.get(ConllDataField.PHEAD);
+		this.tokinfoQName = columns.get(ConllDataField.PDEPREL);
 	}
 }

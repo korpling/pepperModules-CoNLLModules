@@ -17,83 +17,63 @@
  */
 package org.corpus_tools.peppermodules.CoNLLModules;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.corpus_tools.pepper.modules.PepperModuleProperties;
 import org.corpus_tools.pepper.modules.PepperModuleProperty;
-import org.corpus_tools.salt.util.SaltUtil;
+import org.corpus_tools.peppermodules.conll.ConllDataField;
 
 public class CoNLLExporterProperties extends PepperModuleProperties{
-	/**this property determines the dependency edge annotations' annotation name in the Salt graph.*/
-	public static final String PROP_DEP_EDGE_ANNO_NAME = "depEdgeAnnoName";
 	
-	/**If {@value #PROP_WRITE_POS}==true, this property determines the dependency edge annotations' namespace.*/
-	public static final String PROP_DEP_NS = "depNS";
-	
-	/**this property determines the dependency edge's STYPE in the Salt graph.*/
-	public static final String PROP_DEP_RELTYPE = "depRelType";
-	
-	/**this property determines if lemma annotations are exported.*/
-	public static final String PROP_WRITE_LEMMA = "writeLemma";
-	
-	/**this property determines if pos annotations are exported.*/
-	public static final String PROP_WRITE_POS = "writePos";
-	
-	/**If {@value #PROP_WRITE_LEMMA}==true, this property determines the lemma annotations' name.*/
-	public static final String PROP_LEMMA_NAME = "lemmaName";
-	
-	/**If {@value #PROP_WRITE_POS}==true, this property determines the pos annotations' name.*/
-	public static final String PROP_POS_NAME = "posName";
-	
-	/**If {@value #PROP_WRITE_LEMMA}==true, this property determines the lemma annotations' namespace.*/
-	public static final String PROP_LEMMA_NS = "lemmaNS";
-	
-	/**If {@value #PROP_WRITE_POS}==true, this property determines the pos annotations' namespace.*/
-	public static final String PROP_POS_NS = "posNS";
+	/** In this string the annotation names (and collapse instructions) for the CoNLL columns are encoded. 
+	 * These are comma-separated values. A CoNLL-U table looks like the following:
+	 * <pre>
+	 * ID	FORM	LEMMA	CPOS	POS	FEATS	HEAD	REL	MISC	TOK_INFO
+	 * </pre> 
+	 * The following configuration provides the annotation names for the first 6 (ID, FORM not counted)
+	 * columns and collapses MISC and TOK_INFO (tokenization information):
+	 * <pre>
+	 * cols=Lemma,_,Pos,Morph,Dep,,
+	 * </pre> 
+	 * Further CPOS is filled with dashes. FORM is always taken from the Salt tokenization, so ID, FORM and HEAD
+	 * are always omitted.
+	 * 
+	 * If you want to use default values for single annotations, use <pre>*</pre>:
+	 * <pre>
+	 * cols=*,*,*,*,*,*,*
+	 * </pre>
+	 * is the trivial case of only using defaults. This only changes the annotation name for POS and dashes out
+	 * the last two values:
+	 * <pre>
+	 * cols=*,*,pos,*,*,_,_
+	 * </pre>
+	 * 
+	 * */
+	public static final String PROP_COL_CONFIG = "cols";
+	public static final String COLLAPSE_VALUE = " ";
+	private static final String[] DEFAULTS = {"salt::lemma", "_", "salt::pos", "_", "func", "_", "_"};
+	/** this marker is supposed to be used when the user does not want to reconfigure a value and stick to the default.*/
+	public static final String MARKER_USE_DEFAULT = "*";
 	
 	public CoNLLExporterProperties(){
-		this.addProperty(new PepperModuleProperty<String>(PROP_DEP_EDGE_ANNO_NAME, String.class, "this property determines the dependency edge annotations' annotation name in the Salt graph.", "func", false));
-		this.addProperty(new PepperModuleProperty<String>(PROP_DEP_RELTYPE, String.class, "this property determines the dependency edge's STYPE in the Salt graph.", "dependency", false));
-		this.addProperty(new PepperModuleProperty<Boolean>(PROP_WRITE_LEMMA, Boolean.class, "this property determines if lemma annotations are exported.", false, false));
-		this.addProperty(new PepperModuleProperty<Boolean>(PROP_WRITE_POS, Boolean.class, "this property determines if pos annotations are exported.", false, false));
-		this.addProperty(new PepperModuleProperty<String>(PROP_LEMMA_NAME, String.class, "If writeLemma is true, this property determines the lemma annotations' name.", SaltUtil.SEMANTICS_LEMMA, false));
-		this.addProperty(new PepperModuleProperty<String>(PROP_POS_NAME, String.class, "If writePos is true, this property determines the pos annotations' name.", SaltUtil.SEMANTICS_POS, false));
-		this.addProperty(new PepperModuleProperty<String>(PROP_DEP_NS, String.class, "This property determines the dependency edge annotation's namespace.", "dependencies", false));
-		this.addProperty(new PepperModuleProperty<String>(PROP_LEMMA_NS, String.class, "This property determines the lemma annotation's namespace.", SaltUtil.SALT_NAMESPACE, false));
-		this.addProperty(new PepperModuleProperty<String>(PROP_POS_NS, String.class, "This property determines the pos annotation's namespace.", SaltUtil.SALT_NAMESPACE, false));
+		this.addProperty(new PepperModuleProperty<String>(PROP_COL_CONFIG, String.class, "In this string the annotation names (and collapse instructions) for the CoNLL columns are encoded.", String.join(",", DEFAULTS), false));		
 	}
 	
-	public String getDependencyName(){
-		return this.getProperty(PROP_DEP_EDGE_ANNO_NAME).getValue().toString();		
-	}
-	
-	public String getDependencyRelationType(){
-		return this.getProperty(PROP_DEP_RELTYPE).getValue().toString();
-	}
-	
-	public boolean isWriteLemma(){
-		return Boolean.parseBoolean(this.getProperty(PROP_WRITE_LEMMA).getValue().toString());
-	}
-	
-	public boolean isWritePos(){
-		return Boolean.parseBoolean(this.getProperty(PROP_WRITE_LEMMA).getValue().toString());
-	}
-	
-	public String getLemmaName(){
-		return this.getProperty(PROP_LEMMA_NAME).getValue().toString();
-	}
-	
-	public String getPosName(){
-		return this.getProperty(PROP_POS_NAME).getValue().toString();
-	}
-	
-	public String getLemmaNamespace(){
-		return this.getProperty(PROP_LEMMA_NS).getValue().toString();
-	}
-	
-	public String getPosNamespace(){
-		return this.getProperty(PROP_POS_NS).getValue().toString();
-	}
-	
-	public String getDependencyNamespace(){
-		return this.getProperty(PROP_DEP_NS).getValue().toString();
+	public Map<ConllDataField, String> getColumns(){
+		String columnStr = getProperty(PROP_COL_CONFIG).getValue().toString();
+		String[] columns = columnStr.split(",");
+		ConllDataField[] header = {ConllDataField.LEMMA, ConllDataField.CPOSTAG, ConllDataField.POSTAG, ConllDataField.FEATS, ConllDataField.DEPREL, ConllDataField.PHEAD, ConllDataField.PDEPREL};
+		HashMap<ConllDataField, String> colInfo = new HashMap<>();
+		for (int i = 0; i<columns.length; i++){			
+			colInfo.put(header[i], MARKER_USE_DEFAULT.equals(columns[i])? DEFAULTS[i] : columns[i]);
+		}
+		if (columns.length < 7){
+			if (columns.length < 6){
+				return null;
+			}
+			colInfo.put(header[header.length-1], COLLAPSE_VALUE);
+		}
+		return colInfo;
 	}
 }
