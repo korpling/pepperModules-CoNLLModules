@@ -22,8 +22,10 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Set;
 
 import org.corpus_tools.pepper.common.DOCUMENT_STATUS;
 import org.corpus_tools.pepper.impl.PepperMapperImpl;
@@ -35,10 +37,12 @@ import org.corpus_tools.peppermodules.CoNLLModules.CoNLLImporter;
 import org.corpus_tools.peppermodules.conll.tupleconnector.TupleConnectorFactory;
 import org.corpus_tools.peppermodules.conll.tupleconnector.TupleWriter;
 import org.corpus_tools.salt.common.SDocumentGraph;
+import org.corpus_tools.salt.common.SSpan;
+import org.corpus_tools.salt.common.SSpanningRelation;
 import org.corpus_tools.salt.common.SToken;
 import org.corpus_tools.salt.core.SAnnotation;
+import org.corpus_tools.salt.core.SNode;
 import org.corpus_tools.salt.core.SRelation;
-import org.corpus_tools.salt.graph.Label;
 
 /**
  * 
@@ -65,6 +69,7 @@ public class Salt2ConllMapper extends PepperMapperImpl implements PepperMapper {
 	private String featsQName = null;
 	private String miscQName = null;
 	private String tokinfoQName = null;
+	private Set<String> spanAnnos = null;
 	
 	private SDocumentGraph docGraph = null;
 	
@@ -97,6 +102,15 @@ public class Salt2ConllMapper extends PepperMapperImpl implements PepperMapper {
 		Collection<String> tuple = null;
 		boolean isDependency;
 		SAnnotation anno = null;
+		boolean[] onSpan = {this.spanAnnos.contains(lemmaQName),
+							this.spanAnnos.contains(cposQName),
+							this.spanAnnos.contains(posQName),
+							this.spanAnnos.contains(featsQName),
+							this.spanAnnos.contains(miscQName),
+							this.spanAnnos.contains(tokinfoQName)};
+		
+		boolean searchSpan = onSpan[0] || onSpan[1] || onSpan[2] || onSpan[3] || onSpan[4] || onSpan[5];
+		
 		for (SToken tok : docGraph.getSortedTokenByText()){
 			tuple = new ArrayList<String>();
 			
@@ -104,26 +118,50 @@ public class Salt2ConllMapper extends PepperMapperImpl implements PepperMapper {
 			
 			tuple.add(docGraph.getText(tok));//FORM
 			
-			if (!lemmaQName.trim().isEmpty()) {//LEMMA
-				anno = tok.getAnnotation(lemmaQName);
+			SSpan span = null;
+			if (!lemmaQName.trim().isEmpty()) {//LEMMA				
+				if (searchSpan && onSpan[0]){
+					span = getAnnotatedSpan(tok, lemmaQName);
+					if (span != null){
+						anno = span.getAnnotation(lemmaQName);
+					}
+				} else {
+					anno = tok.getAnnotation(lemmaQName);
+				}				
 				if (anno == null || NO_VALUE.equals(lemmaQName)){
 					tuple.add(NO_VALUE);
 				} else {
 					tuple.add(anno.getValue().toString());
 				}
 			}
-			
-			if (!cposQName.trim().isEmpty()) {//CPOS
-				anno = tok.getAnnotation(cposQName);
+
+			anno = null;			
+			if (!cposQName.trim().isEmpty()) {//CPOS				
+				if (searchSpan && onSpan[1]){
+					span = getAnnotatedSpan(tok, cposQName);
+					if (span != null){
+						anno = span.getAnnotation(cposQName);
+					}					
+				} else {
+					anno = tok.getAnnotation(cposQName);
+				}
 				if (anno == null || NO_VALUE.equals(cposQName)){
 					tuple.add(NO_VALUE);
 				} else {
 					tuple.add(anno.getValue().toString());
 				}
 			}
-			
+
+			anno = null;
 			if (!posQName.trim().isEmpty()) {//POS
-				anno = tok.getAnnotation(posQName);
+				if (searchSpan && onSpan[2]){
+					span = getAnnotatedSpan(tok, posQName);
+					if (span != null){
+						anno = span.getAnnotation(posQName);
+					}					
+				} else {
+					anno = tok.getAnnotation(posQName);
+				}
 				if (anno == null || NO_VALUE.equals(posQName)){
 					tuple.add(NO_VALUE);
 				} else {
@@ -131,8 +169,16 @@ public class Salt2ConllMapper extends PepperMapperImpl implements PepperMapper {
 				}
 			}
 			
+			anno = null;
 			if (!featsQName.trim().isEmpty()) {//FEATS
-				anno = tok.getAnnotation(featsQName);
+				if (searchSpan && onSpan[3]){
+					span = getAnnotatedSpan(tok, featsQName);
+					if (span != null){
+						anno = span.getAnnotation(featsQName);
+					}					
+				} else {
+					anno = tok.getAnnotation(featsQName);
+				}
 				if (anno == null || NO_VALUE.equals(featsQName)){
 					tuple.add(NO_VALUE);
 				} else {
@@ -140,6 +186,7 @@ public class Salt2ConllMapper extends PepperMapperImpl implements PepperMapper {
 				}
 			}
 			
+			anno = null;
 			if (!dependencyQName.trim().isEmpty()){//DEPENDENCY
 				Collection<SRelation> incoming = tok.getInRelations();
 				isDependency = false;
@@ -154,8 +201,16 @@ public class Salt2ConllMapper extends PepperMapperImpl implements PepperMapper {
 				}						
 			}
 			
+			anno = null;
 			if (!miscQName.trim().isEmpty()) {//MISC
-				anno = tok.getAnnotation(miscQName);
+				if (searchSpan && onSpan[4]){
+					span = getAnnotatedSpan(tok, miscQName);
+					if (span != null){
+						anno = span.getAnnotation(miscQName);
+					}					
+				} else {
+					anno = tok.getAnnotation(miscQName);
+				}
 				if (anno == null || NO_VALUE.equals(miscQName)){
 					tuple.add(NO_VALUE);
 				} else {
@@ -163,8 +218,16 @@ public class Salt2ConllMapper extends PepperMapperImpl implements PepperMapper {
 				}
 			}
 			
+			anno = null;
 			if (!tokinfoQName.trim().isEmpty()) {//TOK_INFO
-				anno = tok.getAnnotation(tokinfoQName);
+				if (searchSpan && onSpan[5]){
+					span = getAnnotatedSpan(tok, tokinfoQName);
+					if (span != null){
+						anno = span.getAnnotation(tokinfoQName);
+					}					
+				} else {
+					anno = tok.getAnnotation(tokinfoQName);
+				}
 				if (anno == null || NO_VALUE.equals(tokinfoQName)){
 					tuple.add(NO_VALUE);
 				} else {
@@ -181,6 +244,20 @@ public class Salt2ConllMapper extends PepperMapperImpl implements PepperMapper {
 		
 		return DOCUMENT_STATUS.COMPLETED;
 	}
+	
+	private SSpan getAnnotatedSpan(SToken tok, String annoQName){
+		SSpan span = null;
+		SAnnotation anno = null;
+		Iterator<SRelation> itRels = tok.getInRelations().iterator();					
+		while (anno == null && itRels.hasNext()){
+			SRelation nxtRel = itRels.next();
+			if (nxtRel instanceof SSpanningRelation){
+				span = (SSpan)nxtRel.getSource();
+				anno = span.getAnnotation(annoQName);
+			}						
+		}
+		return anno == null? null : span;
+	}
 
 	private void readProperties(){
 		CoNLLExporterProperties properties = (CoNLLExporterProperties)this.getProperties();
@@ -195,5 +272,7 @@ public class Salt2ConllMapper extends PepperMapperImpl implements PepperMapper {
 		this.featsQName = columns.get(ConllDataField.FEATS);
 		this.miscQName = columns.get(ConllDataField.PHEAD);
 		this.tokinfoQName = columns.get(ConllDataField.PDEPREL);
+		
+		this.spanAnnos = properties.getSpanAnnotations();
 	}
 }

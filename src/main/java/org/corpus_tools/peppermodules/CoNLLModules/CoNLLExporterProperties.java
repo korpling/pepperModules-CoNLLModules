@@ -18,7 +18,9 @@
 package org.corpus_tools.peppermodules.CoNLLModules;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import org.corpus_tools.pepper.modules.PepperModuleProperties;
 import org.corpus_tools.pepper.modules.PepperModuleProperty;
@@ -51,13 +53,18 @@ public class CoNLLExporterProperties extends PepperModuleProperties{
 	 * 
 	 * */
 	public static final String PROP_COL_CONFIG = "cols";
+	
+	/** This property contains all the annotations that will be found on spans over the tokens, but not the token itself. */
+	public static final String PROP_SPAN_ANNOS = "spanAnnotations";
+	
 	public static final String COLLAPSE_VALUE = " ";
 	private static final String[] DEFAULTS = {"salt::lemma", "_", "salt::pos", "_", "func", "_", "_"};
 	/** this marker is supposed to be used when the user does not want to reconfigure a value and stick to the default.*/
 	public static final String MARKER_USE_DEFAULT = "*";
 	
 	public CoNLLExporterProperties(){
-		this.addProperty(new PepperModuleProperty<String>(PROP_COL_CONFIG, String.class, "In this string the annotation names (and collapse instructions) for the CoNLL columns are encoded.", String.join(",", DEFAULTS), false));		
+		this.addProperty(new PepperModuleProperty<String>(PROP_COL_CONFIG, String.class, "In this string the annotation names (and collapse instructions) for the CoNLL columns are encoded.", String.join(",", DEFAULTS), false));
+		this.addProperty(new PepperModuleProperty<String>(PROP_SPAN_ANNOS, String.class, "This property contains all the annotations that will be found on spans over the tokens, but not the token itself.", "", false));
 	}
 	
 	public Map<ConllDataField, String> getColumns(){
@@ -75,5 +82,20 @@ public class CoNLLExporterProperties extends PepperModuleProperties{
 			colInfo.put(header[header.length-1], COLLAPSE_VALUE);
 		}
 		return colInfo;
+	}
+	
+	public Set<String> getSpanAnnotations(){
+		HashSet<String> spanAnnos = new HashSet<String>();
+		String propVal = getProperty(PROP_SPAN_ANNOS).getValue().toString();
+		if (propVal.startsWith("{")){
+			propVal = propVal.substring(1);
+		}
+		if (propVal.endsWith("}")){
+			propVal = propVal.substring(0, propVal.length()-1);
+		}
+		for (String a : propVal.split(",")){
+			spanAnnos.add(a);
+		}
+		return spanAnnos;
 	}
 }
