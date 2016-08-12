@@ -94,7 +94,7 @@ public class CoNLLExporterProperties extends PepperModuleProperties{
 			propVal = propVal.substring(0, propVal.length()-1);
 		}
 		for (String a : propVal.split(",")){
-			spanAnnos.add(a);
+			spanAnnos.add(a.trim());
 		}
 		return spanAnnos;
 	}
