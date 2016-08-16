@@ -26,6 +26,8 @@ import org.corpus_tools.pepper.modules.PepperModuleProperties;
 import org.corpus_tools.pepper.modules.PepperModuleProperty;
 import org.corpus_tools.peppermodules.conll.ConllDataField;
 
+import com.google.common.base.Joiner;
+
 public class CoNLLExporterProperties extends PepperModuleProperties{
 	
 	/** In this string the annotation names (and collapse instructions) for the CoNLL columns are encoded. 
@@ -63,7 +65,7 @@ public class CoNLLExporterProperties extends PepperModuleProperties{
 	public static final String MARKER_USE_DEFAULT = "*";
 	
 	public CoNLLExporterProperties(){
-		this.addProperty(new PepperModuleProperty<String>(PROP_COL_CONFIG, String.class, "In this string the annotation names (and collapse instructions) for the CoNLL columns are encoded.", String.join(",", DEFAULTS), false));
+		this.addProperty(new PepperModuleProperty<String>(PROP_COL_CONFIG, String.class, "In this string the annotation names (and collapse instructions) for the CoNLL columns are encoded.", Joiner.on(",").join(DEFAULTS), false));
 		this.addProperty(new PepperModuleProperty<String>(PROP_SPAN_ANNOS, String.class, "This property contains all the annotations that will be found on spans over the tokens, but not the token itself.", "", false));
 	}
 	
