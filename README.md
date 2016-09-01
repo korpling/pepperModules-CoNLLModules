@@ -120,7 +120,7 @@ pepper modules contained in this project
 |---------------------------|-----------------------|-------------|
 |conll.SPOS					|POSTAG, CPOSTAG, NONE	|POSTAG|
 |conll.SLEMMA				|LEMMA, NONE			|LEMMA|
-|conll.considerProjectivity	|TRUE, FALSE			|TRUE|
+|conll.considerProjectivity	|TRUE, FALSE			|FALSE|
 |conll.projectiveMode		|TYPE, NAMESPACE		|TYPE|
 |conll.field6.POSTAG.TAG	|TRUE, FALSE			|TRUE|
 |conll.field6.CPOSTAG.TAG	|any					| |
@@ -153,7 +153,7 @@ With this example setting, all input tokens with a value for the field LEMMA wil
 ### conll.considerProjectivity
 Usage: conll.considerProjectivity=[VALUE]
 Possible values are TRUE and FALSE
-Default value for this attribute is TRUE
+Default value for this attribute is FALSE
 States whether to create a salt pointing relation from projective head of tokens to the dependent.
 
 ### conll.projectiveMode
