@@ -290,9 +290,8 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 		this.splitFeatures = getSplitFeatures();
 		
 
-    boolean considerProjectivity = !getProperties().getProperties().getProperty(CoNLLImporterProperties.PROP_PROJECTIVE_MODE, TRUE).equalsIgnoreCase(TRUE);
-    boolean projectiveModeIsType = !getProperties().getProperties().getProperty(CoNLLImporterProperties.PROP_PROJECTIVE_MODE, TYPE).equalsIgnoreCase(NAMESPACE);
-
+                boolean considerProjectivity = (Boolean) getProperties().getProperty(CoNLLImporterProperties.PROP_CONSIDER_PROJECTIVITY).getValue();
+                boolean projectiveModeIsType = !getProperties().getProperties().getProperty(CoNLLImporterProperties.PROP_PROJECTIVE_MODE, TYPE).equalsIgnoreCase(NAMESPACE);
 
 		// this list is used to collect lines numbers where number of categories
 		// does not match expected number of categories
