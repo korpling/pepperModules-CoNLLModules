@@ -192,6 +192,14 @@ Allowed values are any single category name or pipe separated sequences of categ
 The default value for this attribute is morph (for 'morphological annotation').
 If no / attribute is defined for both the POSTAG and the CPOSTAG value of a data row, the default name [VALUE] is used for the Annotation (or Annotations, see ) of the corresponding salt token. The data row´s FEATS field is used as the value of the annotation(s). 
 
+### conll.POS.NAME
+Usage: conll.POS.NAME=[VALUE]
+A string specifying a valid annotation name for the POS annotation. Allowed values are any valid Salt annotation name. If not used and POS or CPOS are being used, then a default Salt SPOSAnnotation will be created and named 'pos'
+
+### conll.POS.LEMMA
+Usage: conll.POS.LEMMA=[VALUE]
+A string specifying a valid annotation name for the lemma annotation. Allowed values are any valid Salt annotation name. If not used and conll.SLEMMA is being used, then a default Salt SLemmaAnnotation will be created and named 'lemma', provided that column 3 contains non-empty lemma values.
+
 ### conll.splitFeatures
 Usage: conll.splitFeatures=[VALUE]
  If [VALUE] is set TRUE, any data row´s FEATS field will be split into it´s pipe separated elements to create multiple annotations on the corresponding salt token (see POSTAG, CPOSTAG and default). If a field contains a different number of pipe separated elements than defined in the POSTAG, CPOSTAG or default attribute, the lesser number of annotations will be created, while the additional elements will be lost! 

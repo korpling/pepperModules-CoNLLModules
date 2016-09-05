@@ -90,7 +90,22 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 	private boolean getSplitFeatures() {
 	  return (Boolean) getProperties().getProperty(CoNLLImporterProperties.PROP_SPLIT_FEATURES).getValue();
 	}
+   
+        // check for user-defined POS and lemma annotation names
+        String posName;
+        String lemmaName;
+        
+        private String getPosName(){
+            //return (String) getProperties().getProperty(CoNLLImporterProperties.PROP_SLEMMA).getValue();
+            return (String) getProperties().getProperties().getProperty(CoNLLImporterProperties.PROP_POS_NAME, "");
+        }
+        
+        private String getLemmaName(){
+            //return (String) getProperties().getProperty(CoNLLImporterProperties.PROP_SLEMMA).getValue();
+            return (String) getProperties().getProperties().getProperty(CoNLLImporterProperties.PROP_LEMMA_NAME, "");
+        }
 
+        
 	boolean useSLemmaAnnotation;
 
 	// retrieves whether or not to use SLemmaAnnoations
@@ -211,8 +226,17 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 						if (field != null) {
 							String fieldVal = fieldValues.get(field.getFieldNum() - 1);
 							if (fieldVal != null) {
-								SPOSAnnotation anno = SaltFactory.createSPOSAnnotation();
-								anno.setValue(fieldVal);
+                                                                SAnnotation anno;
+                                                                if (posName != null && posName.length() > 0){
+                                                                    // This is a custom names POS annotation, use a regular nameable SAnnotation
+                                                                    anno = SaltFactory.createSAnnotation();
+                                                                    anno.setName(posName);                                                             
+                                                                }
+                                                                else{
+                                                                    // Standard Salt Semantics POS tag - make anno into a new SPOSAnnotation 
+                                                                    anno = SaltFactory.createSPOSAnnotation();
+                                                                }
+								anno.setValue(fieldVal);                                                                
 								sToken.addAnnotation(anno);
 								SPOSAnnotationIndex = index;
 							}
@@ -288,7 +312,8 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 		this.useSLemmaAnnotation = getUseSLemmaAnnotation();
 		this.useSPOSAnnotation = getUseSPOSAnnotation();
 		this.splitFeatures = getSplitFeatures();
-		
+                this.posName = getPosName();
+                this.lemmaName = getLemmaName();
 
                 boolean considerProjectivity = (Boolean) getProperties().getProperty(CoNLLImporterProperties.PROP_CONSIDER_PROJECTIVITY).getValue();
                 boolean projectiveModeIsType = !getProperties().getProperties().getProperty(CoNLLImporterProperties.PROP_PROJECTIVE_MODE, TYPE).equalsIgnoreCase(NAMESPACE);
@@ -372,27 +397,17 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 					ConllDataField field = ConllDataField.LEMMA;
 					String fieldValue = fieldValues.get(field.getFieldNum() - 1);
 					if (fieldValue != null) {
-						SAnnotation sAnnotation = null;
+						SAnnotation sAnnotation = SaltFactory.createSAnnotation();
 						if (useSLemmaAnnotation) {
-							sAnnotation = SaltFactory.createSLemmaAnnotation();
-						} else {
-							sAnnotation = SaltFactory.createSAnnotation();
-							sAnnotation.setName(getProperties().getProperties().getProperty(field.getPropertyKey_Name(), field.name())); // use
-																													// user
-																													// specified
-																													// name
-																													// for
-																													// field,
-																													// or
-																													// default:
-																													// the
-																													// field�s
-																													// ConLL
-																													// name
-						}
-
-						sAnnotation.setValue(fieldValue);
-						sToken.addAnnotation(sAnnotation);
+                                                        if (lemmaName != null && lemmaName.length() > 0){
+                                                            sAnnotation.setName(lemmaName);                                                             
+                                                        }
+                                                        else{
+                                                            sAnnotation = SaltFactory.createSLemmaAnnotation();
+                                                        }
+                                                        sAnnotation.setValue(fieldValue);
+                                                        sToken.addAnnotation(sAnnotation);                                                        
+						}                                                 
 					}
 				}
 
