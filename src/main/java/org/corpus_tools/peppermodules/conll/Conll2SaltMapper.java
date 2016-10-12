@@ -96,12 +96,10 @@ public class Conll2SaltMapper extends PepperMapperImpl {
         String lemmaName;
         
         private String getPosName(){
-            //return (String) getProperties().getProperty(CoNLLImporterProperties.PROP_SLEMMA).getValue();
             return (String) getProperties().getProperties().getProperty(CoNLLImporterProperties.PROP_POS_NAME, "");
         }
         
         private String getLemmaName(){
-            //return (String) getProperties().getProperty(CoNLLImporterProperties.PROP_SLEMMA).getValue();
             return (String) getProperties().getProperties().getProperty(CoNLLImporterProperties.PROP_LEMMA_NAME, "");
         }
 
@@ -193,30 +191,7 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 
 	private void createPOSandCPOSAnnotation(ArrayList<String> fieldValues, SToken sToken) {
 		{
-			if (!this.useSPOSAnnotation) {
-				ConllDataField[] posFields = { ConllDataField.POSTAG, ConllDataField.CPOSTAG };
-				for (int index = 0; index < posFields.length; index++) {
-					ConllDataField field = posFields[index];
-					String fieldValue = fieldValues.get(field.getFieldNum() - 1);
-					if (fieldValue != null) {
-						SAnnotation sAnnotation = SaltFactory.createSAnnotation();
-						sAnnotation.setName(getProperties().getProperties().getProperty(field.getPropertyKey_Name(), field.name())); // use
-																												// user
-																												// specified
-																												// name
-																												// for
-																												// field,
-																												// or
-																												// default:
-																												// the
-																												// field�s
-																												// ConLL
-																												// name
-						sAnnotation.setValue(fieldValue);
-						sToken.addAnnotation(sAnnotation);
-					}
-				}
-			} else {
+			if (this.useSPOSAnnotation) {
 				int SPOSAnnotationIndex = -1;
 				ConllDataField[] bothFields = { this.firstSPOSField, this.secondSPOSField };
 				ConllDataField field = null;
