@@ -63,13 +63,13 @@ public class CoNLLExporterProperties extends PepperModuleProperties{
 	private static final String[] DEFAULTS = {"salt::lemma", "_", "salt::pos", "_", "func", "_", "_"};
 	/** this marker is supposed to be used when the user does not want to reconfigure a value and stick to the default.*/
 	public static final String MARKER_USE_DEFAULT = "*";
-	/** if provided, a specific segmentation is selected rather than all tokens found in a document */
+	/** if provided, a specific segmentation is selected rather than all tokens found in a document. The segmentation needs to be marked with SOrderRelations with the specified name. */
 	public static final String PROP_SEGMENTATION_NAME = "segmentation.name";
 	
 	public CoNLLExporterProperties(){
 		this.addProperty(new PepperModuleProperty<String>(PROP_COL_CONFIG, String.class, "In this string the annotation names (and collapse instructions) for the CoNLL columns are encoded.", Joiner.on(",").join(DEFAULTS), false));
 		this.addProperty(new PepperModuleProperty<String>(PROP_SPAN_ANNOS, String.class, "This property contains all the annotations that will be found on spans over the tokens, but not the token itself.", "", false));
-		//this.addProperty(PepperModuleProperty.with);
+		this.addProperty(new PepperModuleProperty<String>(PROP_SEGMENTATION_NAME, String.class, "If provided, a specific segmentation is selected rather than all tokens found in a document. The segmentation needs to be marked with SOrderRelations with the specified name.", null, false));
 	}
 	
 	public Map<ConllDataField, String> getColumns(){
@@ -102,5 +102,13 @@ public class CoNLLExporterProperties extends PepperModuleProperties{
 			spanAnnos.add(a.trim());
 		}
 		return spanAnnos;
+	}
+	
+	public String getSegmentationName() {
+		Object value = getProperty(PROP_SEGMENTATION_NAME).getValue();
+		if (value != null) {
+			return (String) value;
+		}
+		return null;
 	}
 }
