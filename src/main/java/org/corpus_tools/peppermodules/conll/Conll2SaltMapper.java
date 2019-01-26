@@ -480,7 +480,8 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 					String proheadIDStr = fieldValues.get(ConllDataField.PHEAD.getFieldNum() - 1);
 					Integer proheadID = null;
 					try {
-						proheadID = Integer.parseInt(proheadIDStr);
+						System.out.println("Entered critical scope");
+						proheadID = "_".equals( proheadIDStr.trim() )? -1 : Integer.parseInt(proheadIDStr);
 					} catch (NumberFormatException e) {
 						String errorMessage = String.format("invalid integer value '%s' for PHEAD in line %d of input file. Abort conversion of file " + this.getResourceURI() + ".", proheadIDStr, rowIndex + 1);
 						throw new PepperModuleDataException(this, errorMessage);
