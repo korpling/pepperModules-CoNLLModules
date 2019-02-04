@@ -53,6 +53,9 @@ public class CoNLLImporterProperties extends PepperModuleProperties {
 																					// end
 	public final static String PROP_POS_NAME = PREFIX + "POS.NAME";
 	public final static String PROP_LEMMA_NAME = PREFIX + "LEMMA.NAME";
+	public final static String PROP_EDGETYPE_NAME = PREFIX + "EDGE.TYPE";
+	public final static String PROP_FEATURES_NAMESPACE = PREFIX + "FEATURES.NAMESPACE";
+	public final static String PROP_KEYVAL_FEATURES = PREFIX + "KeyValFeatures";
 																					// is
 																					// correct
 	public final static String PROP_FIELD6_DEFAULT = PREFIX + "field6.default";
@@ -76,7 +79,10 @@ public class CoNLLImporterProperties extends PepperModuleProperties {
 		this.addProperty(new PepperModuleProperty<String>(PROP_FIELD6_DEFAULT, String.class, "Allowed values are any single category name or pipe separated sequences of category names", false));
 		this.addProperty(new PepperModuleProperty<String>(PROP_POS_NAME, String.class, "A string specifying a valid annotation name for the POS annotation", false));
 		this.addProperty(new PepperModuleProperty<String>(PROP_LEMMA_NAME, String.class, "A string specifying a valid annotation name for the lemma annotation", false));
+		this.addProperty(new PepperModuleProperty<String>(PROP_EDGETYPE_NAME, String.class, "A string specifying a valid edge type name for the dependency edges (e.g. 'dep')", false));
 		this.addProperty(new PepperModuleProperty<Boolean>(PROP_SPLIT_FEATURES, Boolean.class, "If [VALUE] is set TRUE, any data row´s FEATS field will be split into it´s pipe separated elements to create multiple annotations on the corresponding salt token (see POSTAG, CPOSTAG and default). If a field contains a different number of pipe separated elements than defined in the POSTAG, CPOSTAG or default attribute, the lesser number of annotations will be created, while the additional elements will be lost! If VALUE is FALSE, no splitting is done.", false, false));
+		this.addProperty(new PepperModuleProperty<Boolean>(PROP_KEYVAL_FEATURES, Boolean.class, "If [VALUE] is set TRUE, it is assumed that the FEATS column contains pipe-delimited annotation names and values such as Case=Gen|Number=Plur.", false, false));
+		this.addProperty(new PepperModuleProperty<String>(PROP_FEATURES_NAMESPACE, String.class, "Namespace to assign to features annotations in column 6.", null, false));
 		this.addProperty(new PepperModuleProperty<Boolean>(PROP_SENTENCE, Boolean.class, "If [VALUE] is set TRUE add a sentence annotation (cat=S) to the data.", true, false));
 
 	}
@@ -115,11 +121,21 @@ public class CoNLLImporterProperties extends PepperModuleProperties {
 	public String getLemmaName() {
 		return ((String) this.getProperty(PROP_LEMMA_NAME).getValue());
 	}
+	public String getEdgeTypeName() {
+		return ((String) this.getProperty(PROP_EDGETYPE_NAME).getValue());
+	}
+	public String getFeaturesNamespace() {
+		return ((String) this.getProperty(PROP_FEATURES_NAMESPACE).getValue());
+	}
 
 	public Boolean isSplitFeatures() {
 		return ((Boolean) this.getProperty(PROP_SPLIT_FEATURES).getValue());
 	}
-	
+
+	public Boolean isKeyValFeatures() { 
+		return ((Boolean) this.getProperty(PROP_KEYVAL_FEATURES).getValue());
+	}
+
 	public Boolean isSentence() {
     return ((Boolean) this.getProperty(PROP_SENTENCE).getValue());
   }
