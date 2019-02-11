@@ -120,12 +120,15 @@ pepper modules contained in this project
 |---------------------------|-----------------------|-------------|
 |conll.SPOS					|POSTAG, CPOSTAG, NONE	|POSTAG|
 |conll.SLEMMA				|LEMMA, NONE			|LEMMA|
+|conll.EDGE.TYPE		| String	| dep |
 |conll.considerProjectivity	|TRUE, FALSE			|FALSE|
 |conll.projectiveMode		|TYPE, NAMESPACE		|TYPE|
 |conll.field6.POSTAG.TAG	|TRUE, FALSE			|TRUE|
 |conll.field6.CPOSTAG.TAG	|any					| |
 |conll.field6.default		|any					| |
 |conll.splitFeatures		|a single category name or a pipe separated sequence of category names	| morph|
+|conll.KeyValFeatures		| TRUE, FALSE	| FALSE|
+|conll.FEATURES.NAMESPACE		| String	| |
 |conll.SENTENCE		        |TRUE, FALSE	| TRUE|
 
 ### conll.SPOS
@@ -204,6 +207,18 @@ A string specifying a valid annotation name for the lemma annotation. Allowed va
 Usage: conll.splitFeatures=[VALUE]
  If [VALUE] is set TRUE, any data row´s FEATS field will be split into it´s pipe separated elements to create multiple annotations on the corresponding salt token (see POSTAG, CPOSTAG and default). If a field contains a different number of pipe separated elements than defined in the POSTAG, CPOSTAG or default attribute, the lesser number of annotations will be created, while the additional elements will be lost! 
 If VALUE is FALSE, no splitting is done.
+
+### conll.KeyValFeatures
+Usage: conll.KeyValFeatures=[VALUE]
+ If [VALUE] is set TRUE, the features column (col6) is expected to contain pipedelimited pairs of annotation names and values, for example `Case=Gen|Number=Plur`.
+
+ ### conll.FEATURES.NAMESPACE
+Usage: conll.FEATURES.NAMESPACE=[VALUE]
+Sets a separate namespace for annotations in the features column (col6).
+
+ ### conll.EDGE.TYPE
+Usage: conll.EDGE.TYPE=[VALUE]
+Manually sets the edge type for dependency edges (default:dep). This overrides automatic settings from the conll.projectiveMode customization.
 
 ### conll.SENTENCE
 Usage: conll.SENTENCE=[VALUE]

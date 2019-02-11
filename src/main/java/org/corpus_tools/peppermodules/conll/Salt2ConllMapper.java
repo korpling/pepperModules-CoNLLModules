@@ -22,10 +22,12 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.corpus_tools.pepper.common.DOCUMENT_STATUS;
 import org.corpus_tools.pepper.impl.PepperMapperImpl;
@@ -37,11 +39,11 @@ import org.corpus_tools.peppermodules.CoNLLModules.CoNLLImporter;
 import org.corpus_tools.peppermodules.conll.tupleconnector.TupleConnectorFactory;
 import org.corpus_tools.peppermodules.conll.tupleconnector.TupleWriter;
 import org.corpus_tools.salt.common.SDocumentGraph;
+import org.corpus_tools.salt.common.SOrderRelation;
 import org.corpus_tools.salt.common.SSpan;
 import org.corpus_tools.salt.common.SSpanningRelation;
 import org.corpus_tools.salt.common.SToken;
 import org.corpus_tools.salt.core.SAnnotation;
-import org.corpus_tools.salt.core.SNode;
 import org.corpus_tools.salt.core.SRelation;
 
 /**
@@ -62,6 +64,7 @@ public class Salt2ConllMapper extends PepperMapperImpl implements PepperMapper {
 																" Make sure you use the right number of columns and you mark collapsing correctly.";
 	
 	/*properties*/
+	private String tokName = null;
 	private String dependencyQName = null;
 	private String lemmaQName = null;
 	private String posQName = null;
@@ -111,7 +114,17 @@ public class Salt2ConllMapper extends PepperMapperImpl implements PepperMapper {
 		
 		boolean searchSpan = onSpan[0] || onSpan[1] || onSpan[2] || onSpan[3] || onSpan[4] || onSpan[5];
 		
-		for (SToken tok : docGraph.getSortedTokenByText()){
+		Set<SToken> tokenSet = new HashSet<SToken>();
+		if (tokName != null) {
+			List<SRelation> orderRelations = docGraph.getRelations().stream().filter((SRelation r) -> r instanceof SOrderRelation).collect(Collectors.<SRelation>toList());
+			tokenSet = orderRelations.stream().map((SRelation r) -> (SToken) r.getSource()).collect(Collectors.<SToken>toSet());
+			tokenSet.addAll(
+					orderRelations.stream().map((SRelation r) -> (SToken) r.getTarget()).collect(Collectors.<SToken>toSet())
+					);
+		} else {
+			tokenSet.addAll(docGraph.getTokens());
+		}
+		for (SToken tok : docGraph.getSortedTokenByText( tokenSet.stream().collect(Collectors.toList()) )){
 			tuple = new ArrayList<String>();
 			
 			tuple.add(tok.getName().replaceAll("[^0-9]", ""));//ID
@@ -265,6 +278,7 @@ public class Salt2ConllMapper extends PepperMapperImpl implements PepperMapper {
 		if (columns == null){
 			throw new PepperModuleException(ERR_MSG_WRONG_COLUMN_FORMAT);
 		}
+		this.tokName = properties.getSegmentationName();
 		this.dependencyQName = columns.get(ConllDataField.DEPREL);
 		this.lemmaQName = columns.get(ConllDataField.LEMMA);
 		this.posQName = columns.get(ConllDataField.POSTAG);
