@@ -121,6 +121,14 @@ public class Salt2ConllMapper extends PepperMapperImpl implements PepperMapper {
 			tokenSet.addAll(
 					orderRelations.stream().map((SRelation r) -> (SToken) r.getTarget()).collect(Collectors.<SToken>toSet())
 					);
+			if (tokenSet.isEmpty()) {
+				if (orderRelations.isEmpty()) {
+					throw new PepperModuleDataException(this, "No explicit segmentations found. Try removing property " + CoNLLExporterProperties.PROP_SEGMENTATION_NAME);
+				}
+				Set<String> b = new HashSet<>();
+				orderRelations.stream().map((SRelation r) -> r.getType()).collect(Collectors.<String>toSet()).stream().forEach(b::add);
+				throw new PepperModuleDataException(this, "No segmentation with name " + tokName + " could be found. Valid names are: " + String.join(", ", b));
+			}
 		} else {
 			tokenSet.addAll(docGraph.getTokens());
 		}
