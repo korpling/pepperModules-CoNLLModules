@@ -78,7 +78,9 @@ public class CoNLLExporterProperties extends PepperModuleProperties{
 				.withType(String.class)
 				.withDescription("Provide an annotation name that marks sentence spans "
 						+ "(or another discourse unit to mark sentences in conll). "
-						+ "The annotation is expected to be a span annotation.")
+						+ "The annotation is expected to be a span annotation. If a "
+						+ "token is not covered by a sentence span, but nevertheless "
+						+ "contained in a selected segmentation, it will be ignored.")
 				.isRequired(false).build());
 	}
 	

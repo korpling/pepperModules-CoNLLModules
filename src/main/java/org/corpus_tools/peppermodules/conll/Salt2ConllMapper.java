@@ -162,6 +162,10 @@ public class Salt2ConllMapper extends PepperMapperImpl implements PepperMapper {
 		}
 		int tokId = 1;
 		for (SToken tok : docGraph.getSortedTokenByText( tokenSet.stream().collect(Collectors.toList()) )) {
+			if (unitName != null && !token2Id.containsKey(tok)) {
+				// tokens that are not covered by a span will not be exported. This behaviour is expected to be desired.
+				continue;
+			}
 			if (token2Id.get(tok) < tokId) {			
 				//insert blank line first
 				try {
