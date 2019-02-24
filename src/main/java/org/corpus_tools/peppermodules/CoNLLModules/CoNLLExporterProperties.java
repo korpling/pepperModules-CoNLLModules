@@ -65,11 +65,21 @@ public class CoNLLExporterProperties extends PepperModuleProperties{
 	public static final String MARKER_USE_DEFAULT = "*";
 	/** if provided, a specific segmentation is selected rather than all tokens found in a document. The segmentation needs to be marked with SOrderRelations with the specified name. */
 	public static final String PROP_SEGMENTATION_NAME = "segmentation.name";
+	/** Provide an annotation name that marks sentence spans (or another discourse unit to mark sentences in conll). The annotation is expected to be a span annotation. */
+	public static final String PROP_DISCOURSE_UNIT_ANNO_NAME = "discourse.anno.name";
 	
 	public CoNLLExporterProperties(){
 		this.addProperty(new PepperModuleProperty<String>(PROP_COL_CONFIG, String.class, "In this string the annotation names (and collapse instructions) for the CoNLL columns are encoded.", Joiner.on(",").join(DEFAULTS), false));
 		this.addProperty(new PepperModuleProperty<String>(PROP_SPAN_ANNOS, String.class, "This property contains all the annotations that will be found on spans over the tokens, but not the token itself.", "", false));
 		this.addProperty(new PepperModuleProperty<String>(PROP_SEGMENTATION_NAME, String.class, "If provided, a specific segmentation is selected rather than all tokens found in a document. The segmentation needs to be marked with SOrderRelations with the specified name.", null, false));
+		this.addProperty(
+				PepperModuleProperty.create()
+				.withName(PROP_DISCOURSE_UNIT_ANNO_NAME)
+				.withType(String.class)
+				.withDescription("Provide an annotation name that marks sentence spans "
+						+ "(or another discourse unit to mark sentences in conll). "
+						+ "The annotation is expected to be a span annotation.")
+				.isRequired(false).build());
 	}
 	
 	public Map<ConllDataField, String> getColumns(){
@@ -110,5 +120,10 @@ public class CoNLLExporterProperties extends PepperModuleProperties{
 			return (String) value;
 		}
 		return null;
+	}
+	
+	public String getDiscourseUnit() {
+		Object value = getProperty(PROP_DISCOURSE_UNIT_ANNO_NAME).getValue();
+		return value == null? null : (String) value;
 	}
 }
