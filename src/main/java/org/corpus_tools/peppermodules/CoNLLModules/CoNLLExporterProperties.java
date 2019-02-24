@@ -148,6 +148,6 @@ public class CoNLLExporterProperties extends PepperModuleProperties{
 			return null;
 		}
 		String input = ((String) value).replaceAll("\\{|\\}", "");
-		return Arrays.asList(input.split("( )+?,( )+?"));
+		return Arrays.asList(input.split("(( )+)?,(( )+)?"));
 	}
 }

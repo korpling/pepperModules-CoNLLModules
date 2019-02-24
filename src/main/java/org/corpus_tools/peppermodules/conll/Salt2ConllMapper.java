@@ -240,11 +240,10 @@ public class Salt2ConllMapper extends PepperMapperImpl implements PepperMapper {
 				List<String> kvPairs = new ArrayList<>();
 				for (String featAnnoName : toFeatureNames) {
 					SAnnotation featAnno = null;
+					System.out.println("Checking name: " + featAnnoName);
 					if (spanAnnos.contains(featAnnoName)) {
-						List<SRelation> spRels = tok.getInRelations().stream().filter((SRelation r) -> r instanceof SSpanningRelation).collect(Collectors.toList());
-						for (Iterator<SRelation> relIt = spRels.iterator(); relIt.hasNext() && featAnno != null;) {
-							featAnno = ((SSpanningRelation) relIt.next()).getSource().getAnnotation(featAnnoName);
-						}
+						span = getAnnotatedSpan(tok, featAnnoName);
+						featAnno = span == null? null : span.getAnnotation(featAnnoName);
 					} else {
 						tok.getAnnotation(featAnnoName);
 					}
@@ -335,7 +334,7 @@ public class Salt2ConllMapper extends PepperMapperImpl implements PepperMapper {
 		while (anno == null && itRels.hasNext()){
 			SRelation nxtRel = itRels.next();
 			if (nxtRel instanceof SSpanningRelation){
-				span = (SSpan)nxtRel.getSource();
+				span = (SSpan) nxtRel.getSource();
 				anno = span.getAnnotation(annoQName);
 			}						
 		}
