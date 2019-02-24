@@ -30,6 +30,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
 import org.corpus_tools.pepper.common.DOCUMENT_STATUS;
 import org.corpus_tools.pepper.impl.PepperMapperImpl;
 import org.corpus_tools.pepper.modules.PepperMapper;
@@ -180,7 +181,7 @@ public class Salt2ConllMapper extends PepperMapperImpl implements PepperMapper {
 			
 			tuple.add( Integer.toString(tokId) );//ID
 			
-			tuple.add(docGraph.getText(tok));//FORM
+			tuple.add(docGraph.getText(tok).trim());//FORM
 			
 			SSpan span = null;
 			if (!lemmaQName.trim().isEmpty()) {//LEMMA				
@@ -234,7 +235,23 @@ public class Salt2ConllMapper extends PepperMapperImpl implements PepperMapper {
 			}
 			
 			anno = null;
+			List<String> toFeatureNames = ((CoNLLExporterProperties) props).getFeatureAnnos();
 			if (!featsQName.trim().isEmpty()) {//FEATS
+				List<String> kvPairs = new ArrayList<>();
+				for (String featAnnoName : toFeatureNames) {
+					SAnnotation featAnno = null;
+					if (spanAnnos.contains(featAnnoName)) {
+						List<SRelation> spRels = tok.getInRelations().stream().filter((SRelation r) -> r instanceof SSpanningRelation).collect(Collectors.toList());
+						for (Iterator<SRelation> relIt = spRels.iterator(); relIt.hasNext() && featAnno != null;) {
+							featAnno = ((SSpanningRelation) relIt.next()).getSource().getAnnotation(featAnnoName);
+						}
+					} else {
+						tok.getAnnotation(featAnnoName);
+					}
+					if (featAnno != null) {
+						kvPairs.add(StringUtils.join(new String[]{featAnnoName, featAnno.getValue_STEXT()}, "="));
+					}
+				}
 				if (searchSpan && onSpan[3]){
 					span = getAnnotatedSpan(tok, featsQName);
 					if (span != null){
@@ -243,11 +260,13 @@ public class Salt2ConllMapper extends PepperMapperImpl implements PepperMapper {
 				} else {
 					anno = tok.getAnnotation(featsQName);
 				}
-				if (anno == null || NO_VALUE.equals(featsQName)){
-					tuple.add(NO_VALUE);
-				} else {
-					tuple.add(anno.getValue().toString());
+				if ((anno == null || NO_VALUE.equals(featsQName)) && kvPairs.isEmpty()){
+					kvPairs.add(NO_VALUE);
+				} 
+				else if (anno != null) {
+					kvPairs.add(StringUtils.join(new String[] {featsQName, anno.getValue_STEXT()}, "="));
 				}
+				tuple.add(StringUtils.join(kvPairs, "|"));
 			}
 			
 			anno = null;
