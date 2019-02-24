@@ -18,7 +18,6 @@
 package org.corpus_tools.peppermodules.conll;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -27,11 +26,9 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map.Entry;
-import java.util.Properties;
 
 import org.corpus_tools.pepper.common.DOCUMENT_STATUS;
 import org.corpus_tools.pepper.impl.PepperMapperImpl;
-import org.corpus_tools.pepper.modules.PepperModuleProperties;
 import org.corpus_tools.pepper.modules.exceptions.PepperModuleDataException;
 import org.corpus_tools.peppermodules.CoNLLModules.CoNLLImporterProperties;
 import org.corpus_tools.peppermodules.conll.tupleconnector.TupleConnectorFactory;
@@ -43,8 +40,6 @@ import org.corpus_tools.salt.common.STextualDS;
 import org.corpus_tools.salt.common.STextualRelation;
 import org.corpus_tools.salt.common.SToken;
 import org.corpus_tools.salt.core.SAnnotation;
-import org.corpus_tools.salt.semantics.SPOSAnnotation;
-import org.eclipse.emf.common.util.URI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -80,6 +75,7 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 
 
 	boolean splitFeatures;
+	boolean keyValFeatures;
 	
 	public Conll2SaltMapper()
 	{
@@ -90,10 +86,25 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 	private boolean getSplitFeatures() {
 	  return (Boolean) getProperties().getProperty(CoNLLImporterProperties.PROP_SPLIT_FEATURES).getValue();
 	}
-   
-        // check for user-defined POS and lemma annotation names
+
+        // retrieves whether to split pipe separated feature values and expect key names as in: Case=Gen|Number=Plur
+	private boolean getKeyValFeatures() {
+	  return (Boolean) getProperties().getProperty(CoNLLImporterProperties.PROP_KEYVAL_FEATURES).getValue();
+	}
+
+        // check for user-defined edge type, POS and lemma annotation names
         String posName;
         String lemmaName;
+        String edgeType;
+        String featuresNamespace;
+        
+        private String getEdgeType(){
+            return (String) getProperties().getProperties().getProperty(CoNLLImporterProperties.PROP_EDGETYPE_NAME, "dep");
+        }
+
+        private String getFeaturesNamespace(){
+            return (String) getProperties().getProperties().getProperty(CoNLLImporterProperties.PROP_FEATURES_NAMESPACE, null);
+        }
         
         private String getPosName(){
             return (String) getProperties().getProperties().getProperty(CoNLLImporterProperties.PROP_POS_NAME, "");
@@ -271,6 +282,10 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 		}
 
 		STextualDS sTextualDS = SaltFactory.createSTextualDS();
+		String textName = ((CoNLLImporterProperties) getProperties()).getTextName();
+		if(textName != null && !textName.isEmpty()) {
+			sTextualDS.setName(textName);
+		}
 		sTextualDS.setGraph(getDocument().getDocumentGraph());
 
 		ArrayList<SToken> tokenList = new ArrayList<SToken>();
@@ -287,8 +302,11 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 		this.useSLemmaAnnotation = getUseSLemmaAnnotation();
 		this.useSPOSAnnotation = getUseSPOSAnnotation();
 		this.splitFeatures = getSplitFeatures();
+		this.keyValFeatures = getKeyValFeatures();
                 this.posName = getPosName();
                 this.lemmaName = getLemmaName();
+                this.edgeType = getEdgeType();
+                this.featuresNamespace = getFeaturesNamespace();
 
                 boolean considerProjectivity = (Boolean) getProperties().getProperty(CoNLLImporterProperties.PROP_CONSIDER_PROJECTIVITY).getValue();
                 boolean projectiveModeIsType = !getProperties().getProperties().getProperty(CoNLLImporterProperties.PROP_PROJECTIVE_MODE, TYPE).equalsIgnoreCase(NAMESPACE);
@@ -417,17 +435,30 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 							doSplit = (featureKeys.length > 1);
 						}
 					}
-					if (doSplit) {
+                                        if (this.keyValFeatures){ // conll-u style key=val|key2=val2|...
+						String[] featureValues = featureValue.split("\\|");
+                                                for (String KeyVal:featureValues){
+                                                    if (KeyVal.contains("=")){
+                                                        String[] Parts = KeyVal.split("=",2);
+                                                        if (Parts.length == 2){
+                                                            String AnnoKey = Parts[0];
+                                                            String AnnoVal = Parts[1];
+                                                            sToken.createAnnotation(this.featuresNamespace, AnnoKey, AnnoVal);
+                                                        }
+                                                    }
+                                                }
+                                        }
+                                        else if (doSplit) {
 						String[] featureValues = featureValue.split(FEATURESEPARATOR);
 						for (int idx = 0; idx < Math.min(featureKeys.length, featureValues.length); idx++) {
-							sToken.createAnnotation(null, featureKeys[idx], featureValues[idx]);
+							sToken.createAnnotation(this.featuresNamespace, featureKeys[idx], featureValues[idx]);
 						}
 						if (featureKeys.length != featureValues.length) {
 							nonMatchingCategoryNumberLines.add(rowIndex + 1);
 						}
 					} else {
 						// no splitting
-						sToken.createAnnotation(null, featureKey, featureValue);
+						sToken.createAnnotation(this.featuresNamespace, featureKey, featureValue);
 					}
 				} // (featureString!=null)
 
@@ -462,7 +493,11 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 					sAnnotation.setValue(annoValue);
 
 					SPointingRelation sPointingRelation = SaltFactory.createSPointingRelation();
-					sPointingRelation.setType(DEP);
+                                        if (edgeType != DEP){
+                                            sPointingRelation.setType(edgeType);
+                                        }else{
+                                            sPointingRelation.setType(DEP);
+                                        }
 					sPointingRelation.setSource(sToken);
 					sPointingRelation.setTarget(sToken);
 					sPointingRelation.addAnnotation(sAnnotation);

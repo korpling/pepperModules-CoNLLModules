@@ -53,8 +53,11 @@ public class CoNLLImporterProperties extends PepperModuleProperties {
 																					// end
 	public final static String PROP_POS_NAME = PREFIX + "POS.NAME";
 	public final static String PROP_LEMMA_NAME = PREFIX + "LEMMA.NAME";
-																					// is
-																					// correct
+	public final static String PROP_EDGETYPE_NAME = PREFIX + "EDGE.TYPE";
+	public final static String PROP_FEATURES_NAMESPACE = PREFIX + "FEATURES.NAMESPACE";
+	public final static String PROP_KEYVAL_FEATURES = PREFIX + "KeyValFeatures";
+	// is
+	// correct
 	public final static String PROP_FIELD6_DEFAULT = PREFIX + "field6.default";
 	public final static String PROP_SPLIT_FEATURES = PREFIX + "splitFeatures";
 
@@ -62,22 +65,52 @@ public class CoNLLImporterProperties extends PepperModuleProperties {
 	public final static String PROPERTYVAL_POSTAG = "POSTAG";
 	public final static String PROPERTYVAL_CPOSTAG = "CPOSTAG";
 	public final static String PROPERTYVAL_LEMMA = "LEMMA";
-	
+
 	public final static String PROP_SENTENCE = PREFIX + "SENTENCE";
 
-	public CoNLLImporterProperties() {
-		this.addProperty(new PepperModuleProperty<String>(PROP_SPOS, String.class, "States which CoNLL field´s data to use for the SPOSAnnotation of salt tokens, or, if [FIELD] is NONE, not to create SPOSAnnotations at all. If the field designated by [FIELD] contains no data, [ALTERNATIVEFIELD] (if given), is used. If that field contains no data, no SPOSAnnotation is created for the particular salt token.", PROPERTYVAL_POSTAG, false));
-		this.addProperty(new PepperModuleProperty<String>(PROP_SLEMMA, String.class, "States which CoNLL field´s data to use for the SLemmaAnnotation of salt tokens, or, if [FIELD] is NONE, not to create SLemmaAnnotations at all. If the field designated by [FIELD] contains no data, no SLemmaAnnotation is created for the particular salt token. The default value for this attribute is LEMMA.", PROPERTYVAL_LEMMA, false));
-		this.addProperty(new PepperModuleProperty<Boolean>(PROP_CONSIDER_PROJECTIVITY, Boolean.class, "States whether to create a salt pointing relation from projective head of tokens to the dependent.", false, false));
-		this.addProperty(new PepperModuleProperty<String>(PROP_PROJECTIVE_MODE, String.class, "This attribute only applies if  is set TRUE! Usage: conll.projectiveMode=[VALUE] Possible values are TYPE and NAMESPACE Default value for this attribute is TYPE configures how projectivity is modelled in the salt representation. Generally, there will be a salt pointing relation and an annotation with the name 'deprel' on that relation. If the mode is set TYPE, the relation´s type will be 'prodep'. If the mode is set NAMESPACE, the relation´s type will be 'dep' and the annotation´s namespace will be set to 'projective'. ", "TYPE", false));
+	public final static String PROP_TEXT_NAME = PREFIX + "textName";
 
-		this.addProperty(new PepperModuleProperty<String>(PROP_FIELD6_POSTAG, String.class, "This is not only a single property, but a class of properties. Multiple entries of this type may be given in a properties file, but [TAG] must be unique. A property of this type applies for any input data row that contains the given [TAG] as value for the POSTAG field. The corresponding salt token will get a SAnnotation with [VALUE] as name and the input data row´s FEATS field as value.", false));
-		this.addProperty(new PepperModuleProperty<String>(PROP_FIELD6_CPOSTAG, String.class, "This attribute works like , but instead of POSTAG, the CPOSTAG value of data rows is utilized. ", false));
-		this.addProperty(new PepperModuleProperty<String>(PROP_FIELD6_DEFAULT, String.class, "Allowed values are any single category name or pipe separated sequences of category names", false));
-		this.addProperty(new PepperModuleProperty<String>(PROP_POS_NAME, String.class, "A string specifying a valid annotation name for the POS annotation", false));
-		this.addProperty(new PepperModuleProperty<String>(PROP_LEMMA_NAME, String.class, "A string specifying a valid annotation name for the lemma annotation", false));
-		this.addProperty(new PepperModuleProperty<Boolean>(PROP_SPLIT_FEATURES, Boolean.class, "If [VALUE] is set TRUE, any data row´s FEATS field will be split into it´s pipe separated elements to create multiple annotations on the corresponding salt token (see POSTAG, CPOSTAG and default). If a field contains a different number of pipe separated elements than defined in the POSTAG, CPOSTAG or default attribute, the lesser number of annotations will be created, while the additional elements will be lost! If VALUE is FALSE, no splitting is done.", false, false));
-		this.addProperty(new PepperModuleProperty<Boolean>(PROP_SENTENCE, Boolean.class, "If [VALUE] is set TRUE add a sentence annotation (cat=S) to the data.", true, false));
+	public CoNLLImporterProperties() {
+		this.addProperty(new PepperModuleProperty<String>(PROP_SPOS, String.class,
+				"States which CoNLL field´s data to use for the SPOSAnnotation of salt tokens, or, if [FIELD] is NONE, not to create SPOSAnnotations at all. If the field designated by [FIELD] contains no data, [ALTERNATIVEFIELD] (if given), is used. If that field contains no data, no SPOSAnnotation is created for the particular salt token.",
+				PROPERTYVAL_POSTAG, false));
+		this.addProperty(new PepperModuleProperty<String>(PROP_SLEMMA, String.class,
+				"States which CoNLL field´s data to use for the SLemmaAnnotation of salt tokens, or, if [FIELD] is NONE, not to create SLemmaAnnotations at all. If the field designated by [FIELD] contains no data, no SLemmaAnnotation is created for the particular salt token. The default value for this attribute is LEMMA.",
+				PROPERTYVAL_LEMMA, false));
+		this.addProperty(new PepperModuleProperty<Boolean>(PROP_CONSIDER_PROJECTIVITY, Boolean.class,
+				"States whether to create a salt pointing relation from projective head of tokens to the dependent.",
+				false, false));
+		this.addProperty(new PepperModuleProperty<String>(PROP_PROJECTIVE_MODE, String.class,
+				"This attribute only applies if  is set TRUE! Usage: conll.projectiveMode=[VALUE] Possible values are TYPE and NAMESPACE Default value for this attribute is TYPE configures how projectivity is modelled in the salt representation. Generally, there will be a salt pointing relation and an annotation with the name 'deprel' on that relation. If the mode is set TYPE, the relation´s type will be 'prodep'. If the mode is set NAMESPACE, the relation´s type will be 'dep' and the annotation´s namespace will be set to 'projective'. ",
+				"TYPE", false));
+
+		this.addProperty(new PepperModuleProperty<String>(PROP_FIELD6_POSTAG, String.class,
+				"This is not only a single property, but a class of properties. Multiple entries of this type may be given in a properties file, but [TAG] must be unique. A property of this type applies for any input data row that contains the given [TAG] as value for the POSTAG field. The corresponding salt token will get a SAnnotation with [VALUE] as name and the input data row´s FEATS field as value.",
+				false));
+		this.addProperty(new PepperModuleProperty<String>(PROP_FIELD6_CPOSTAG, String.class,
+				"This attribute works like , but instead of POSTAG, the CPOSTAG value of data rows is utilized. ",
+				false));
+		this.addProperty(new PepperModuleProperty<String>(PROP_FIELD6_DEFAULT, String.class,
+				"Allowed values are any single category name or pipe separated sequences of category names", false));
+		this.addProperty(new PepperModuleProperty<String>(PROP_POS_NAME, String.class,
+				"A string specifying a valid annotation name for the POS annotation", false));
+		this.addProperty(new PepperModuleProperty<String>(PROP_LEMMA_NAME, String.class,
+				"A string specifying a valid annotation name for the lemma annotation", false));
+		this.addProperty(new PepperModuleProperty<String>(PROP_EDGETYPE_NAME, String.class,
+				"A string specifying a valid edge type name for the dependency edges (e.g. 'dep')", false));
+		this.addProperty(new PepperModuleProperty<Boolean>(PROP_SPLIT_FEATURES, Boolean.class,
+				"If [VALUE] is set TRUE, any data row´s FEATS field will be split into it´s pipe separated elements to create multiple annotations on the corresponding salt token (see POSTAG, CPOSTAG and default). If a field contains a different number of pipe separated elements than defined in the POSTAG, CPOSTAG or default attribute, the lesser number of annotations will be created, while the additional elements will be lost! If VALUE is FALSE, no splitting is done.",
+				false, false));
+		this.addProperty(new PepperModuleProperty<Boolean>(PROP_KEYVAL_FEATURES, Boolean.class,
+				"If [VALUE] is set TRUE, it is assumed that the FEATS column contains pipe-delimited annotation names and values such as Case=Gen|Number=Plur.",
+				false, false));
+		this.addProperty(new PepperModuleProperty<String>(PROP_FEATURES_NAMESPACE, String.class,
+				"Namespace to assign to features annotations in column 6.", null, false));
+		this.addProperty(new PepperModuleProperty<Boolean>(PROP_SENTENCE, Boolean.class,
+				"If [VALUE] is set TRUE add a sentence annotation (cat=S) to the data.", true, false));
+
+		this.addProperty(PepperModuleProperty.create().withName(PROP_TEXT_NAME).withType(String.class)
+				.withDescription("Name of the text").withDefaultValue(null).isRequired(false).build());
 
 	}
 
@@ -109,19 +142,37 @@ public class CoNLLImporterProperties extends PepperModuleProperties {
 		return ((String) this.getProperty(PROP_FIELD6_DEFAULT).getValue());
 	}
 
-        public String getPosName() {
+	public String getPosName() {
 		return ((String) this.getProperty(PROP_POS_NAME).getValue());
 	}
+
 	public String getLemmaName() {
 		return ((String) this.getProperty(PROP_LEMMA_NAME).getValue());
+	}
+
+	public String getEdgeTypeName() {
+		return ((String) this.getProperty(PROP_EDGETYPE_NAME).getValue());
+	}
+
+	public String getFeaturesNamespace() {
+		return ((String) this.getProperty(PROP_FEATURES_NAMESPACE).getValue());
 	}
 
 	public Boolean isSplitFeatures() {
 		return ((Boolean) this.getProperty(PROP_SPLIT_FEATURES).getValue());
 	}
-	
+
+	public Boolean isKeyValFeatures() {
+		return ((Boolean) this.getProperty(PROP_KEYVAL_FEATURES).getValue());
+	}
+
 	public Boolean isSentence() {
-    return ((Boolean) this.getProperty(PROP_SENTENCE).getValue());
-  }
+		return ((Boolean) this.getProperty(PROP_SENTENCE).getValue());
+	}
+
+	public String getTextName() {
+		Object val = this.getProperty(PROP_TEXT_NAME).getValue();
+		return val instanceof String ? (String) val : null;
+	}
 
 }
