@@ -240,7 +240,6 @@ public class Salt2ConllMapper extends PepperMapperImpl implements PepperMapper {
 				List<String> kvPairs = new ArrayList<>();
 				for (String featAnnoName : toFeatureNames) {
 					SAnnotation featAnno = null;
-					System.out.println("Checking name: " + featAnnoName);
 					if (spanAnnos.contains(featAnnoName)) {
 						span = getAnnotatedSpan(tok, featAnnoName);
 						featAnno = span == null? null : span.getAnnotation(featAnnoName);
