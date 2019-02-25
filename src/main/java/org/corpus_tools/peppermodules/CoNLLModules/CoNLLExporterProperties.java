@@ -19,6 +19,7 @@ package org.corpus_tools.peppermodules.CoNLLModules;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -145,7 +146,7 @@ public class CoNLLExporterProperties extends PepperModuleProperties{
 	public List<String> getFeatureAnnos() {
 		Object value = getProperty(PROP_ANNOS_AS_FEATURES).getValue();
 		if (value == null) {
-			return null;
+			return Collections.<String>emptyList();
 		}
 		String input = ((String) value).replaceAll("\\{|\\}", "");
 		return Arrays.asList(input.split("(( )+)?,(( )+)?"));
