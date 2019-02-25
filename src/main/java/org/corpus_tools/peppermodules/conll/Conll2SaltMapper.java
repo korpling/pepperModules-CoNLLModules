@@ -477,7 +477,7 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 				String headIDStr = fieldValues.get(ConllDataField.HEAD.getFieldNum() - 1);
 				Integer headID = null;
 				try {
-					headID = Integer.parseInt(headIDStr);
+					headID = headIDStr.matches("[0-9]+")? Integer.parseInt(headIDStr) : -1;
 				} catch (NumberFormatException e) {
 					String errorMessage = String.format("Invalid integer value '%s' for HEAD in line %d of input file '" + this.getResourceURI() + "'. Abort conversion of file " + this.getResourceURI() + ".", headIDStr, rowIndex + 1);
 					throw new PepperModuleDataException(this, errorMessage);
