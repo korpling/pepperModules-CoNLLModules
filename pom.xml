@@ -9,7 +9,7 @@
 		<java.version>1.8</java.version>
 	</properties>
 	<artifactId>pepperModules-CoNLLModules</artifactId>
-	<version>2.0.3-SNAPSHOT</version>
+	<version>2.1.0</version>
 	<packaging>bundle</packaging>
 	<description>This project provides a Pepper importer for CoNLL data.</description>
 	<url>https://github.com/korpling/pepperModules-CoNLLModules</url>
