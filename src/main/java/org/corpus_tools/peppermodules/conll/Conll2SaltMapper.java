@@ -18,7 +18,6 @@
 package org.corpus_tools.peppermodules.conll;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -27,11 +26,9 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map.Entry;
-import java.util.Properties;
 
 import org.corpus_tools.pepper.common.DOCUMENT_STATUS;
 import org.corpus_tools.pepper.impl.PepperMapperImpl;
-import org.corpus_tools.pepper.modules.PepperModuleProperties;
 import org.corpus_tools.pepper.modules.exceptions.PepperModuleDataException;
 import org.corpus_tools.peppermodules.CoNLLModules.CoNLLImporterProperties;
 import org.corpus_tools.peppermodules.conll.tupleconnector.TupleConnectorFactory;
@@ -43,8 +40,6 @@ import org.corpus_tools.salt.common.STextualDS;
 import org.corpus_tools.salt.common.STextualRelation;
 import org.corpus_tools.salt.common.SToken;
 import org.corpus_tools.salt.core.SAnnotation;
-import org.corpus_tools.salt.semantics.SPOSAnnotation;
-import org.eclipse.emf.common.util.URI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -287,6 +282,10 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 		}
 
 		STextualDS sTextualDS = SaltFactory.createSTextualDS();
+		String textName = ((CoNLLImporterProperties) getProperties()).getTextName();
+		if(textName != null && !textName.isEmpty()) {
+			sTextualDS.setName(textName);
+		}
 		sTextualDS.setGraph(getDocument().getDocumentGraph());
 
 		ArrayList<SToken> tokenList = new ArrayList<SToken>();
@@ -478,7 +477,7 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 				String headIDStr = fieldValues.get(ConllDataField.HEAD.getFieldNum() - 1);
 				Integer headID = null;
 				try {
-					headID = Integer.parseInt(headIDStr);
+					headID = headIDStr.matches("[0-9]+")? Integer.parseInt(headIDStr) : -1;
 				} catch (NumberFormatException e) {
 					String errorMessage = String.format("Invalid integer value '%s' for HEAD in line %d of input file '" + this.getResourceURI() + "'. Abort conversion of file " + this.getResourceURI() + ".", headIDStr, rowIndex + 1);
 					throw new PepperModuleDataException(this, errorMessage);
@@ -516,7 +515,8 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 					String proheadIDStr = fieldValues.get(ConllDataField.PHEAD.getFieldNum() - 1);
 					Integer proheadID = null;
 					try {
-						proheadID = Integer.parseInt(proheadIDStr);
+						System.out.println("Entered critical scope");
+						proheadID = "_".equals( proheadIDStr.trim() )? -1 : Integer.parseInt(proheadIDStr);
 					} catch (NumberFormatException e) {
 						String errorMessage = String.format("invalid integer value '%s' for PHEAD in line %d of input file. Abort conversion of file " + this.getResourceURI() + ".", proheadIDStr, rowIndex + 1);
 						throw new PepperModuleDataException(this, errorMessage);

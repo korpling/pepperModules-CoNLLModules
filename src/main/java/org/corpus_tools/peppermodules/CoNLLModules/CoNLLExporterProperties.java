@@ -17,11 +17,16 @@
  */
 package org.corpus_tools.peppermodules.CoNLLModules;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.lang3.StringUtils;
 import org.corpus_tools.pepper.modules.PepperModuleProperties;
 import org.corpus_tools.pepper.modules.PepperModuleProperty;
 import org.corpus_tools.peppermodules.conll.ConllDataField;
@@ -65,11 +70,32 @@ public class CoNLLExporterProperties extends PepperModuleProperties{
 	public static final String MARKER_USE_DEFAULT = "*";
 	/** if provided, a specific segmentation is selected rather than all tokens found in a document. The segmentation needs to be marked with SOrderRelations with the specified name. */
 	public static final String PROP_SEGMENTATION_NAME = "segmentation.name";
+	/** Provide an annotation name that marks sentence spans (or another discourse unit to mark sentences in conll). The annotation is expected to be a span annotation. */
+	public static final String PROP_DISCOURSE_UNIT_ANNO_NAME = "discourse.anno.name";
+	/** The annotations listed in csv-style will be exported into CoNLLs feature column as "KEY=VALUE"-pairs. */
+	public static final String PROP_ANNOS_AS_FEATURES = "annos.as.features";
 	
 	public CoNLLExporterProperties(){
 		this.addProperty(new PepperModuleProperty<String>(PROP_COL_CONFIG, String.class, "In this string the annotation names (and collapse instructions) for the CoNLL columns are encoded.", Joiner.on(",").join(DEFAULTS), false));
 		this.addProperty(new PepperModuleProperty<String>(PROP_SPAN_ANNOS, String.class, "This property contains all the annotations that will be found on spans over the tokens, but not the token itself.", "", false));
 		this.addProperty(new PepperModuleProperty<String>(PROP_SEGMENTATION_NAME, String.class, "If provided, a specific segmentation is selected rather than all tokens found in a document. The segmentation needs to be marked with SOrderRelations with the specified name.", null, false));
+		this.addProperty(
+				PepperModuleProperty.create()
+				.withName(PROP_DISCOURSE_UNIT_ANNO_NAME)
+				.withType(String.class)
+				.withDescription("Provide an annotation name that marks sentence spans "
+						+ "(or another discourse unit to mark sentences in conll). "
+						+ "The annotation is expected to be a span annotation. If a "
+						+ "token is not covered by a sentence span, but nevertheless "
+						+ "contained in a selected segmentation, it will be ignored.")
+				.isRequired(false).build());
+		this.addProperty(
+				PepperModuleProperty.create()
+				.withName(PROP_ANNOS_AS_FEATURES)
+				.withType(String.class)
+				.withDescription("The annotations listed in csv-style will be exported into CoNLLs feature column as \"KEY=VALUE\"-pairs.")
+				.isRequired(false)
+				.build());
 	}
 	
 	public Map<ConllDataField, String> getColumns(){
@@ -110,5 +136,19 @@ public class CoNLLExporterProperties extends PepperModuleProperties{
 			return (String) value;
 		}
 		return null;
+	}
+	
+	public String getDiscourseUnit() {
+		Object value = getProperty(PROP_DISCOURSE_UNIT_ANNO_NAME).getValue();
+		return value == null? null : (String) value;
+	}
+	
+	public List<String> getFeatureAnnos() {
+		Object value = getProperty(PROP_ANNOS_AS_FEATURES).getValue();
+		if (value == null) {
+			return Collections.<String>emptyList();
+		}
+		String input = ((String) value).replaceAll("\\{|\\}", "");
+		return Arrays.asList(input.split("(( )+)?,(( )+)?"));
 	}
 }

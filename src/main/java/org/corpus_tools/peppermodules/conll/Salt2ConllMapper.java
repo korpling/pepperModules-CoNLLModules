@@ -22,6 +22,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -29,6 +30,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
 import org.corpus_tools.pepper.common.DOCUMENT_STATUS;
 import org.corpus_tools.pepper.impl.PepperMapperImpl;
 import org.corpus_tools.pepper.modules.PepperMapper;
@@ -45,6 +47,8 @@ import org.corpus_tools.salt.common.SSpanningRelation;
 import org.corpus_tools.salt.common.SToken;
 import org.corpus_tools.salt.core.SAnnotation;
 import org.corpus_tools.salt.core.SRelation;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 
@@ -54,6 +58,8 @@ import org.corpus_tools.salt.core.SRelation;
  *
  */
 public class Salt2ConllMapper extends PepperMapperImpl implements PepperMapper {
+	
+	private static final Logger logger = LoggerFactory.getLogger(Salt2ConllMapper.class);
 	
 	private static final String ERR_MSG_NO_DOCUMENT = "No document to convert.";
 	private static final String ERR_MSG_EMPTY_DOCUMENT = "Document is empty.";
@@ -117,19 +123,65 @@ public class Salt2ConllMapper extends PepperMapperImpl implements PepperMapper {
 		Set<SToken> tokenSet = new HashSet<SToken>();
 		if (tokName != null) {
 			List<SRelation> orderRelations = docGraph.getRelations().stream().filter((SRelation r) -> r instanceof SOrderRelation).collect(Collectors.<SRelation>toList());
-			tokenSet = orderRelations.stream().map((SRelation r) -> (SToken) r.getSource()).collect(Collectors.<SToken>toSet());
+			List<SRelation> selectedRelations = orderRelations.stream().filter((SRelation r) -> tokName.equals(r.getType())).collect(Collectors.toList());
+			tokenSet = selectedRelations.stream().map((SRelation r) -> (SToken) r.getSource()).collect(Collectors.<SToken>toSet());
 			tokenSet.addAll(
-					orderRelations.stream().map((SRelation r) -> (SToken) r.getTarget()).collect(Collectors.<SToken>toSet())
-					);
+					selectedRelations.stream().map((SRelation r) -> (SToken) r.getTarget()).collect(Collectors.<SToken>toSet())
+			);
+			if (tokenSet.isEmpty()) {
+				if (orderRelations.isEmpty()) {
+					throw new PepperModuleDataException(this, "No explicit segmentations found. Try removing property " + CoNLLExporterProperties.PROP_SEGMENTATION_NAME);
+				}
+				Set<String> b = new HashSet<>();
+				orderRelations.stream().map((SRelation r) -> r.getType()).collect(Collectors.<String>toSet()).stream().forEach(b::add);
+				throw new PepperModuleDataException(this, "No segmentation with name " + tokName + " could be found. Valid names are: " + String.join(", ", b));
+			}
 		} else {
 			tokenSet.addAll(docGraph.getTokens());
 		}
-		for (SToken tok : docGraph.getSortedTokenByText( tokenSet.stream().collect(Collectors.toList()) )){
+		Map<SToken, Integer> token2Id = new HashMap<>();
+		String unitName = ((CoNLLExporterProperties) getProperties()).getDiscourseUnit();
+		if (unitName != null) {			
+			for (SSpan span : docGraph.getSpans()) {
+				if (span.getAnnotation(unitName) != null) {	
+					List<SToken> overlappedTokens = docGraph.getOverlappedTokens(span).stream().filter(tokenSet::contains).collect(Collectors.toList());
+					int i = 1;
+					for (SToken tok : docGraph.getSortedTokenByText( overlappedTokens )) {
+						token2Id.put(tok, i++);
+					}
+				}
+			}
+			if (token2Id.isEmpty()) {
+				throw new PepperModuleDataException(this, "No tokens in span group " + unitName + " on tokenization " + tokName + " defined.");
+			}
+		}
+		if (token2Id.isEmpty()) {
+			int i = 1;
+			for (SToken tok : docGraph.getSortedTokenByText( tokenSet.stream().collect(Collectors.toList()) )){
+				token2Id.put(tok, i++);
+			}
+		}
+		int tokId = 0;
+		for (SToken tok : docGraph.getSortedTokenByText( tokenSet.stream().collect(Collectors.toList()) )) {
+			if (unitName != null && !token2Id.containsKey(tok)) {
+				// tokens that are not covered by a span will not be exported. This behaviour is expected to be desired.
+				continue;
+			}
+			if (token2Id.get(tok) <= tokId) {			
+				//insert blank line first
+				try {
+					tw.addTuple(new ArrayList<>());
+				} catch (FileNotFoundException e) {
+					throw new PepperModuleException();
+				}
+			}
+			tokId = token2Id.get(tok);
+		
 			tuple = new ArrayList<String>();
 			
-			tuple.add(tok.getName().replaceAll("[^0-9]", ""));//ID
+			tuple.add( Integer.toString(tokId) );//ID
 			
-			tuple.add(docGraph.getText(tok));//FORM
+			tuple.add(docGraph.getText(tok).trim());//FORM
 			
 			SSpan span = null;
 			if (!lemmaQName.trim().isEmpty()) {//LEMMA				
@@ -183,7 +235,21 @@ public class Salt2ConllMapper extends PepperMapperImpl implements PepperMapper {
 			}
 			
 			anno = null;
+			List<String> toFeatureNames = ((CoNLLExporterProperties) props).getFeatureAnnos();
 			if (!featsQName.trim().isEmpty()) {//FEATS
+				List<String> kvPairs = new ArrayList<>();
+				for (String featAnnoName : toFeatureNames) {
+					SAnnotation featAnno = null;
+					if (spanAnnos.contains(featAnnoName)) {
+						span = getAnnotatedSpan(tok, featAnnoName);
+						featAnno = span == null? null : span.getAnnotation(featAnnoName);
+					} else {
+						tok.getAnnotation(featAnnoName);
+					}
+					if (featAnno != null) {
+						kvPairs.add(StringUtils.join(new String[]{featAnnoName, featAnno.getValue_STEXT()}, "="));
+					}
+				}
 				if (searchSpan && onSpan[3]){
 					span = getAnnotatedSpan(tok, featsQName);
 					if (span != null){
@@ -192,11 +258,13 @@ public class Salt2ConllMapper extends PepperMapperImpl implements PepperMapper {
 				} else {
 					anno = tok.getAnnotation(featsQName);
 				}
-				if (anno == null || NO_VALUE.equals(featsQName)){
-					tuple.add(NO_VALUE);
-				} else {
-					tuple.add(anno.getValue().toString());
+				if ((anno == null || NO_VALUE.equals(featsQName)) && kvPairs.isEmpty()){
+					kvPairs.add(NO_VALUE);
+				} 
+				else if (anno != null) {
+					kvPairs.add(StringUtils.join(new String[] {featsQName, anno.getValue_STEXT()}, "="));
 				}
+				tuple.add(StringUtils.join(kvPairs, "|"));
 			}
 			
 			anno = null;
@@ -209,7 +277,7 @@ public class Salt2ConllMapper extends PepperMapperImpl implements PepperMapper {
 					for (Iterator<SRelation> iter=incoming.iterator();
 							iter.hasNext()&&!isDependency;
 							next=iter.next(), isDependency=next.getAnnotation(dependencyQName)!=null, anno=next.getAnnotation(dependencyQName)){}				
-					tuple.add(isDependency? ((SToken)next.getSource()).getName().replaceAll("[^0-9]", "") : NO_VALUE);//HEAD
+					tuple.add(isDependency? Integer.toString((token2Id.get(next.getSource()))) : NO_VALUE);//HEAD
 					tuple.add(anno==null? NO_VALUE : (anno.getValue()==null? NO_VALUE : anno.getValue_STEXT()));//FUNC
 				}						
 			}
@@ -265,7 +333,7 @@ public class Salt2ConllMapper extends PepperMapperImpl implements PepperMapper {
 		while (anno == null && itRels.hasNext()){
 			SRelation nxtRel = itRels.next();
 			if (nxtRel instanceof SSpanningRelation){
-				span = (SSpan)nxtRel.getSource();
+				span = (SSpan) nxtRel.getSource();
 				anno = span.getAnnotation(annoQName);
 			}						
 		}
