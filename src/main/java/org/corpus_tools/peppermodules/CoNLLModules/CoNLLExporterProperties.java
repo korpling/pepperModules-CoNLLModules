@@ -104,7 +104,7 @@ public class CoNLLExporterProperties extends PepperModuleProperties{
 		ConllDataField[] header = {ConllDataField.LEMMA, ConllDataField.CPOSTAG, ConllDataField.POSTAG, ConllDataField.FEATS, ConllDataField.DEPREL, ConllDataField.PHEAD, ConllDataField.PDEPREL};
 		HashMap<ConllDataField, String> colInfo = new HashMap<>();
 		for (int i = 0; i<columns.length; i++){			
-			colInfo.put(header[i], MARKER_USE_DEFAULT.equals(columns[i])? DEFAULTS[i] : columns[i]);
+			colInfo.put(header[i], MARKER_USE_DEFAULT.equals(columns[i])? DEFAULTS[i] : columns[i].trim());
 		}
 		if (columns.length < 7){
 			if (columns.length < 6){
