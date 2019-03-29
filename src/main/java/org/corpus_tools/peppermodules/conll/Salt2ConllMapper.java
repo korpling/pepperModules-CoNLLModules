@@ -20,6 +20,7 @@ package org.corpus_tools.peppermodules.conll;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -81,6 +82,8 @@ public class Salt2ConllMapper extends PepperMapperImpl implements PepperMapper {
 	private Set<String> spanAnnos = null;
 	
 	private SDocumentGraph docGraph = null;
+
+	private boolean flatout;
 	
 	@Override
 	public DOCUMENT_STATUS mapSDocument(){		
@@ -96,10 +99,14 @@ public class Salt2ConllMapper extends PepperMapperImpl implements PepperMapper {
 		
 		TupleWriter tw = TupleConnectorFactory.fINSTANCE.createTupleWriter();
 		
-		String dirname = getResourceURI().toFileString();
-		(new File(dirname)).mkdirs();
-		String conllFileName = dirname+getDocument().getName()+"."+CoNLLImporter.ENDING_TXT;
+		String conllFileName;
+		if (this.flatout) {
+			conllFileName = Paths.get(getResourceURI().toFileString() + getDocument().getPath().lastSegment() + "." + CoNLLImporter.ENDING_TXT).toString();
+		} else {
+			conllFileName = Paths.get(getResourceURI().toFileString(), getDocument().getPath().path() + "." + CoNLLImporter.ENDING_TXT).toString();
+		}
 		File file = new File(conllFileName);
+		file.getParentFile().mkdirs();
 		try {
 			if (!file.exists()){
 				file.createNewFile();
@@ -213,7 +220,7 @@ public class Salt2ConllMapper extends PepperMapperImpl implements PepperMapper {
 				if (anno == null || NO_VALUE.equals(cposQName)){
 					tuple.add(NO_VALUE);
 				} else {
-					tuple.add(anno.getValue().toString());
+					tuple.add(anno.getValue_STEXT());
 				}
 			}
 
@@ -261,7 +268,7 @@ public class Salt2ConllMapper extends PepperMapperImpl implements PepperMapper {
 				if ((anno == null || NO_VALUE.equals(featsQName)) && kvPairs.isEmpty()){
 					kvPairs.add(NO_VALUE);
 				} 
-				else if (anno != null) {
+				else if (anno != null && !anno.getValue_STEXT().trim().isEmpty()) {
 					kvPairs.add(StringUtils.join(new String[] {featsQName, anno.getValue_STEXT()}, "="));
 				}
 				tuple.add(StringUtils.join(kvPairs, "|"));
@@ -353,8 +360,9 @@ public class Salt2ConllMapper extends PepperMapperImpl implements PepperMapper {
 		this.cposQName = columns.get(ConllDataField.CPOSTAG);
 		this.featsQName = columns.get(ConllDataField.FEATS);
 		this.miscQName = columns.get(ConllDataField.PHEAD);
-		this.tokinfoQName = columns.get(ConllDataField.PDEPREL);
+		this.tokinfoQName = columns.get(ConllDataField.PDEPREL);		
 		
 		this.spanAnnos = properties.getSpanAnnotations();
+		this.flatout = properties.flattenOutputTree();
 	}
 }
