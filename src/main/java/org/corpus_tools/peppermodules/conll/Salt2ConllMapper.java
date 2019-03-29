@@ -101,7 +101,7 @@ public class Salt2ConllMapper extends PepperMapperImpl implements PepperMapper {
 		
 		String conllFileName;
 		if (this.flatout) {
-			conllFileName = Paths.get(getResourceURI().toFileString() + getDocument().getPath().lastSegment() + "." + CoNLLImporter.ENDING_TXT).toString();
+			conllFileName = Paths.get(getResourceURI().toFileString(), getDocument().getName() + "." + CoNLLImporter.ENDING_TXT).toString();
 		} else {
 			conllFileName = Paths.get(getResourceURI().toFileString(), getDocument().getPath().path() + "." + CoNLLImporter.ENDING_TXT).toString();
 		}
