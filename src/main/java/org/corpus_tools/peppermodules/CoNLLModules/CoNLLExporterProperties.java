@@ -74,6 +74,8 @@ public class CoNLLExporterProperties extends PepperModuleProperties{
 	public static final String PROP_DISCOURSE_UNIT_ANNO_NAME = "discourse.anno.name";
 	/** The annotations listed in csv-style will be exported into CoNLLs feature column as "KEY=VALUE"-pairs. */
 	public static final String PROP_ANNOS_AS_FEATURES = "annos.as.features";
+	/** This property determines whether or not the source directories tree structure should be kept or a flat output directory is desired. */
+	public static final String PROP_FLAT_OUTPUT = "output.flatten";
 	
 	public CoNLLExporterProperties(){
 		this.addProperty(new PepperModuleProperty<String>(PROP_COL_CONFIG, String.class, "In this string the annotation names (and collapse instructions) for the CoNLL columns are encoded.", Joiner.on(",").join(DEFAULTS), false));
@@ -94,6 +96,14 @@ public class CoNLLExporterProperties extends PepperModuleProperties{
 				.withName(PROP_ANNOS_AS_FEATURES)
 				.withType(String.class)
 				.withDescription("The annotations listed in csv-style will be exported into CoNLLs feature column as \"KEY=VALUE\"-pairs.")
+				.isRequired(false)
+				.build());
+		this.addProperty(
+				PepperModuleProperty.create()
+				.withName(PROP_FLAT_OUTPUT)
+				.withType(Boolean.class)
+				.withDescription("This property determines whether or not the source directories tree structure should be kept or a flat output directory is desired.")
+				.withDefaultValue(true)
 				.isRequired(false)
 				.build());
 	}
@@ -150,5 +160,9 @@ public class CoNLLExporterProperties extends PepperModuleProperties{
 		}
 		String input = ((String) value).replaceAll("\\{|\\}", "");
 		return Arrays.asList(input.split("(( )+)?,(( )+)?"));
+	}
+	
+	public boolean flattenOutputTree() {
+		return (Boolean) getProperty(PROP_FLAT_OUTPUT).getValue();
 	}
 }
