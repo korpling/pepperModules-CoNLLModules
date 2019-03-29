@@ -253,7 +253,7 @@ public class Salt2ConllMapper extends PepperMapperImpl implements PepperMapper {
 					} else {
 						tok.getAnnotation(featAnnoName);
 					}
-					if (featAnno != null) {
+					if (featAnno != null && !featAnno.getValue_STEXT().isEmpty()) {
 						kvPairs.add(StringUtils.join(new String[]{featAnnoName, featAnno.getValue_STEXT()}, "="));
 					}
 				}
