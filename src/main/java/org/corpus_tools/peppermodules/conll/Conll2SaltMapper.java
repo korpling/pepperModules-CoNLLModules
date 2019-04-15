@@ -463,9 +463,12 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 				} // (featureString!=null)
 
 				// get ID of current token
-				String tokenIDStr = fieldValues.get(ConllDataField.ID.getFieldNum() - 1);
+				String tokenIDStr = fieldValues.get(ConllDataField.ID.getFieldNum() - 1);				
 				Integer tokenID = null;
 				try {
+					if (tokenIDStr.contains("-")) {
+						continue;
+					}
 					tokenID = Integer.parseInt(tokenIDStr);
 				} catch (NumberFormatException e) {
 					String errorMessage = String.format("Invalid integer value '%s' for ID in line %d of input file. Abort conversion of file " + this.getResourceURI() + ".", tokenIDStr, rowIndex + 1);
