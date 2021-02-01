@@ -69,6 +69,12 @@ public class CoNLLImporterProperties extends PepperModuleProperties {
 	public final static String PROP_SENTENCE = PREFIX + "SENTENCE";
 
 	public final static String PROP_TEXT_NAME = PREFIX + "textName";
+	
+	/** This determines the edge type for enhanced dependencies as coded by the conll-u standard. The edge type needs to be distinct from the edge type set for regular dependencies. If this property is set, parsing the file for enhanced dependencies will be activated.  Does not work together with 'considerProjectivity'.*/
+	public static final String PROP_ENHANCED_EDGE_TYPE = PREFIX + "enhanced.EDGE.TYPE";
+	
+	/** If set to true, this property triggers a creation of SLayers for dependency annotations including edges and tree nodes. Layer names are the edge types. */
+	public static final String PROP_DEPS_WITH_LAYERS = PREFIX + "dependency.layers";
 
 	public CoNLLImporterProperties() {
 		this.addProperty(new PepperModuleProperty<String>(PROP_SPOS, String.class,
@@ -83,7 +89,7 @@ public class CoNLLImporterProperties extends PepperModuleProperties {
 		this.addProperty(new PepperModuleProperty<String>(PROP_PROJECTIVE_MODE, String.class,
 				"This attribute only applies if  is set TRUE! Usage: conll.projectiveMode=[VALUE] Possible values are TYPE and NAMESPACE Default value for this attribute is TYPE configures how projectivity is modelled in the salt representation. Generally, there will be a salt pointing relation and an annotation with the name 'deprel' on that relation. If the mode is set TYPE, the relation´s type will be 'prodep'. If the mode is set NAMESPACE, the relation´s type will be 'dep' and the annotation´s namespace will be set to 'projective'. ",
 				"TYPE", false));
-
+		
 		this.addProperty(new PepperModuleProperty<String>(PROP_FIELD6_POSTAG, String.class,
 				"This is not only a single property, but a class of properties. Multiple entries of this type may be given in a properties file, but [TAG] must be unique. A property of this type applies for any input data row that contains the given [TAG] as value for the POSTAG field. The corresponding salt token will get a SAnnotation with [VALUE] as name and the input data row´s FEATS field as value.",
 				false));
@@ -108,10 +114,21 @@ public class CoNLLImporterProperties extends PepperModuleProperties {
 				"Namespace to assign to features annotations in column 6.", null, false));
 		this.addProperty(new PepperModuleProperty<Boolean>(PROP_SENTENCE, Boolean.class,
 				"If [VALUE] is set TRUE add a sentence annotation (cat=S) to the data.", true, false));
-
+		
 		this.addProperty(PepperModuleProperty.create().withName(PROP_TEXT_NAME).withType(String.class)
 				.withDescription("Name of the text").withDefaultValue(null).isRequired(false).build());
-
+		
+		addProperty(PepperModuleProperty.create()
+				.withName(PROP_ENHANCED_EDGE_TYPE)
+				.withType(String.class)
+				.withDescription("This determines the edge type for enhanced dependencies as coded by the conll-u standard. If this property is set, parsing the file for enhanced dependencies will be activated. Does not work together with 'considerProjectivity'.")
+				.build());
+		addProperty(PepperModuleProperty.create()
+				.withName(PROP_DEPS_WITH_LAYERS)
+				.withType(Boolean.class)
+				.withDescription("If set to true, this property triggers a creation of SLayers for dependency annotations including edges and tree nodes. Layer names are the edge types.")
+				.withDefaultValue(false)
+				.build());
 	}
 
 	public String getSPos() {
@@ -174,5 +191,13 @@ public class CoNLLImporterProperties extends PepperModuleProperties {
 		Object val = this.getProperty(PROP_TEXT_NAME).getValue();
 		return val instanceof String ? (String) val : null;
 	}
-
+	
+	public String getEnhancedEdgeType() {
+		Object val = getProperty(PROP_ENHANCED_EDGE_TYPE).getValue();
+		return val == null? null : (String) val;
+	}
+	
+	public Boolean dependenciesHaveLayers() {
+		return (Boolean) getProperty(PROP_DEPS_WITH_LAYERS).getValue();
+	}
 }

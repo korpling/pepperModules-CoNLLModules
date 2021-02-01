@@ -200,10 +200,10 @@ public class Salt2ConllMapper extends PepperMapperImpl implements PepperMapper {
 				} else {
 					anno = tok.getAnnotation(lemmaQName);
 				}				
-				if (anno == null || NO_VALUE.equals(lemmaQName)){
+				if (anno == null || anno.getValue_STEXT() == null || NO_VALUE.equals(lemmaQName)){
 					tuple.add(NO_VALUE);
 				} else {
-					tuple.add(anno.getValue().toString());
+					tuple.add(anno.getValue_STEXT());
 				}
 			}
 
@@ -234,7 +234,7 @@ public class Salt2ConllMapper extends PepperMapperImpl implements PepperMapper {
 				} else {
 					anno = tok.getAnnotation(posQName);
 				}
-				if (anno == null || NO_VALUE.equals(posQName)){
+				if (anno == null || anno.getValue_STEXT() == null || NO_VALUE.equals(posQName)){
 					tuple.add(NO_VALUE);
 				} else {
 					tuple.add(anno.getValue().toString());
@@ -254,7 +254,7 @@ public class Salt2ConllMapper extends PepperMapperImpl implements PepperMapper {
 						tok.getAnnotation(featAnnoName);
 					}
 					if (featAnno != null && featAnno.getValue() != null && !featAnno.getValue_STEXT().trim().isEmpty()) {
-						kvPairs.add(StringUtils.join(new String[]{featAnnoName, featAnno.getValue_STEXT()}, "="));
+						kvPairs.add(StringUtils.join(new String[]{featAnnoName, featAnno.getValue_STEXT().trim()}, "="));
 					}
 				}
 				if (searchSpan && onSpan[3]){
@@ -269,7 +269,7 @@ public class Salt2ConllMapper extends PepperMapperImpl implements PepperMapper {
 					kvPairs.add(NO_VALUE);
 				} 
 				else if (anno != null && anno.getValue() != null && !anno.getValue_STEXT().trim().isEmpty()) {
-					kvPairs.add(StringUtils.join(new String[] {featsQName, anno.getValue_STEXT()}, "="));
+					kvPairs.add(StringUtils.join(new String[] {featsQName, anno.getValue_STEXT().trim()}, "="));
 				}
 				tuple.add(StringUtils.join(kvPairs, "|"));
 			}

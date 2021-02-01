@@ -25,8 +25,10 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.corpus_tools.pepper.common.DOCUMENT_STATUS;
 import org.corpus_tools.pepper.impl.PepperMapperImpl;
 import org.corpus_tools.pepper.modules.exceptions.PepperModuleDataException;
@@ -36,10 +38,12 @@ import org.corpus_tools.peppermodules.conll.tupleconnector.TupleReader;
 import org.corpus_tools.salt.SaltFactory;
 import org.corpus_tools.salt.common.SPointingRelation;
 import org.corpus_tools.salt.common.SSpan;
+import org.corpus_tools.salt.common.SStructuredNode;
 import org.corpus_tools.salt.common.STextualDS;
 import org.corpus_tools.salt.common.STextualRelation;
 import org.corpus_tools.salt.common.SToken;
 import org.corpus_tools.salt.core.SAnnotation;
+import org.corpus_tools.salt.core.SLayer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -96,10 +100,16 @@ public class Conll2SaltMapper extends PepperMapperImpl {
         String posName;
         String lemmaName;
         String edgeType;
+        String enhancedEdgeType;
         String featuresNamespace;
+        boolean dependenciesHaveLayers;
         
         private String getEdgeType(){
             return (String) getProperties().getProperties().getProperty(CoNLLImporterProperties.PROP_EDGETYPE_NAME, "dep");
+        }
+        
+        private String getEnhancedEdgeType(){
+            return ((CoNLLImporterProperties) getProperties()).getEnhancedEdgeType();
         }
 
         private String getFeaturesNamespace(){
@@ -112,6 +122,10 @@ public class Conll2SaltMapper extends PepperMapperImpl {
         
         private String getLemmaName(){
             return (String) getProperties().getProperties().getProperty(CoNLLImporterProperties.PROP_LEMMA_NAME, "");
+        }
+        
+        private boolean dependenciesHaveLayers() {
+        	return ((CoNLLImporterProperties) getProperties()).dependenciesHaveLayers();
         }
 
         
@@ -303,13 +317,15 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 		this.useSPOSAnnotation = getUseSPOSAnnotation();
 		this.splitFeatures = getSplitFeatures();
 		this.keyValFeatures = getKeyValFeatures();
-                this.posName = getPosName();
-                this.lemmaName = getLemmaName();
-                this.edgeType = getEdgeType();
-                this.featuresNamespace = getFeaturesNamespace();
+        this.posName = getPosName();
+        this.lemmaName = getLemmaName();
+        this.edgeType = getEdgeType();
+        this.enhancedEdgeType = getEnhancedEdgeType();
+        this.featuresNamespace = getFeaturesNamespace();
+        this.dependenciesHaveLayers = dependenciesHaveLayers();
 
-                boolean considerProjectivity = (Boolean) getProperties().getProperty(CoNLLImporterProperties.PROP_CONSIDER_PROJECTIVITY).getValue();
-                boolean projectiveModeIsType = !getProperties().getProperties().getProperty(CoNLLImporterProperties.PROP_PROJECTIVE_MODE, TYPE).equalsIgnoreCase(NAMESPACE);
+        boolean considerProjectivity = (Boolean) getProperties().getProperty(CoNLLImporterProperties.PROP_CONSIDER_PROJECTIVITY).getValue();
+        boolean projectiveModeIsType = !getProperties().getProperties().getProperty(CoNLLImporterProperties.PROP_PROJECTIVE_MODE, TYPE).equalsIgnoreCase(NAMESPACE);
 
 		// this list is used to collect lines numbers where number of categories
 		// does not match expected number of categories
@@ -319,9 +335,7 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 		int stringBuilderCharBufferSize = tupleReader.characterSize(ConllDataField.FORM.getFieldNum() - 1) + numOfTuples;
 		StringBuilder primaryText = new StringBuilder(stringBuilderCharBufferSize);
 
-		List<SToken> sentenceToken = new LinkedList<>(); 
-
-		
+		List<SToken> sentenceToken = new LinkedList<>();	
 		// iteration over all data rows (the complete input-file)
 		for (int rowIndex = 0; rowIndex < numOfTuples; rowIndex++) {
 			try {
@@ -461,7 +475,9 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 						sToken.createAnnotation(this.featuresNamespace, featureKey, featureValue);
 					}
 				} // (featureString!=null)
-
+				
+				
+				/* BEGIN OF DEPENDENCIES */				
 				// get ID of current token
 				String tokenIDStr = fieldValues.get(ConllDataField.ID.getFieldNum() - 1);				
 				Integer tokenID = null;
@@ -476,7 +492,7 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 					throw new PepperModuleDataException(this, errorMessage);
 				}
 
-				// get ID of current token�s head token
+				// get ID of current token's head token
 				String headIDStr = fieldValues.get(ConllDataField.HEAD.getFieldNum() - 1);
 				Integer headID = null;
 				try {
@@ -487,29 +503,15 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 				}
 
 				// create pointing relation, pointing from head to dependent
+				Pair<Integer, String> primaryDependency = null;
 				if (headID > 0) {
 					// create annotation for pointing relation
-					SAnnotation sAnnotation = SaltFactory.createSAnnotation();
-					sAnnotation.setName(DEPREL);
-
 					String annoValue = fieldValues.get(ConllDataField.DEPREL.getFieldNum() - 1);
-					sAnnotation.setValue(annoValue);
-
-					SPointingRelation sPointingRelation = SaltFactory.createSPointingRelation();
-                                        if (edgeType != DEP){
-                                            sPointingRelation.setType(edgeType);
-                                        }else{
-                                            sPointingRelation.setType(DEP);
-                                        }
-					sPointingRelation.setSource(sToken);
-					sPointingRelation.setTarget(sToken);
-					sPointingRelation.addAnnotation(sAnnotation);
-					sPointingRelation.setGraph(getDocument().getDocumentGraph());
-
+					primaryDependency = Pair.of(headID, annoValue);
 					if (headID <= tokenID) {
-						sPointingRelation.setSource(tokenList.get(headID - 1));
+						modifyPointingRelation(null, tokenList.get(headID - 1), sToken, edgeType, DEPREL, annoValue);
 					} else {
-						pointingRelationMap.put(sPointingRelation, headID);
+						pointingRelationMap.put(modifyPointingRelation(null, sToken, sToken, edgeType, DEPREL, annoValue), headID);
 					}
 				}
 				
@@ -550,6 +552,42 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 							sPointingRelation.setSource(tokenList.get(proheadID - 1));
 						} else {
 							pointingRelationMap.put(sPointingRelation, proheadID);
+						}
+					}
+				}
+				else if (enhancedEdgeType != null && primaryDependency != null) {
+					String enhancedSpec = fieldValues.get(ConllDataField.PHEAD.getFieldNum() - 1);
+					if (enhancedSpec != null) {						
+						int i = 0;
+						String[] segments = enhancedSpec.split("\\|");					
+						for (String depSpec : segments) {
+							i++;
+							int eHead;
+							try {
+								eHead = Integer.parseInt(depSpec.substring(0, depSpec.indexOf(':')));
+							} catch (NumberFormatException e) {
+								throw new PepperModuleDataException(this, "Could not parse head id from enhanced dependency specification `" + depSpec + "` for token with id " + tokenIDStr);
+							}
+							if (eHead == 0) {
+								continue;
+							}
+							String[] eDepRels;  // for one defined head multiple relations are possible
+							try {
+								eDepRels = depSpec.substring(depSpec.indexOf(':') + 1).split(":"); 								
+							} catch (ArrayIndexOutOfBoundsException e) {
+								throw new PepperModuleDataException(this, "Enhanced dependency `" + depSpec + "` does not specify (a) proper relation label(s) or head id for token with id " + tokenIDStr);
+							}
+							for (String eDepRel : eDepRels) {
+								if (eHead != primaryDependency.getLeft() || !eDepRel.equals(primaryDependency.getRight())) {
+									// create dependency relation											
+									if (eHead <= tokenID) {
+										modifyPointingRelation(null, tokenList.get(eHead - 1), sToken, enhancedEdgeType, DEPREL, eDepRel);
+									} else {
+										pointingRelationMap.put(modifyPointingRelation(null, sToken, sToken, enhancedEdgeType, DEPREL, eDepRel), eHead);
+									}
+									break;  // for the same head only one relation is allowed
+								}
+							}
 						}
 					}
 				}
@@ -610,5 +648,40 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 		}
 		return (DOCUMENT_STATUS.COMPLETED);
 	} // map
+	
+	private SPointingRelation mapDependency() {
+		return null;
+	}
+	
+	Map<String, SLayer> layerMap = new HashMap<>();
+	
+	private SPointingRelation modifyPointingRelation(SPointingRelation rel, SStructuredNode source, SStructuredNode target, String type, String annoName, String annoVal) {
+		boolean newRel = rel == null;
+		if (newRel) {
+			rel = SaltFactory.createSPointingRelation();
+		}
+		rel.setSource(source);
+		rel.setTarget(target);
+		rel.setType(type);
+		if (annoName != null && annoVal != null) {
+			rel.createAnnotation(null, annoName, annoVal);
+		}
+		if (newRel) {
+			rel.setGraph(getDocument().getDocumentGraph());
+		}
+		if (dependenciesHaveLayers) {
+			SLayer layer;
+			if (!layerMap.containsKey(type)) {
+				layer = SaltFactory.createSLayer();
+				layer.setName(type);
+				layerMap.put(type, layer);
+			}
+			layer = layerMap.get(type);
+			rel.addLayer(layer);
+			rel.getSource().addLayer(layer);
+			rel.getTarget().addLayer(layer);
+		}
+		return rel;
+	}
 
 } // ConllDep2SaltMapper
