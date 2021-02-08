@@ -1,0 +1,17 @@
+# sent_id = weblog-juancole.com_juancole_20040324065800_ENG_20040324_065800-0004
+# text = US troops there clashed with guerrillas in a fight that left one Iraqi dead.
+1	US	US	PROPN	NNP	Number=Sing	2	compound	2:compound	_
+2	troops	troops	NOUN	NNS	Number=Plur	4	nsubj	4:nsubj	_
+3	there	there	ADV	RB	PronType=Dem	2	advmod	2:advmod	_
+4	clashed	clash	VERB	VBD	Mood=Ind|Tense=Past|VerbForm=Fin	0	root	0:root	_
+5	with	with	ADP	IN	_	6	case	6:case	_
+6	guerrillas	guerrilla	NOUN	NNS	Number=Plur	4	obl	4:obl:with	_
+7	in	in	ADP	IN	_	9	case	9:case	_
+8	a	a	DET	DT	Definite=Ind|PronType=Art	9	det	9:det	_
+9	fight	fight	NOUN	NN	Number=Sing	4	obl	4:obl:in|11:nsubj	_
+10	that	that	PRON	WDT	PronType=Rel	11	nsubj	9:ref	_
+11	left	leave	VERB	VBD	Mood=Ind|Tense=Past|VerbForm=Fin	9	acl:relcl	9:acl:relcl	_
+12	one	one	NUM	CD	NumType=Card	13	nummod	13:nummod	_
+13	Iraqi	Iraqi	PROPN	NNP	Number=Sing	11	obj	14:nsubj:xsubj	_
+14	dead	dead	ADJ	JJ	Degree=Pos	11	xcomp	11:xcomp	SpaceAfter=No
+15	.	.	PUNCT	.	_	4	punct	4:punct	_

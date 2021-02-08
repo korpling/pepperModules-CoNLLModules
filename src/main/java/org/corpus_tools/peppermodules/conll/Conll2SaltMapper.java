@@ -103,7 +103,9 @@ public class Conll2SaltMapper extends PepperMapperImpl {
         String enhancedEdgeType;
         String featuresNamespace;
         boolean dependenciesHaveLayers;
-        
+        boolean splitEnhancedDeprels;
+        boolean noDuplicateEdeps;
+
         private String getEdgeType(){
             return (String) getProperties().getProperties().getProperty(CoNLLImporterProperties.PROP_EDGETYPE_NAME, "dep");
         }
@@ -127,7 +129,14 @@ public class Conll2SaltMapper extends PepperMapperImpl {
         private boolean dependenciesHaveLayers() {
         	return ((CoNLLImporterProperties) getProperties()).dependenciesHaveLayers();
         }
-
+        
+        private boolean splitEnhancedDeprels() {
+        	return ((CoNLLImporterProperties) getProperties()).splitEnhancedDeprels();
+        }
+        
+        private boolean noDuplicateEdeps() {
+        	return ((CoNLLImporterProperties) getProperties()).noDuplicateEdeps();                
+        }
         
 	boolean useSLemmaAnnotation;
 
@@ -323,6 +332,9 @@ public class Conll2SaltMapper extends PepperMapperImpl {
         this.enhancedEdgeType = getEnhancedEdgeType();
         this.featuresNamespace = getFeaturesNamespace();
         this.dependenciesHaveLayers = dependenciesHaveLayers();
+        this.splitEnhancedDeprels = splitEnhancedDeprels();
+        this.noDuplicateEdeps = noDuplicateEdeps();
+             
 
         boolean considerProjectivity = (Boolean) getProperties().getProperty(CoNLLImporterProperties.PROP_CONSIDER_PROJECTIVITY).getValue();
         boolean projectiveModeIsType = !getProperties().getProperties().getProperty(CoNLLImporterProperties.PROP_PROJECTIVE_MODE, TYPE).equalsIgnoreCase(NAMESPACE);
@@ -564,6 +576,7 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 							i++;
 							int eHead;
 							try {
+								//eHead = Integer.parseInt(depSpec.substring(0, depSpec.indexOf(':')));
 								eHead = Integer.parseInt(depSpec.substring(0, depSpec.indexOf(':')));
 							} catch (NumberFormatException e) {
 								throw new PepperModuleDataException(this, "Could not parse head id from enhanced dependency specification `" + depSpec + "` for token with id " + tokenIDStr);
@@ -573,12 +586,17 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 							}
 							String[] eDepRels;  // for one defined head multiple relations are possible
 							try {
-								eDepRels = depSpec.substring(depSpec.indexOf(':') + 1).split(":"); 								
+                                                                if (splitEnhancedDeprels){
+                                                                    // split relations like "obl:with" into two labels, "obl" and "with"
+                                                                    eDepRels = depSpec.substring(depSpec.indexOf(':') + 1).split(":"); 								
+                                                                }else{  // treat relations like "obl:with" as monolithic labels
+                                                                    eDepRels = depSpec.substring(depSpec.indexOf(':') + 1).split(" "); 								
+                                                                }                                                               
 							} catch (ArrayIndexOutOfBoundsException e) {
 								throw new PepperModuleDataException(this, "Enhanced dependency `" + depSpec + "` does not specify (a) proper relation label(s) or head id for token with id " + tokenIDStr);
 							}
 							for (String eDepRel : eDepRels) {
-								if (eHead != primaryDependency.getLeft() || !eDepRel.equals(primaryDependency.getRight())) {
+								if ((eHead != primaryDependency.getLeft() || !eDepRel.equals(primaryDependency.getRight())) || !noDuplicateEdeps) {
 									// create dependency relation											
 									if (eHead <= tokenID) {
 										modifyPointingRelation(null, tokenList.get(eHead - 1), sToken, enhancedEdgeType, DEPREL, eDepRel);
@@ -675,6 +693,7 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 				layer = SaltFactory.createSLayer();
 				layer.setName(type);
 				layerMap.put(type, layer);
+                                getDocument().getDocumentGraph().addLayer(layer);
 			}
 			layer = layerMap.get(type);
 			rel.addLayer(layer);

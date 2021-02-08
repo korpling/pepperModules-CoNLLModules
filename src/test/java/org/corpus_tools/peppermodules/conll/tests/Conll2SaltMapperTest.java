@@ -35,6 +35,8 @@ import org.corpus_tools.salt.common.STextualDS;
 import org.corpus_tools.salt.common.STextualRelation;
 import org.corpus_tools.salt.common.SToken;
 import org.corpus_tools.salt.core.SAnnotation;
+import org.corpus_tools.salt.core.SLayer;
+import org.corpus_tools.salt.core.SRelation;
 import org.corpus_tools.salt.semantics.SLemmaAnnotation;
 import org.corpus_tools.salt.semantics.SPOSAnnotation;
 import org.eclipse.emf.common.util.URI;
@@ -442,4 +444,28 @@ public class Conll2SaltMapperTest {
 		// }
 
 	}
+        
+        @Test
+	public void testEnhancedDependencies()
+	{
+          getFixture().getProperties().setPropertyValue("conll.enhanced.EDGE.TYPE", "edep");
+          getFixture().getProperties().setPropertyValue("conll.dependency.layers", "TRUE");
+          getFixture().getProperties().setPropertyValue("conll.no.duplicate.edeps", "TRUE");
+	  getFixture().setResourceURI(URI.createFileURI("src/test/resources/edeps.conllu"));
+	  getFixture().mapSDocument();
+	  
+	  SDocumentGraph dg = getFixture().getDocument().getDocumentGraph();
+	  
+	  Assert.assertEquals(1, dg.getSpans().size()); // There is one sentence
+	  
+	  SSpan span = dg.getSpans().get(0);
+	  Assert.assertEquals(15, dg.getOverlappedTokens(span).size());  // There are 15 tokens
+          Assert.assertEquals(1,dg.getLayerByName("edep").size()); // The edep layer exists
+           
+          // There are 19 dependency edges
+          Assert.assertEquals(19, dg.getPointingRelations().size());
+          
+	}
+
+        
 }

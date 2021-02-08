@@ -130,6 +130,8 @@ pepper modules contained in this project
 |conll.KeyValFeatures		| TRUE, FALSE	| FALSE|
 |conll.FEATURES.NAMESPACE		| String	| |
 |conll.SENTENCE		        |TRUE, FALSE	| TRUE|
+|conll.split.edeps		        |TRUE, FALSE	| FALSE|
+|conll.no.duplicate.edeps		        |TRUE, FALSE	| FALSE|
 
 ### conll.SPOS
 Usage: conll.SPOS=[FIELD](,[ALTERNATIVEFIELD])
@@ -223,3 +225,11 @@ Manually sets the edge type for dependency edges (default:dep). This overrides a
 ### conll.SENTENCE
 Usage: conll.SENTENCE=[VALUE]
  If [VALUE] is set TRUE add a sentence annotation (cat=S) to the data.
+
+### conll.split.edeps
+Usage: conll.split.edeps=[VALUE]
+ If [VALUE] is set TRUE split enhanced dependency relation labels into multiple edges based on the ':' separator (e.g. `obl:with` becomes `obl` and `with`).
+
+### conll.no.duplicate.edeps
+Usage: conll.no.duplicate.edeps=[VALUE]
+ If [VALUE] is set TRUE then enhanced dependencies which have corresponding regular dependencies with the same source, target and label are ignored.

@@ -75,6 +75,13 @@ public class CoNLLImporterProperties extends PepperModuleProperties {
 	
 	/** If set to true, this property triggers a creation of SLayers for dependency annotations including edges and tree nodes. Layer names are the edge types. */
 	public static final String PROP_DEPS_WITH_LAYERS = PREFIX + "dependency.layers";
+        
+        /** If set to true, enhanced dependencies are split by ':' into multiple labels, for example 'obl:with' becomes two labels, 'obl' and 'with'. */
+	public static final String PROP_SPLIT_EDEPS = PREFIX + "split.edeps";
+
+        /** If set to true, enhanced dependencies with identical non-enhanced counterparts are ignored. */
+	public static final String PROP_NO_DUP_EDEPS = PREFIX + "no.duplicate.edeps";
+        
 
 	public CoNLLImporterProperties() {
 		this.addProperty(new PepperModuleProperty<String>(PROP_SPOS, String.class,
@@ -127,6 +134,18 @@ public class CoNLLImporterProperties extends PepperModuleProperties {
 				.withName(PROP_DEPS_WITH_LAYERS)
 				.withType(Boolean.class)
 				.withDescription("If set to true, this property triggers a creation of SLayers for dependency annotations including edges and tree nodes. Layer names are the edge types.")
+				.withDefaultValue(false)
+				.build());
+		addProperty(PepperModuleProperty.create()
+				.withName(PROP_SPLIT_EDEPS)
+				.withType(Boolean.class)
+				.withDescription("If set to true, enhanced dependencies are split by ':' into multiple labels, for example 'obl:with' becomes two labels, 'obl' and 'with'.")
+				.withDefaultValue(false)
+				.build());
+		addProperty(PepperModuleProperty.create()
+				.withName(PROP_NO_DUP_EDEPS)
+				.withType(Boolean.class)
+				.withDescription("If set to true, enhanced dependencies with identical non-enhanced counterparts are ignored.")
 				.withDefaultValue(false)
 				.build());
 	}
@@ -200,4 +219,13 @@ public class CoNLLImporterProperties extends PepperModuleProperties {
 	public Boolean dependenciesHaveLayers() {
 		return (Boolean) getProperty(PROP_DEPS_WITH_LAYERS).getValue();
 	}
+        
+        public Boolean splitEnhancedDeprels() {
+		return (Boolean) getProperty(PROP_SPLIT_EDEPS).getValue();
+	}
+
+        public Boolean noDuplicateEdeps() {
+		return (Boolean) getProperty(PROP_NO_DUP_EDEPS).getValue();
+	}
+
 }
