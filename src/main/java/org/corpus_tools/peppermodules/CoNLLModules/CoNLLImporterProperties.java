@@ -48,7 +48,10 @@ public class CoNLLImporterProperties extends PepperModuleProperties {
 																				// correct
 	public final static String PROP_FIELD6_CPOSTAG = PREFIX + "field6.CPOSTAG."; // the
 																					// dot
-																					// at
+	public final static String PROP_EDGELAYER_NAME = PREFIX + "EDGE.LAYER";
+	public final static String PROP_EDGEANNO_NS = PREFIX + "EDGE.ANNO.NS";
+	public final static String PROP_EDGEANNO_NAME = PREFIX + "EDGE.ANNO.NAME";
+																			// at
 																					// the
 																					// end
 	public final static String PROP_POS_NAME = PREFIX + "POS.NAME";
@@ -114,6 +117,9 @@ public class CoNLLImporterProperties extends PepperModuleProperties {
 		this.addProperty(new PepperModuleProperty<Boolean>(PROP_SPLIT_FEATURES, Boolean.class,
 				"If [VALUE] is set TRUE, any data row´s FEATS field will be split into it´s pipe separated elements to create multiple annotations on the corresponding salt token (see POSTAG, CPOSTAG and default). If a field contains a different number of pipe separated elements than defined in the POSTAG, CPOSTAG or default attribute, the lesser number of annotations will be created, while the additional elements will be lost! If VALUE is FALSE, no splitting is done.",
 				false, false));
+                this.addProperty(new PepperModuleProperty<String>(PROP_EDGELAYER_NAME, String.class, "A string specifying a valid layer name for the dependency edges (e.g. 'dep')", false));
+                this.addProperty(new PepperModuleProperty<String>(PROP_EDGEANNO_NAME, String.class, "A string specifying a name for the edge annotation (e.g. 'func')", false));
+                this.addProperty(new PepperModuleProperty<String>(PROP_EDGEANNO_NS, String.class, "A string specifying a namespace for the edge annotation (e.g. 'dep' in 'dep:func')", false));
 		this.addProperty(new PepperModuleProperty<Boolean>(PROP_KEYVAL_FEATURES, Boolean.class,
 				"If [VALUE] is set TRUE, it is assumed that the FEATS column contains pipe-delimited annotation names and values such as Case=Gen|Number=Plur.",
 				false, false));
@@ -190,7 +196,17 @@ public class CoNLLImporterProperties extends PepperModuleProperties {
 		return ((String) this.getProperty(PROP_EDGETYPE_NAME).getValue());
 	}
 
-	public String getFeaturesNamespace() {
+        public String getEdgeLayerName() {
+		return ((String) this.getProperty(PROP_EDGELAYER_NAME).getValue());
+	}
+        public String getEdgeAnnoName() {
+		return ((String) this.getProperty(PROP_EDGEANNO_NAME).getValue());
+	}
+        public String getEdgeAnnoNS() {
+		return ((String) this.getProperty(PROP_EDGEANNO_NS).getValue());
+	}
+
+        public String getFeaturesNamespace() {
 		return ((String) this.getProperty(PROP_FEATURES_NAMESPACE).getValue());
 	}
 

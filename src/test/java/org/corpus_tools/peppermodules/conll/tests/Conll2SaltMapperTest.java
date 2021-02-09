@@ -451,6 +451,7 @@ public class Conll2SaltMapperTest {
           getFixture().getProperties().setPropertyValue("conll.enhanced.EDGE.TYPE", "edep");
           getFixture().getProperties().setPropertyValue("conll.dependency.layers", "TRUE");
           getFixture().getProperties().setPropertyValue("conll.no.duplicate.edeps", "TRUE");
+          getFixture().getProperties().setPropertyValue("conll.EDGE.TYPE", "dep");
 	  getFixture().setResourceURI(URI.createFileURI("src/test/resources/edeps.conllu"));
 	  getFixture().mapSDocument();
 	  

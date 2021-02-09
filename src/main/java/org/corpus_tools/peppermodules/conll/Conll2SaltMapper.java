@@ -99,6 +99,9 @@ public class Conll2SaltMapper extends PepperMapperImpl {
         // check for user-defined edge type, POS and lemma annotation names
         String posName;
         String lemmaName;
+        String edgeAnnoName;
+        String edgeAnnoNS;
+        String edgeLayer;
         String edgeType;
         String enhancedEdgeType;
         String featuresNamespace;
@@ -114,7 +117,19 @@ public class Conll2SaltMapper extends PepperMapperImpl {
             return ((CoNLLImporterProperties) getProperties()).getEnhancedEdgeType();
         }
 
-        private String getFeaturesNamespace(){
+        private String getEdgeLayer(){
+            return (String) getProperties().getProperties().getProperty(CoNLLImporterProperties.PROP_EDGELAYER_NAME, "dep");
+        }
+
+         private String getEdgeAnnoName(){
+            return (String) getProperties().getProperties().getProperty(CoNLLImporterProperties.PROP_EDGEANNO_NAME, "deprel");
+        }
+
+         private String getEdgeAnnoNS(){
+            return (String) getProperties().getProperties().getProperty(CoNLLImporterProperties.PROP_EDGEANNO_NS, "dep");
+        }
+
+         private String getFeaturesNamespace(){
             return (String) getProperties().getProperties().getProperty(CoNLLImporterProperties.PROP_FEATURES_NAMESPACE, null);
         }
         
@@ -330,6 +345,9 @@ public class Conll2SaltMapper extends PepperMapperImpl {
         this.lemmaName = getLemmaName();
         this.edgeType = getEdgeType();
         this.enhancedEdgeType = getEnhancedEdgeType();
+        this.edgeLayer = getEdgeLayer();
+        this.edgeAnnoName = getEdgeAnnoName();
+        this.edgeAnnoNS = getEdgeAnnoNS();
         this.featuresNamespace = getFeaturesNamespace();
         this.dependenciesHaveLayers = dependenciesHaveLayers();
         this.splitEnhancedDeprels = splitEnhancedDeprels();
@@ -347,6 +365,10 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 		int stringBuilderCharBufferSize = tupleReader.characterSize(ConllDataField.FORM.getFieldNum() - 1) + numOfTuples;
 		StringBuilder primaryText = new StringBuilder(stringBuilderCharBufferSize);
 
+                // layer for dependency edges
+                SLayer lyr = SaltFactory.createSLayer();
+                lyr.setName(edgeLayer);
+               
 		List<SToken> sentenceToken = new LinkedList<>();	
 		// iteration over all data rows (the complete input-file)
 		for (int rowIndex = 0; rowIndex < numOfTuples; rowIndex++) {
@@ -521,9 +543,17 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 					String annoValue = fieldValues.get(ConllDataField.DEPREL.getFieldNum() - 1);
 					primaryDependency = Pair.of(headID, annoValue);
 					if (headID <= tokenID) {
-						modifyPointingRelation(null, tokenList.get(headID - 1), sToken, edgeType, DEPREL, annoValue);
+                                            if (edgeAnnoName != DEPREL){
+						modifyPointingRelation(null, tokenList.get(headID - 1), sToken, edgeType, edgeAnnoName, annoValue);
+                                            } else{
+                                                modifyPointingRelation(null, tokenList.get(headID - 1), sToken, edgeType, DEPREL, annoValue);
+                                            }
 					} else {
+                                            if (edgeAnnoName != DEPREL){
+						pointingRelationMap.put(modifyPointingRelation(null, sToken, sToken, edgeType, edgeAnnoName, annoValue), headID);
+                                            } else{
 						pointingRelationMap.put(modifyPointingRelation(null, sToken, sToken, edgeType, DEPREL, annoValue), headID);
+                                            }
 					}
 				}
 				
@@ -544,11 +574,20 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 					if (proheadID > 0) {
 						// create annotation for pointing relation
 						SAnnotation sAnnotation = SaltFactory.createSAnnotation();
-						sAnnotation.setName(DEPREL);
+                                                if (edgeAnnoName != DEPREL){  // custom edge anno name
+                                                    sAnnotation.setName(edgeAnnoName);
+                                                }
+                                                else{						
+                                                    sAnnotation.setName(DEPREL);
+                                                }
+                                        
 						sAnnotation.setValue(fieldValues.get(ConllDataField.PDEPREL.getFieldNum() - 1));
 
 						SPointingRelation sPointingRelation = SaltFactory.createSPointingRelation();
 						sPointingRelation.addAnnotation(sAnnotation);
+                                                if (!(dependenciesHaveLayers)){
+                                                    sPointingRelation.addLayer(lyr);
+                                                }
 						sPointingRelation.setSource(sToken);
 						sPointingRelation.setTarget(sToken);
 						sPointingRelation.setGraph(getDocument().getDocumentGraph());
@@ -556,8 +595,16 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 						if (projectiveModeIsType) {
 							sPointingRelation.setType(PRODEP);
 						} else {
-							sAnnotation.setNamespace(PROJECTIVE);
-							sPointingRelation.setType(DEP);
+                                                    if (edgeType != DEP){
+                                                        sPointingRelation.setType(edgeType);
+                                                    }else{
+                                                        sPointingRelation.setType(DEP);
+                                                    }
+                                                    if (edgeAnnoNS != DEP){
+                                                        sAnnotation.setNamespace(edgeAnnoNS);
+                                                    }else{
+                                                        sAnnotation.setNamespace(PROJECTIVE);
+                                                    }                                                    
 						}
 
 						if (proheadID <= tokenID) {
@@ -599,9 +646,18 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 								if ((eHead != primaryDependency.getLeft() || !eDepRel.equals(primaryDependency.getRight())) || !noDuplicateEdeps) {
 									// create dependency relation											
 									if (eHead <= tokenID) {
-										modifyPointingRelation(null, tokenList.get(eHead - 1), sToken, enhancedEdgeType, DEPREL, eDepRel);
+                                                                                if (edgeAnnoName != DEPREL){  // custom edge anno name
+                                                                                    modifyPointingRelation(null, tokenList.get(eHead - 1), sToken, enhancedEdgeType, edgeAnnoName, eDepRel);
+                                                                                }
+                                                                                else{
+                                                                                    modifyPointingRelation(null, tokenList.get(eHead - 1), sToken, enhancedEdgeType, DEPREL, eDepRel);
+                                                                                }
 									} else {
+                                                                            if (edgeAnnoName != DEPREL){  // custom edge anno name
+										pointingRelationMap.put(modifyPointingRelation(null, sToken, sToken, enhancedEdgeType, edgeAnnoName, eDepRel), eHead);
+                                                                            }else{
 										pointingRelationMap.put(modifyPointingRelation(null, sToken, sToken, enhancedEdgeType, DEPREL, eDepRel), eHead);
+                                                                            }
 									}
 									break;  // for the same head only one relation is allowed
 								}
@@ -682,7 +738,7 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 		rel.setTarget(target);
 		rel.setType(type);
 		if (annoName != null && annoVal != null) {
-			rel.createAnnotation(null, annoName, annoVal);
+			rel.createAnnotation(edgeAnnoNS, annoName, annoVal);
 		}
 		if (newRel) {
 			rel.setGraph(getDocument().getDocumentGraph());
@@ -697,8 +753,8 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 			}
 			layer = layerMap.get(type);
 			rel.addLayer(layer);
-			rel.getSource().addLayer(layer);
-			rel.getTarget().addLayer(layer);
+			//rel.getSource().addLayer(layer);
+			//rel.getTarget().addLayer(layer);
 		}
 		return rel;
 	}
