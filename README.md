@@ -110,7 +110,33 @@ All fields except 1, 2 and 7 may contain dummy value (an underscore _).
 5  zwaaien  zwaai  N     N     soort|mv|neut         2  vc     _  _
 6  .        .      Punc  Punc  punct                 5  punct  _  _
 ```
-            
+
+## enhanced dependencies format
+The importer also supports enhanced dependencies with secondary edges in column 9 and possible reconstructed/ellipsis tokens with decimal IDs, as in the following example (see the Universal Dependencies documentation for more details).
+
+```
+1	She	she	PRON	PRP	Case=Nom|Gender=Fem|Number=Sing|Person=3|PronType=Prs	3	nsubj:pass	3:nsubj:pass|5:nsubj:xsubj|11.1:nsubj:pass|13:nsubj:pass	_
+2	is	be	AUX	VBZ	Mood=Ind|Number=Sing|Person=3|Tense=Pres|VerbForm=Fin	3	aux:pass	3:aux:pass	_
+3	called	call	VERB	VBN	Tense=Past|VerbForm=Part|Voice=Pass	0	root	0:root	_
+4	"	"	PUNCT	``	_	5	punct	5:punct	SpaceAfter=No
+5	martyr	martyr	NOUN	NN	Number=Sing	3	xcomp	3:xcomp	SpaceAfter=No
+6	"	"	PUNCT	''	_	5	punct	5:punct	_
+7	by	by	ADP	IN	_	10	case	10:case	_
+8	several	several	ADJ	JJ	Degree=Pos	10	amod	10:amod	_
+9	Arab	arab	ADJ	JJ	Degree=Pos	10	amod	10:amod	_
+10	leaders	leader	NOUN	NNS	Number=Plur	3	obl	3:obl:by	_
+11	and	and	CCONJ	CC	_	13	cc	13:cc	_
+11.1	called	call	VERB	VBN	Tense=Past|VerbForm=Part|Voice=Pass	_	_	3:conj:and	CopyOf=3
+12	"	"	PUNCT	``	_	13	punct	13:punct	SpaceAfter=No
+13	activist	activist	NOUN	NN	Number=Sing	3	conj	3:conj:and|11.1:xcomp	SpaceAfter=No
+14	"	"	PUNCT	''	_	13	punct	13:punct	_
+15	by	by	ADP	IN	_	18	case	18:case	_
+16	the	the	DET	DT	Definite=Def|PronType=Art	18	det	18:det	_
+17	European	european	ADJ	JJ	Degree=Pos	18	amod	18:amod	_
+18	press	press	NOUN	NN	Number=Sing	13	orphan	11.1:obl:by	SpaceAfter=No
+19	.	.	PUNCT	.	_	3	punct	3:punct	_
+```
+
 ## Properties
 
 The following table contains an overview of all usable properties to customize the behaviour of this pepper module. The following section contains a close description to each single property and describes the resulting differences in the mapping to the salt model. 
@@ -132,6 +158,7 @@ pepper modules contained in this project
 |conll.SENTENCE		        |TRUE, FALSE	| TRUE|
 |conll.split.edeps		        |TRUE, FALSE	| FALSE|
 |conll.no.duplicate.edeps		        |TRUE, FALSE	| FALSE|
+|conll.ellipsis.tok.annotation		        |String	| |
 
 ### conll.SPOS
 Usage: conll.SPOS=[FIELD](,[ALTERNATIVEFIELD])
@@ -233,3 +260,7 @@ Usage: conll.split.edeps=[VALUE]
 ### conll.no.duplicate.edeps
 Usage: conll.no.duplicate.edeps=[VALUE]
  If [VALUE] is set TRUE then enhanced dependencies which have corresponding regular dependencies with the same source, target and label are ignored.
+
+### conll.ellipsis.tok.annotation
+Usage: conll.ellipsis.tok.annotation=[VALUE]
+If set, ellipsis token values are imported as annotations, and replaced in base text by a blank space. Use colon to specify a namespace.

@@ -452,19 +452,32 @@ public class Conll2SaltMapperTest {
           getFixture().getProperties().setPropertyValue("conll.dependency.layers", "TRUE");
           getFixture().getProperties().setPropertyValue("conll.no.duplicate.edeps", "TRUE");
           getFixture().getProperties().setPropertyValue("conll.EDGE.TYPE", "dep");
+          // set ellipsis tokens to be imported as annotations of a blank token, instead of primary text
+          getFixture().getProperties().setPropertyValue("conll.ellipsis.tok.annotation", "ellipsis:word");
 	  getFixture().setResourceURI(URI.createFileURI("src/test/resources/edeps.conllu"));
 	  getFixture().mapSDocument();
 	  
 	  SDocumentGraph dg = getFixture().getDocument().getDocumentGraph();
 	  
-	  Assert.assertEquals(1, dg.getSpans().size()); // There is one sentence
+	  Assert.assertEquals(2, dg.getSpans().size()); // There are two sentences
 	  
-	  SSpan span = dg.getSpans().get(0);
-	  Assert.assertEquals(15, dg.getOverlappedTokens(span).size());  // There are 15 tokens
+	  SSpan span1 = dg.getSpans().get(0); // second sentence
+	  Assert.assertEquals(20, dg.getOverlappedTokens(span1).size());  // There are 15 tokens
+          Assert.assertEquals(1,dg.getLayerByName("edep").size()); // The edep layer exists
+          SToken emptyToken = dg.getSortedTokenByText(dg.getOverlappedTokens(span1)).get(11);
+          // check that ellipsis token was imported and annotated correctly
+          Assert.assertEquals(emptyToken.getAnnotation("salt::lemma").getValue(),"call");
+          // check that ellipsis token text was imported into an annotation instead of primary text
+          Assert.assertEquals(emptyToken.getAnnotation("ellipsis::word").getValue(), "called");
+          Assert.assertEquals(emptyToken.getInRelations().size(),2); // 1 incoming PR to empty token, 1 SSpanning from sent
+          Assert.assertEquals(emptyToken.getOutRelations().size(),4); // 3 outgoing PRs, 1 STextualRelation to base text        
+
+          SSpan span2 = dg.getSpans().get(1); // second sentence
+	  Assert.assertEquals(15, dg.getOverlappedTokens(span2).size());  // There are 15 tokens
           Assert.assertEquals(1,dg.getLayerByName("edep").size()); // The edep layer exists
            
-          // There are 19 dependency edges
-          Assert.assertEquals(19, dg.getPointingRelations().size());
+          // There are 45 dependency edges
+          Assert.assertEquals(45, dg.getPointingRelations().size());
           
 	}
 

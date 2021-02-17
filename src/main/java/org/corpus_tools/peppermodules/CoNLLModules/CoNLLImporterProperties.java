@@ -84,6 +84,9 @@ public class CoNLLImporterProperties extends PepperModuleProperties {
 
         /** If set to true, enhanced dependencies with identical non-enhanced counterparts are ignored. */
 	public static final String PROP_NO_DUP_EDEPS = PREFIX + "no.duplicate.edeps";
+
+        /** If set, ellipsis token values are imported as annotations, and replaced in base text by a blank space. Use colon to specify a namespace. */
+	public static final String ELLIPSIS_TOK_ANNO = PREFIX + "ellipsis.tok.annotation";
         
 
 	public CoNLLImporterProperties() {
@@ -154,7 +157,12 @@ public class CoNLLImporterProperties extends PepperModuleProperties {
 				.withDescription("If set to true, enhanced dependencies with identical non-enhanced counterparts are ignored.")
 				.withDefaultValue(false)
 				.build());
-	}
+		addProperty(PepperModuleProperty.create()
+				.withName(ELLIPSIS_TOK_ANNO)
+				.withType(String.class)
+				.withDescription("If set, ellipsis token values are imported as annotations, and replaced in base text by a blank space. Use colon to specify a namespace.")
+				.build());	
+        }
 
 	public String getSPos() {
 		return ((String) this.getProperty(PROP_SPOS).getValue());
@@ -242,6 +250,11 @@ public class CoNLLImporterProperties extends PepperModuleProperties {
 
         public Boolean noDuplicateEdeps() {
 		return (Boolean) getProperty(PROP_NO_DUP_EDEPS).getValue();
+	}
+
+        public String getEllipsisAnno() {
+		Object val = getProperty(ELLIPSIS_TOK_ANNO).getValue();
+		return val == null? null : (String) val;
 	}
 
 }

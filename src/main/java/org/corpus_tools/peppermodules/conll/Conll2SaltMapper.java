@@ -108,6 +108,9 @@ public class Conll2SaltMapper extends PepperMapperImpl {
         boolean dependenciesHaveLayers;
         boolean splitEnhancedDeprels;
         boolean noDuplicateEdeps;
+        String ellipsisAnnoString;
+        String ellipsisTokAnno;
+        String ellipsisTokAnnoNS;
 
         private String getEdgeType(){
             return (String) getProperties().getProperties().getProperty(CoNLLImporterProperties.PROP_EDGETYPE_NAME, "dep");
@@ -153,7 +156,11 @@ public class Conll2SaltMapper extends PepperMapperImpl {
         	return ((CoNLLImporterProperties) getProperties()).noDuplicateEdeps();                
         }
         
-	boolean useSLemmaAnnotation;
+        private String getEllipsisAnno(){
+            return ((CoNLLImporterProperties) getProperties()).getEllipsisAnno();
+        }
+
+        boolean useSLemmaAnnotation;
 
 	// retrieves whether or not to use SLemmaAnnoations
 	private boolean getUseSLemmaAnnotation() {
@@ -327,8 +334,9 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 		sTextualDS.setGraph(getDocument().getDocumentGraph());
 
 		ArrayList<SToken> tokenList = new ArrayList<SToken>();
-		HashMap<SPointingRelation, Integer> pointingRelationMap = new HashMap<SPointingRelation, Integer>();
+		HashMap<SPointingRelation, String> pointingRelationMap = new HashMap<SPointingRelation, String>();
 		ArrayList<String> fieldValues = new ArrayList<String>();
+                HashMap<String,Integer> SentTokMap = new HashMap<>();
 
 		Collection<String> tuple = null;
 		int numOfTuples = tupleReader.getNumOfTuples();
@@ -345,6 +353,19 @@ public class Conll2SaltMapper extends PepperMapperImpl {
         this.lemmaName = getLemmaName();
         this.edgeType = getEdgeType();
         this.enhancedEdgeType = getEnhancedEdgeType();
+        this.ellipsisAnnoString = getEllipsisAnno();
+        this.ellipsisTokAnno = null;
+        this.ellipsisTokAnnoNS = null;
+        if (this.ellipsisAnnoString != null){
+            if (this.ellipsisAnnoString.contains(":")){
+                String[] parts = this.ellipsisAnnoString.split(":",2);
+                this.ellipsisTokAnnoNS = parts[0];
+                this.ellipsisTokAnno = parts[1];
+            }
+            else{
+                this.ellipsisTokAnno = this.ellipsisAnnoString;
+            }
+        }
         this.edgeLayer = getEdgeLayer();
         this.edgeAnnoName = getEdgeAnnoName();
         this.edgeAnnoNS = getEdgeAnnoNS();
@@ -410,17 +431,24 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 				sToken.setGraph(getDocument().getDocumentGraph());
 				tokenList.add(sToken);
 
+                                String tokenIDStr = fieldValues.get(ConllDataField.ID.getFieldNum() - 1);				
+                                
 				// update primary text (sTextualDS.sText will be set after
 				// completely reading the input file)
-				int tokenTextStartOffset = primaryText.length();
-				primaryText.append(fieldValues.get(ConllDataField.FORM.getFieldNum() - 1)).append(" "); // update
-																										// primary
-																										// text
-																										// data,
-																										// tokens
-																										// separated
-																										// by
-																										// space
+                                
+                                int tokenTextStartOffset = primaryText.length();
+                                if (tokenIDStr.contains(".") && this.ellipsisTokAnno != null){
+                                    String ellipsisToken = fieldValues.get(ConllDataField.FORM.getFieldNum() - 1);
+                                    SAnnotation sa = SaltFactory.createSAnnotation();
+                                    sa.setName(this.ellipsisTokAnno);
+                                    sa.setNamespace(this.ellipsisTokAnnoNS);
+                                    sa.setValue(ellipsisToken);
+                                    sToken.addAnnotation(sa);
+                                    primaryText.append(" ").append(" "); // ellipsis token and properties configured to import form field as annotation
+                                } else{
+                                    primaryText.append(fieldValues.get(ConllDataField.FORM.getFieldNum() - 1)).append(" "); // update primary text data, tokens separated by space
+                                }
+                                
 				int tokenTextEndOffset = primaryText.length() - 1;
 
 				// create textual relation
@@ -513,40 +541,47 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 				
 				/* BEGIN OF DEPENDENCIES */				
 				// get ID of current token
-				String tokenIDStr = fieldValues.get(ConllDataField.ID.getFieldNum() - 1);				
-				Integer tokenID = null;
+				Float tokenID = null;
 				try {
 					if (tokenIDStr.contains("-")) {
 						continue;
 					}
-					tokenID = Integer.parseInt(tokenIDStr);
+					tokenID = Float.parseFloat(tokenIDStr);
 				} catch (NumberFormatException e) {
-					String errorMessage = String.format("Invalid integer value '%s' for ID in line %d of input file. Abort conversion of file " + this.getResourceURI() + ".", tokenIDStr, rowIndex + 1);
+					String errorMessage = String.format("Invalid numerical value '%s' for ID in line %d of input file. Abort conversion of file " + this.getResourceURI() + ".", tokenIDStr, rowIndex + 1);
 
 					throw new PepperModuleDataException(this, errorMessage);
 				}
 
+                                // map potentially float ID to position in token list
+                                SentTokMap.put(tokenID.toString(),tokenList.size()-1);
+
+                                
 				// get ID of current token's head token
 				String headIDStr = fieldValues.get(ConllDataField.HEAD.getFieldNum() - 1);
-				Integer headID = null;
+				String headID = null;
 				try {
-					headID = headIDStr.matches("[0-9]+")? Integer.parseInt(headIDStr) : -1;
+					headID = headIDStr.matches("[0-9]+(\\.[0-9]+)?")? headIDStr : "-1";
+                                        headID = ((Float) Float.parseFloat(headID)).toString(); // make all string IDs decimal
 				} catch (NumberFormatException e) {
-					String errorMessage = String.format("Invalid integer value '%s' for HEAD in line %d of input file '" + this.getResourceURI() + "'. Abort conversion of file " + this.getResourceURI() + ".", headIDStr, rowIndex + 1);
+					String errorMessage = String.format("Invalid numerical value '%s' for HEAD in line %d of input file '" + this.getResourceURI() + "'. Abort conversion of file " + this.getResourceURI() + ".", headIDStr, rowIndex + 1);
 					throw new PepperModuleDataException(this, errorMessage);
 				}
+                                
+                                Integer headIDPosition = null;
 
 				// create pointing relation, pointing from head to dependent
-				Pair<Integer, String> primaryDependency = null;
-				if (headID > 0) {
+				Pair<String, String> primaryDependency = null;
+				if (Float.parseFloat(headID) > 0) {
 					// create annotation for pointing relation
 					String annoValue = fieldValues.get(ConllDataField.DEPREL.getFieldNum() - 1);
 					primaryDependency = Pair.of(headID, annoValue);
-					if (headID <= tokenID) {
+					if (Float.parseFloat(headID) <= tokenID) {
+                                            headIDPosition = SentTokMap.get(headID.toString());
                                             if (edgeAnnoName != DEPREL){
-						modifyPointingRelation(null, tokenList.get(headID - 1), sToken, edgeType, edgeAnnoName, annoValue);
+						modifyPointingRelation(null, tokenList.get(headIDPosition), sToken, edgeType, edgeAnnoName, annoValue);
                                             } else{
-                                                modifyPointingRelation(null, tokenList.get(headID - 1), sToken, edgeType, DEPREL, annoValue);
+                                                modifyPointingRelation(null, tokenList.get(headIDPosition), sToken, edgeType, DEPREL, annoValue);
                                             }
 					} else {
                                             if (edgeAnnoName != DEPREL){
@@ -610,21 +645,20 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 						if (proheadID <= tokenID) {
 							sPointingRelation.setSource(tokenList.get(proheadID - 1));
 						} else {
-							pointingRelationMap.put(sPointingRelation, proheadID);
+							pointingRelationMap.put(sPointingRelation, proheadID.toString());
 						}
 					}
 				}
-				else if (enhancedEdgeType != null && primaryDependency != null) {
+				else if (enhancedEdgeType != null) {
 					String enhancedSpec = fieldValues.get(ConllDataField.PHEAD.getFieldNum() - 1);
 					if (enhancedSpec != null) {						
 						int i = 0;
 						String[] segments = enhancedSpec.split("\\|");					
 						for (String depSpec : segments) {
 							i++;
-							int eHead;
+							Float eHead;
 							try {
-								//eHead = Integer.parseInt(depSpec.substring(0, depSpec.indexOf(':')));
-								eHead = Integer.parseInt(depSpec.substring(0, depSpec.indexOf(':')));
+								eHead = Float.parseFloat(depSpec.substring(0, depSpec.indexOf(':')));
 							} catch (NumberFormatException e) {
 								throw new PepperModuleDataException(this, "Could not parse head id from enhanced dependency specification `" + depSpec + "` for token with id " + tokenIDStr);
 							}
@@ -643,20 +677,27 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 								throw new PepperModuleDataException(this, "Enhanced dependency `" + depSpec + "` does not specify (a) proper relation label(s) or head id for token with id " + tokenIDStr);
 							}
 							for (String eDepRel : eDepRels) {
-								if ((eHead != primaryDependency.getLeft() || !eDepRel.equals(primaryDependency.getRight())) || !noDuplicateEdeps) {
+                                                                if (primaryDependency == null){
+                                                                    // for ellipsis tokens, set up artificial primary dependency, guaranteed to be distinct from edeps
+                                                                    primaryDependency = Pair.of("0", "_"); 
+                                                                }
+								if ((eHead != Float.parseFloat(primaryDependency.getLeft()) || !eDepRel.equals(primaryDependency.getRight())) || !noDuplicateEdeps) {
+                                                                        Integer eHeadPosition = null;
+                                                                        
 									// create dependency relation											
 									if (eHead <= tokenID) {
+                                                                                eHeadPosition = SentTokMap.get(eHead.toString());
                                                                                 if (edgeAnnoName != DEPREL){  // custom edge anno name
-                                                                                    modifyPointingRelation(null, tokenList.get(eHead - 1), sToken, enhancedEdgeType, edgeAnnoName, eDepRel);
+                                                                                    modifyPointingRelation(null, tokenList.get(eHeadPosition), sToken, enhancedEdgeType, edgeAnnoName, eDepRel);
                                                                                 }
                                                                                 else{
-                                                                                    modifyPointingRelation(null, tokenList.get(eHead - 1), sToken, enhancedEdgeType, DEPREL, eDepRel);
+                                                                                    modifyPointingRelation(null, tokenList.get(eHeadPosition), sToken, enhancedEdgeType, DEPREL, eDepRel);
                                                                                 }
 									} else {
                                                                             if (edgeAnnoName != DEPREL){  // custom edge anno name
-										pointingRelationMap.put(modifyPointingRelation(null, sToken, sToken, enhancedEdgeType, edgeAnnoName, eDepRel), eHead);
+										pointingRelationMap.put(modifyPointingRelation(null, sToken, sToken, enhancedEdgeType, edgeAnnoName, eDepRel), eHead.toString());
                                                                             }else{
-										pointingRelationMap.put(modifyPointingRelation(null, sToken, sToken, enhancedEdgeType, DEPREL, eDepRel), eHead);
+										pointingRelationMap.put(modifyPointingRelation(null, sToken, sToken, enhancedEdgeType, DEPREL, eDepRel), eHead.toString());
                                                                             }
 									}
 									break;  // for the same head only one relation is allowed
@@ -676,26 +717,25 @@ public class Conll2SaltMapper extends PepperMapperImpl {
           SSpan sSpan = getDocument().getDocumentGraph().createSpan(sentenceToken);
           sSpan.createAnnotation(null, CAT, S);
         }
-			  
-			  sentenceToken.clear();
+
+			  sentenceToken.clear();                          
 			} // end if/else tupleSize > 1
 
 			if ((tupleSize == 1) || (rowIndex == lastTupleIndex)) { // if true,
-																	// this is a
-																	// sentence
-																	// separating
-																	// row or
-																	// the last
-																	// row in
-																	// the input
 																	// file
 				// pointingRelationMap has pointing relations as keys and
 				// corresponding source node IDs as values
 				// set the actual node as source for each pointing relation
-				for (Entry<SPointingRelation, Integer> entry : pointingRelationMap.entrySet()) {
-					entry.getKey().setSource(tokenList.get(entry.getValue() - 1)); // index=ID-1
+				for (Entry<SPointingRelation, String> entry : pointingRelationMap.entrySet()) {
+                                    Integer position = SentTokMap.get(entry.getValue());
+                                    if (position == null){
+                			String bla = "s";
+                                    }
+                                    SToken src = tokenList.get(position);
+                                    entry.getKey().setSource(src); // index=ID-1
 				}
 				tokenList.clear();
+                                SentTokMap.clear();  // new sentence, clear mapping
 				pointingRelationMap.clear();
 			}
 
