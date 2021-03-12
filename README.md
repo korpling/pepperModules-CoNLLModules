@@ -159,6 +159,7 @@ pepper modules contained in this project
 |conll.split.edeps		        |TRUE, FALSE	| FALSE|
 |conll.no.duplicate.edeps		        |TRUE, FALSE	| FALSE|
 |conll.ellipsis.tok.annotation		        |String	| |
+|conll.meta.prefix            |String| meta_ |
 
 ### conll.SPOS
 Usage: conll.SPOS=[FIELD](,[ALTERNATIVEFIELD])
@@ -264,3 +265,7 @@ Usage: conll.no.duplicate.edeps=[VALUE]
 ### conll.ellipsis.tok.annotation
 Usage: conll.ellipsis.tok.annotation=[VALUE]
 If set, ellipsis token values are imported as annotations, and replaced in base text by a blank space. Use colon to specify a namespace.
+
+### conll.meta.prefix
+Usage: conll.meta.prefix=[VALUE]
+Comment lines with key value structure: `# key = value` will be interpreted as metadata if the key begins with this string. Default: meta_

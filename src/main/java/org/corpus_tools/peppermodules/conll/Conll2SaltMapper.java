@@ -111,6 +111,7 @@ public class Conll2SaltMapper extends PepperMapperImpl {
         String ellipsisAnnoString;
         String ellipsisTokAnno;
         String ellipsisTokAnnoNS;
+        String metaPrefix;
 
         private String getEdgeType(){
             return (String) getProperties().getProperties().getProperty(CoNLLImporterProperties.PROP_EDGETYPE_NAME, "dep");
@@ -131,6 +132,10 @@ public class Conll2SaltMapper extends PepperMapperImpl {
          private String getEdgeAnnoNS(){
             return (String) getProperties().getProperties().getProperty(CoNLLImporterProperties.PROP_EDGEANNO_NS, "dep");
         }
+         
+         private String getMetaPrefix(){
+            return (String) getProperties().getProperties().getProperty(CoNLLImporterProperties.META_PREFIX, "meta_");
+         }
 
          private String getFeaturesNamespace(){
             return (String) getProperties().getProperties().getProperty(CoNLLImporterProperties.PROP_FEATURES_NAMESPACE, null);
@@ -369,6 +374,7 @@ public class Conll2SaltMapper extends PepperMapperImpl {
         this.edgeLayer = getEdgeLayer();
         this.edgeAnnoName = getEdgeAnnoName();
         this.edgeAnnoNS = getEdgeAnnoNS();
+        this.metaPrefix = getMetaPrefix();
         this.featuresNamespace = getFeaturesNamespace();
         this.dependenciesHaveLayers = dependenciesHaveLayers();
         this.splitEnhancedDeprels = splitEnhancedDeprels();
@@ -391,6 +397,9 @@ public class Conll2SaltMapper extends PepperMapperImpl {
                 lyr.setName(edgeLayer);
                
 		List<SToken> sentenceToken = new LinkedList<>();	
+                
+                List<SAnnotation> sentAnnos = new LinkedList<>();	
+                
 		// iteration over all data rows (the complete input-file)
 		for (int rowIndex = 0; rowIndex < numOfTuples; rowIndex++) {
 			try {
@@ -400,7 +409,12 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 				throw new PepperModuleDataException(this, errorMessage);
 			}
 
+                        try {
 			tupleSize = tuple.size();
+                        }
+                        catch (NullPointerException e){
+                           throw new PepperModuleDataException(this, "bla");
+                        }
 			fieldValues.clear();
 
 			if (!((tupleSize == 1) || (tupleSize == numOfColumnsExpected))) {
@@ -706,16 +720,54 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 						}
 					}
 				}
+                                if (!considerProjectivity){  // attepmt to read MISC annos
+                                    String miscStr = fieldValues.get(ConllDataField.PDEPREL.getFieldNum() - 1);
+                                    if (miscStr!=null){
+                                        String annos[] =  miscStr.split("\\|");
+                                        for (String anno : annos){
+                                            if (anno.contains("=")){
+                                                String parts[] = anno.split("=",2);
+                                                String key = parts[0].trim();
+                                                String val = parts[1].trim();
+                                                SAnnotation sa = SaltFactory.createSAnnotation();
+                                                sa.setName(key);
+                                                sa.setValue(val);
+                                                sToken.addAnnotation(sa);
+                                            }
+                                        }
+                                    }
+                                }
 
 			} // if (tupleSize>1)
 			else
 			{
+                            Iterator<String> iter = tuple.iterator();
+                            String lineString = iter.next();
+                            if (lineString.startsWith("#") && lineString.contains("=")){
+                                String parts[] = lineString.split("=",2);
+                                String key = parts[0].replaceFirst("#", "").trim();
+                                String val = parts[1].trim();
+                                if (key.startsWith(this.metaPrefix)){
+                                    key = key.replaceFirst(this.metaPrefix, "");
+                                    getDocument().createMetaAnnotation(null, key, val);
+                                } else{
+                                    SAnnotation anno = SaltFactory.createSAnnotation();
+                                    anno.setName(key);
+                                    anno.setValue(val);
+                                    sentAnnos.add(anno);
+                                }
+                            }
+                            
 			  if(!sentenceToken.isEmpty() 
 			      && ((CoNLLImporterProperties) getProperties()).isSentence())
         {
           // create span and add span annotation
           SSpan sSpan = getDocument().getDocumentGraph().createSpan(sentenceToken);
           sSpan.createAnnotation(null, CAT, S);
+          for (SAnnotation sAnno : sentAnnos){
+              sSpan.addAnnotation(sAnno);
+          }
+          sentAnnos.clear();
         }
 
 			  sentenceToken.clear();                          
@@ -728,9 +780,6 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 				// set the actual node as source for each pointing relation
 				for (Entry<SPointingRelation, String> entry : pointingRelationMap.entrySet()) {
                                     Integer position = SentTokMap.get(entry.getValue());
-                                    if (position == null){
-                			String bla = "s";
-                                    }
                                     SToken src = tokenList.get(position);
                                     entry.getKey().setSource(src); // index=ID-1
 				}

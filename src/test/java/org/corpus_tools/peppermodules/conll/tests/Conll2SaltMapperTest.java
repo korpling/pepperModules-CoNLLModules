@@ -481,5 +481,45 @@ public class Conll2SaltMapperTest {
           
 	}
 
+        @Test
+	public void testGUM()
+	{
+          getFixture().getProperties().setPropertyValue("conll.enhanced.EDGE.TYPE", "edep");
+          getFixture().getProperties().setPropertyValue("conll.dependency.layers", "TRUE");
+          getFixture().getProperties().setPropertyValue("conll.no.duplicate.edeps", "TRUE");
+          getFixture().getProperties().setPropertyValue("conll.EDGE.TYPE", "dep");
+          // set ellipsis tokens to be imported as annotations of a blank token, instead of primary text
+          getFixture().getProperties().setPropertyValue("conll.ellipsis.tok.annotation", "morph:Ellipsis");
+	  getFixture().setResourceURI(URI.createFileURI("src/test/resources/gum_test.conllu"));
+	  getFixture().mapSDocument();
+	  
+	  SDocumentGraph dg = getFixture().getDocument().getDocumentGraph();
+	  
+	  Assert.assertEquals(24, dg.getSpans().size()); // There are two sentences
+	  
+	  SSpan span1 = dg.getSpans().get(0); // second sentence
+	  Assert.assertEquals(7, dg.getOverlappedTokens(span1).size());  // There are 15 tokens
+          Assert.assertEquals(1,dg.getLayerByName("edep").size()); // The edep layer exists
+
+	}
         
+         @Test
+	public void testMetaCoref()
+	{
+          getFixture().getProperties().setPropertyValue("conll.enhanced.EDGE.TYPE", "edep");
+          getFixture().getProperties().setPropertyValue("conll.dependency.layers", "TRUE");
+          getFixture().getProperties().setPropertyValue("conll.no.duplicate.edeps", "TRUE");
+          getFixture().getProperties().setPropertyValue("conll.EDGE.TYPE", "dep");
+          // set ellipsis tokens to be imported as annotations of a blank token, instead of primary text
+          getFixture().getProperties().setPropertyValue("conll.ellipsis.tok.annotation", "morph:Ellipsis");
+	  getFixture().setResourceURI(URI.createFileURI("src/test/resources/on_conllua.conllu"));
+	  getFixture().mapSDocument();
+	  
+	  SDocumentGraph dg = getFixture().getDocument().getDocumentGraph();
+	  
+	  Assert.assertEquals(2, dg.getSpans().size()); // There are two sentences
+          Assert.assertEquals(3, dg.getDocument().getMetaAnnotations().size());  // 3 metadata
+	  
+
+	}
 }

@@ -1,0 +1,64 @@
+# newdoc id = bc_cctv_0000_001
+# meta_genre = bc
+# meta_partition = dev
+# meta_has_speaker = False
+
+# sent_id = bc_cctv_0000_001-0
+# text = In the summer of 2005, a picture that people have long been looking forward to started emerging with frequency in various major Hong Kong media.
+# speaker = Speaker_1
+1	In	in	ADP	IN	_	3	case	_	_
+2	the	the	DET	DT	_	3	det	_	Entity=(DATE-SGL-0
+3	summer	summer	NOUN	NN	_	17	obl	_	_
+4	of	of	ADP	IN	_	5	case	_	_
+5	2005	2005	NUM	CD	_	3	nmod	_	Entity=DATE-SGL-0)|SpaceAfter=No
+6	,	,	PUNCT	,	_	17	punct	_	_
+7	a	a	DET	DT	_	8	det	_	_
+8	picture	picture	NOUN	NN	_	17	nsubj	_	_
+9	that	that	PRON	WDT	_	14	obj	_	_
+10	people	people	NOUN	NNS	_	14	nsubj	_	_
+11	have	have	AUX	VBP	_	14	aux	_	Prop=have.01
+12	long	long	ADV	RB	_	14	advmod	_	_
+13	been	be	AUX	VBN	_	14	aux	_	Prop=be.03
+14	looking	look	VERB	VBG	_	8	acl:relcl	_	Prop=look.01|Sense=look-v.5
+15	forward	forward	ADV	RB	_	14	advmod	_	_
+16	to	to	ADP	IN	_	15	dep	_	_
+17	started	start	VERB	VBD	_	0	root	_	Prop=start.01|Sense=start-v.2
+18	emerging	emerge	VERB	VBG	_	17	xcomp	_	Prop=emerge.01|Sense=emerge-v.2
+19	with	with	ADP	IN	_	20	case	_	_
+20	frequency	frequency	NOUN	NN	_	18	obl	_	_
+21	in	in	ADP	IN	_	26	case	_	_
+22	various	various	ADJ	JJ	_	26	amod	_	_
+23	major	major	ADJ	JJ	_	26	amod	_	_
+24	Hong	Hong	PROPN	NNP	_	25	compound	_	Entity=(GPE-IDENT-1
+25	Kong	Kong	PROPN	NNP	_	26	compound	_	Entity=GPE-IDENT-1)
+26	media	media	NOUN	NNS	_	18	obl	_	SpaceAfter=No
+27	.	.	PUNCT	.	_	17	punct	_	_
+
+# sent_id = bc_cctv_0000_001-1
+# text = With their unique charm, these well-known cartoon images once again caused Hong Kong to be a focus of worldwide attention.
+# speaker = Speaker_1
+1	With	with	ADP	IN	_	4	case	_	_
+2	their	they	PRON	PRP$	_	4	nmod:poss	_	Entity=(UNKNOWN-IDENT-2)
+3	unique	unique	ADJ	JJ	_	4	amod	_	_
+4	charm	charm	NOUN	NN	_	14	obl	_	SpaceAfter=No
+5	,	,	PUNCT	,	_	14	punct	_	_
+6	these	these	DET	DT	_	11	det	_	Entity=(UNKNOWN-IDENT-2
+7	well	well	ADV	RB	_	9	advmod	_	SpaceAfter=No
+8	-	-	PUNCT	HYPH	_	9	punct	_	SpaceAfter=No
+9	known	know	VERB	VBN	_	11	amod	_	Prop=know.01
+10	cartoon	cartoon	NOUN	NN	_	11	compound	_	_
+11	images	image	NOUN	NNS	_	14	nsubj	_	Entity=UNKNOWN-IDENT-2)
+12	once	once	ADV	RB	_	13	advmod	_	_
+13	again	again	ADV	RB	_	14	advmod	_	_
+14	caused	cause	VERB	VBD	_	0	root	_	Prop=cause.01|Sense=cause-v.1
+15	Hong	Hong	PROPN	NNP	_	16	compound	_	Entity=(GPE-IDENT-1
+16	Kong	Kong	PROPN	NNP	_	14	obj	_	Entity=GPE-IDENT-1)
+17	to	to	PART	TO	_	20	mark	_	_
+18	be	be	VERB	VB	_	20	cop	_	Prop=be.01|Sense=be-v.1
+19	a	a	DET	DT	_	20	det	_	_
+20	focus	focus	NOUN	NN	_	14	xcomp	_	_
+21	of	of	ADP	IN	_	23	case	_	_
+22	worldwide	worldwide	ADJ	JJ	_	23	amod	_	_
+23	attention	attention	NOUN	NN	_	20	nmod	_	SpaceAfter=No
+24	.	.	PUNCT	.	_	14	punct	_	_
+

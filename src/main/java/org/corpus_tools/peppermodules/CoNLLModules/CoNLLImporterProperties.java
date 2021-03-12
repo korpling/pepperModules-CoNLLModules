@@ -87,8 +87,10 @@ public class CoNLLImporterProperties extends PepperModuleProperties {
 
         /** If set, ellipsis token values are imported as annotations, and replaced in base text by a blank space. Use colon to specify a namespace. */
 	public static final String ELLIPSIS_TOK_ANNO = PREFIX + "ellipsis.tok.annotation";
-        
 
+        /** Prefix for comment line annotations interpreted as metadata. Default: meta_ */
+	public static final String META_PREFIX = PREFIX + "meta.prefix";
+        
 	public CoNLLImporterProperties() {
 		this.addProperty(new PepperModuleProperty<String>(PROP_SPOS, String.class,
 				"States which CoNLL field´s data to use for the SPOSAnnotation of salt tokens, or, if [FIELD] is NONE, not to create SPOSAnnotations at all. If the field designated by [FIELD] contains no data, [ALTERNATIVEFIELD] (if given), is used. If that field contains no data, no SPOSAnnotation is created for the particular salt token.",
@@ -161,6 +163,12 @@ public class CoNLLImporterProperties extends PepperModuleProperties {
 				.withName(ELLIPSIS_TOK_ANNO)
 				.withType(String.class)
 				.withDescription("If set, ellipsis token values are imported as annotations, and replaced in base text by a blank space. Use colon to specify a namespace.")
+				.build());	
+		addProperty(PepperModuleProperty.create()
+				.withName(META_PREFIX)
+				.withType(String.class)
+				.withDescription("Prefix for comment line annotations interpreted as metadata. Default: meta_ ")
+                                .withDefaultValue("meta_")
 				.build());	
         }
 
@@ -254,6 +262,11 @@ public class CoNLLImporterProperties extends PepperModuleProperties {
 
         public String getEllipsisAnno() {
 		Object val = getProperty(ELLIPSIS_TOK_ANNO).getValue();
+		return val == null? null : (String) val;
+	}
+
+        public String getMetaPrefix() {
+		Object val = getProperty(META_PREFIX).getValue();
 		return val == null? null : (String) val;
 	}
 
