@@ -55,9 +55,11 @@ public class CoNLLImporterProperties extends PepperModuleProperties {
 																					// the
 																					// end
 	public final static String PROP_POS_NAME = PREFIX + "POS.NAME";
+	public final static String PROP_SECOND_POS_NAME = PREFIX + "SECOND.POS.NAME";
 	public final static String PROP_LEMMA_NAME = PREFIX + "LEMMA.NAME";
 	public final static String PROP_EDGETYPE_NAME = PREFIX + "EDGE.TYPE";
 	public final static String PROP_FEATURES_NAMESPACE = PREFIX + "FEATURES.NAMESPACE";
+	public final static String PROP_MISC_NAMESPACE = PREFIX + "MISC.NAMESPACE";
 	public final static String PROP_KEYVAL_FEATURES = PREFIX + "KeyValFeatures";
 	// is
 	// correct
@@ -88,8 +90,20 @@ public class CoNLLImporterProperties extends PepperModuleProperties {
         /** If set, ellipsis token values are imported as annotations, and replaced in base text by a blank space. Use colon to specify a namespace. */
 	public static final String ELLIPSIS_TOK_ANNO = PREFIX + "ellipsis.tok.annotation";
 
-        /** Prefix for comment line annotations interpreted as metadata. Default: meta_ */
+        /** Prefix for comment line annotations interpreted as metadata. Default: meta:: */
 	public static final String META_PREFIX = PREFIX + "meta.prefix";
+
+        /** Comma separated list of sentence annotations to import */
+	public static final String SENT_ANNOS = PREFIX + "sentence.annotations";
+
+        /** Namespace for CoNLL-Coref-style markables in MISC field if present. */
+	public static final String MARK_NS = PREFIX + "markable.namespace";
+        
+        /** Annotation key containing CoNLL-Coref-style markables in MISC field, e.g. Entity in Entity=(person */
+	public static final String MARK_ANNO = PREFIX + "markable.annotation";
+
+        /** Annotation key names (hyphen-separated) for CoNLL-Coref-style markables in MISC field if present.  GRP denotes edge cluster, EDGE denotes edge type. Default: entity-GRP-identity */
+	public static final String MARK_LABELS = PREFIX + "markable.labels";
         
 	public CoNLLImporterProperties() {
 		this.addProperty(new PepperModuleProperty<String>(PROP_SPOS, String.class,
@@ -115,6 +129,8 @@ public class CoNLLImporterProperties extends PepperModuleProperties {
 				"Allowed values are any single category name or pipe separated sequences of category names", false));
 		this.addProperty(new PepperModuleProperty<String>(PROP_POS_NAME, String.class,
 				"A string specifying a valid annotation name for the POS annotation", false));
+		this.addProperty(new PepperModuleProperty<String>(PROP_SECOND_POS_NAME, String.class,
+				"A string specifying a valid annotation name for the second POS annotation, if desired", false));
 		this.addProperty(new PepperModuleProperty<String>(PROP_LEMMA_NAME, String.class,
 				"A string specifying a valid annotation name for the lemma annotation", false));
 		this.addProperty(new PepperModuleProperty<String>(PROP_EDGETYPE_NAME, String.class,
@@ -129,7 +145,9 @@ public class CoNLLImporterProperties extends PepperModuleProperties {
 				"If [VALUE] is set TRUE, it is assumed that the FEATS column contains pipe-delimited annotation names and values such as Case=Gen|Number=Plur.",
 				false, false));
 		this.addProperty(new PepperModuleProperty<String>(PROP_FEATURES_NAMESPACE, String.class,
-				"Namespace to assign to features annotations in column 6.", null, false));
+				"Namespace to assign to feature annotations in column 6.", null, false));
+		this.addProperty(new PepperModuleProperty<String>(PROP_MISC_NAMESPACE, String.class,
+				"Namespace to assign to feature annotations in column 10.", null, false));
 		this.addProperty(new PepperModuleProperty<Boolean>(PROP_SENTENCE, Boolean.class,
 				"If [VALUE] is set TRUE add a sentence annotation (cat=S) to the data.", true, false));
 		
@@ -167,8 +185,30 @@ public class CoNLLImporterProperties extends PepperModuleProperties {
 		addProperty(PepperModuleProperty.create()
 				.withName(META_PREFIX)
 				.withType(String.class)
-				.withDescription("Prefix for comment line annotations interpreted as metadata. Default: meta_ ")
-                                .withDefaultValue("meta_")
+				.withDescription("Prefix for comment line annotations interpreted as metadata. Default: meta:: ")
+                                .withDefaultValue("meta::")
+				.build());	
+		addProperty(PepperModuleProperty.create()
+				.withName(SENT_ANNOS)
+				.withType(String.class)
+				.withDescription("Comma separated list of sentence annotations to import")
+				.build());	
+		addProperty(PepperModuleProperty.create()
+				.withName(MARK_NS)
+				.withType(String.class)
+				.withDescription("Namespace for CoNLL-Coref-style markables in MISC field if present")
+				.build());	
+		addProperty(PepperModuleProperty.create()
+				.withName(MARK_ANNO)
+				.withType(String.class)
+				.withDescription("Annotation key containing CoNLL-Coref-style markables in MISC field, e.g. Entity in Entity=(person")
+                                .withDefaultValue("Entity")
+				.build());	
+		addProperty(PepperModuleProperty.create()
+				.withName(MARK_LABELS)
+				.withType(String.class)
+				.withDescription("Annotation key names (hyphen-separated) for CoNLL-Coref-style markables in MISC field if present. GRP denotes edge cluster, EDGE denotes edge type. Default: entity-GRP-identity")
+                                .withDefaultValue("entity-GRP-identity")
 				.build());	
         }
 
@@ -204,6 +244,10 @@ public class CoNLLImporterProperties extends PepperModuleProperties {
 		return ((String) this.getProperty(PROP_POS_NAME).getValue());
 	}
 
+	public String getSecondPosName() {
+		return ((String) this.getProperty(PROP_SECOND_POS_NAME).getValue());
+	}
+
 	public String getLemmaName() {
 		return ((String) this.getProperty(PROP_LEMMA_NAME).getValue());
 	}
@@ -224,6 +268,10 @@ public class CoNLLImporterProperties extends PepperModuleProperties {
 
         public String getFeaturesNamespace() {
 		return ((String) this.getProperty(PROP_FEATURES_NAMESPACE).getValue());
+	}
+
+        public String getMiscNamespace() {
+		return ((String) this.getProperty(PROP_MISC_NAMESPACE).getValue());
 	}
 
 	public Boolean isSplitFeatures() {
@@ -268,6 +316,25 @@ public class CoNLLImporterProperties extends PepperModuleProperties {
         public String getMetaPrefix() {
 		Object val = getProperty(META_PREFIX).getValue();
 		return val == null? null : (String) val;
+	}
+
+        public String[] getSentAnnos() {
+		Object val = getProperty(SENT_ANNOS).getValue();
+		return val == null? null : ((String) val).split(",");
+	}
+        public String getMarkNamespace() {
+		Object val = getProperty(MARK_NS).getValue();
+		return val == null? null : (String) val;
+	}
+
+        public String getMarkAnnotation() {
+		Object val = getProperty(MARK_ANNO).getValue();
+		return val == null? null : (String) val;
+	}
+
+        public String[] getMarkLabels() {
+		Object val = getProperty(MARK_LABELS).getValue();
+		return val == null? null : ((String) val).split("-",-1);
 	}
 
 }

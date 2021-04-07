@@ -1,7 +1,7 @@
 # newdoc id = bc_cctv_0000_001
-# meta_genre = bc
-# meta_partition = dev
-# meta_has_speaker = False
+# meta::genre = bc
+# meta::partition = dev
+# meta::has_speaker = False
 
 # sent_id = bc_cctv_0000_001-0
 # text = In the summer of 2005, a picture that people have long been looking forward to started emerging with frequency in various major Hong Kong media.

@@ -490,8 +490,12 @@ public class Conll2SaltMapperTest {
           getFixture().getProperties().setPropertyValue("conll.EDGE.TYPE", "dep");
           // set ellipsis tokens to be imported as annotations of a blank token, instead of primary text
           getFixture().getProperties().setPropertyValue("conll.ellipsis.tok.annotation", "morph:Ellipsis");
+          // do not import entity markables
+          getFixture().getProperties().setPropertyValue("conll.markable.annotation", "");
 	  getFixture().setResourceURI(URI.createFileURI("src/test/resources/gum_test.conllu"));
-	  getFixture().mapSDocument();
+          // only import s_type sentence annotation and speaker
+          getFixture().getProperties().setPropertyValue("conll.sentence.annotations", "s_type,speaker");
+          getFixture().mapSDocument();
 	  
 	  SDocumentGraph dg = getFixture().getDocument().getDocumentGraph();
 	  
@@ -509,7 +513,14 @@ public class Conll2SaltMapperTest {
           getFixture().getProperties().setPropertyValue("conll.enhanced.EDGE.TYPE", "edep");
           getFixture().getProperties().setPropertyValue("conll.dependency.layers", "TRUE");
           getFixture().getProperties().setPropertyValue("conll.no.duplicate.edeps", "TRUE");
+          getFixture().getProperties().setPropertyValue("conll.SECOND.POS.NAME", "upos");
           getFixture().getProperties().setPropertyValue("conll.EDGE.TYPE", "dep");
+          //"GPE-IDENT-1"
+          getFixture().getProperties().setPropertyValue("conll.markable.labels", "entity-EDGE-");
+          getFixture().getProperties().setPropertyValue("conll.markable.annotation", "Entity");
+          getFixture().getProperties().setPropertyValue("conll.markable.namespace", "ref");
+          getFixture().getProperties().setPropertyValue("conll.sentence.annotations", "speaker");
+          
           // set ellipsis tokens to be imported as annotations of a blank token, instead of primary text
           getFixture().getProperties().setPropertyValue("conll.ellipsis.tok.annotation", "morph:Ellipsis");
 	  getFixture().setResourceURI(URI.createFileURI("src/test/resources/on_conllua.conllu"));
@@ -517,7 +528,7 @@ public class Conll2SaltMapperTest {
 	  
 	  SDocumentGraph dg = getFixture().getDocument().getDocumentGraph();
 	  
-	  Assert.assertEquals(2, dg.getSpans().size()); // There are two sentences
+	  Assert.assertEquals(7, dg.getSpans().size()); // There are 2 sentences, 5 entities
           Assert.assertEquals(3, dg.getDocument().getMetaAnnotations().size());  // 3 metadata
 	  
 

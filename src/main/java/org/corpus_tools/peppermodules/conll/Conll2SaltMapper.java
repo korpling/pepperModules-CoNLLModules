@@ -20,19 +20,26 @@ package org.corpus_tools.peppermodules.conll;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import org.apache.commons.lang3.ArrayUtils;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.corpus_tools.pepper.common.DOCUMENT_STATUS;
 import org.corpus_tools.pepper.impl.PepperMapperImpl;
 import org.corpus_tools.pepper.modules.exceptions.PepperModuleDataException;
+import org.corpus_tools.peppermodules.CoNLLModules.CoNLLCorefMarkable;
 import org.corpus_tools.peppermodules.CoNLLModules.CoNLLImporterProperties;
+import org.corpus_tools.peppermodules.CoNLLModules.DefaultDict;
 import org.corpus_tools.peppermodules.conll.tupleconnector.TupleConnectorFactory;
 import org.corpus_tools.peppermodules.conll.tupleconnector.TupleReader;
 import org.corpus_tools.salt.SaltFactory;
@@ -98,6 +105,7 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 
         // check for user-defined edge type, POS and lemma annotation names
         String posName;
+        String secondPosName;
         String lemmaName;
         String edgeAnnoName;
         String edgeAnnoNS;
@@ -105,6 +113,7 @@ public class Conll2SaltMapper extends PepperMapperImpl {
         String edgeType;
         String enhancedEdgeType;
         String featuresNamespace;
+        String miscNamespace;
         boolean dependenciesHaveLayers;
         boolean splitEnhancedDeprels;
         boolean noDuplicateEdeps;
@@ -112,7 +121,16 @@ public class Conll2SaltMapper extends PepperMapperImpl {
         String ellipsisTokAnno;
         String ellipsisTokAnnoNS;
         String metaPrefix;
+        String[] sentAnnos;
+        String markNamespace;
+        SLayer markLayer;
+        String markAnnotation;
+        String[] markLabels;
+        Integer grpIdIndex;  // position of coref group identifier in span annotations
 
+        // ArrayList to hold CoNLL-style bracketed spans from MISC field
+        ArrayList<CoNLLCorefMarkable> markables = new ArrayList<>();
+        
         private String getEdgeType(){
             return (String) getProperties().getProperties().getProperty(CoNLLImporterProperties.PROP_EDGETYPE_NAME, "dep");
         }
@@ -137,12 +155,36 @@ public class Conll2SaltMapper extends PepperMapperImpl {
             return (String) getProperties().getProperties().getProperty(CoNLLImporterProperties.META_PREFIX, "meta_");
          }
 
+         private String[] getSentAnnos(){
+            return ((CoNLLImporterProperties) getProperties()).getSentAnnos();
+         }
+
+         private String getMarkNamespace(){
+            return (String) getProperties().getProperties().getProperty(CoNLLImporterProperties.MARK_NS, null);
+         }
+
+         private String getMarkAnnotation(){
+            return (String) getProperties().getProperties().getProperty(CoNLLImporterProperties.MARK_ANNO, null);
+         }
+
+         private String[] getMarkLabels(){
+            return ((CoNLLImporterProperties) getProperties()).getMarkLabels();
+         }
+
+         private String getMiscNamespace(){
+            return (String) getProperties().getProperties().getProperty(CoNLLImporterProperties.PROP_MISC_NAMESPACE, null);
+        }
+        
          private String getFeaturesNamespace(){
             return (String) getProperties().getProperties().getProperty(CoNLLImporterProperties.PROP_FEATURES_NAMESPACE, null);
         }
         
         private String getPosName(){
             return (String) getProperties().getProperties().getProperty(CoNLLImporterProperties.PROP_POS_NAME, "");
+        }
+        
+        private String getSecondPosName(){
+            return (String) getProperties().getProperties().getProperty(CoNLLImporterProperties.PROP_SECOND_POS_NAME, "");
         }
         
         private String getLemmaName(){
@@ -251,6 +293,7 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 	}
 
 	private void createPOSandCPOSAnnotation(ArrayList<String> fieldValues, SToken sToken) {
+                ConllDataField field2;
 		{
 			if (this.useSPOSAnnotation) {
 				int SPOSAnnotationIndex = -1;
@@ -277,7 +320,28 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 								SPOSAnnotationIndex = index;
 							}
 						}
-					}
+					} else if(secondPosName!=null) {
+                                                // User asked for both POS tags with separate name for 'other' tag
+                                                if (bothFields[SPOSAnnotationIndex]==ConllDataField.POSTAG){
+                                                    field2 = ConllDataField.CPOSTAG; // other tag is CPOS
+                                                } else {
+                                                    field2 = ConllDataField.POSTAG; // other tag is POS
+                                                }
+                                            
+						if (field2 != null) {
+							String fieldVal = fieldValues.get(field2.getFieldNum() - 1);
+							if (fieldVal != null) {
+                                                                SAnnotation anno;
+                                                                if (secondPosName.length() > 0){
+                                                                    // This is a second POS annotation, use a regular nameable SAnnotation
+                                                                    anno = SaltFactory.createSAnnotation();
+                                                                    anno.setName(secondPosName);                                                                                                                             
+                                                                    anno.setValue(fieldVal);                                                                
+                                                                    sToken.addAnnotation(anno);
+                                                                }
+							}
+						}                                        
+                                        }
 				}
 
 				for (int index = 0; index < bothFields.length; index++) {
@@ -287,18 +351,7 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 							String fieldVal = fieldValues.get(field.getFieldNum() - 1);
 							if (fieldVal != null) {
 								SAnnotation anno = SaltFactory.createSAnnotation();
-								anno.setName(getProperties().getProperties().getProperty(field.getPropertyKey_Name(), field.name())); // use
-																													// user
-																													// specified
-																													// name
-																													// for
-																													// field,
-																													// or
-																													// default:
-																													// the
-																													// field�s
-																													// ConLL
-																													// name
+								anno.setName(getProperties().getProperties().getProperty(field.getPropertyKey_Name(), field.name())); // use user specified name for field, or default: the field's ConLL name
 								anno.setValue(fieldVal);
 								sToken.addAnnotation(anno);
 								SPOSAnnotationIndex = index;
@@ -309,7 +362,7 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 			}
 		}
 	}
-
+        
 	/**
 	 * {@inheritDoc PepperMapper#setDocument(SDocument)}
 	 * 
@@ -355,6 +408,7 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 		this.splitFeatures = getSplitFeatures();
 		this.keyValFeatures = getKeyValFeatures();
         this.posName = getPosName();
+        this.secondPosName = getSecondPosName();
         this.lemmaName = getLemmaName();
         this.edgeType = getEdgeType();
         this.enhancedEdgeType = getEnhancedEdgeType();
@@ -375,12 +429,38 @@ public class Conll2SaltMapper extends PepperMapperImpl {
         this.edgeAnnoName = getEdgeAnnoName();
         this.edgeAnnoNS = getEdgeAnnoNS();
         this.metaPrefix = getMetaPrefix();
+        this.sentAnnos = getSentAnnos();
+        this.markNamespace = getMarkNamespace();
         this.featuresNamespace = getFeaturesNamespace();
+        this.miscNamespace = getMiscNamespace();
         this.dependenciesHaveLayers = dependenciesHaveLayers();
         this.splitEnhancedDeprels = splitEnhancedDeprels();
         this.noDuplicateEdeps = noDuplicateEdeps();
-             
+        if (this.markNamespace != null){
+           this.markLayer = SaltFactory.createSLayer();
+           this.markLayer.setName(this.markNamespace);
+           this.markLayer.setGraph(getDocument().getDocumentGraph());
+       }
+        this.markAnnotation = getMarkAnnotation();
+        this.markLabels = getMarkLabels();
+        this.grpIdIndex = Arrays.asList(this.markLabels).indexOf("GRP");
 
+        // regex patterns to match coref Info with opening brackets, closing, or both
+        Pattern patOpen = Pattern.compile("\\(([^|()]+)");
+        Pattern patClose = Pattern.compile("([^|()]+)\\)");
+        Pattern patDouble = Pattern.compile("\\(([^|()]+)\\)");
+        boolean nestedClosed = true;
+        String group;
+        int tok_counter=0;
+
+        // markable containers
+        DefaultDict<Integer,List<CoNLLCorefMarkable>> markstart_dict = new DefaultDict<>(ArrayList.class);
+        DefaultDict<Integer,List<CoNLLCorefMarkable>> markend_dict = new DefaultDict<>(ArrayList.class);
+        LinkedHashMap<String,LinkedList<CoNLLCorefMarkable>> last_mark_by_group = new LinkedHashMap<>();        
+        LinkedHashMap<String,LinkedList<CoNLLCorefMarkable>> open_marks_by_group = new LinkedHashMap<>();        
+        DefaultDict<String,String> mark_text_by_group = new DefaultDict<>(String.class);        
+        
+        
         boolean considerProjectivity = (Boolean) getProperties().getProperty(CoNLLImporterProperties.PROP_CONSIDER_PROJECTIVITY).getValue();
         boolean projectiveModeIsType = !getProperties().getProperties().getProperty(CoNLLImporterProperties.PROP_PROJECTIVE_MODE, TYPE).equalsIgnoreCase(NAMESPACE);
 
@@ -409,12 +489,7 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 				throw new PepperModuleDataException(this, errorMessage);
 			}
 
-                        try {
 			tupleSize = tuple.size();
-                        }
-                        catch (NullPointerException e){
-                           throw new PepperModuleDataException(this, "bla");
-                        }
 			fieldValues.clear();
 
 			if (!((tupleSize == 1) || (tupleSize == numOfColumnsExpected))) {
@@ -451,6 +526,7 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 				// completely reading the input file)
                                 
                                 int tokenTextStartOffset = primaryText.length();
+                                String tokText;
                                 if (tokenIDStr.contains(".") && this.ellipsisTokAnno != null){
                                     String ellipsisToken = fieldValues.get(ConllDataField.FORM.getFieldNum() - 1);
                                     SAnnotation sa = SaltFactory.createSAnnotation();
@@ -459,8 +535,10 @@ public class Conll2SaltMapper extends PepperMapperImpl {
                                     sa.setValue(ellipsisToken);
                                     sToken.addAnnotation(sa);
                                     primaryText.append(" ").append(" "); // ellipsis token and properties configured to import form field as annotation
+                                    tokText = " ";
                                 } else{
-                                    primaryText.append(fieldValues.get(ConllDataField.FORM.getFieldNum() - 1)).append(" "); // update primary text data, tokens separated by space
+                                    tokText = fieldValues.get(ConllDataField.FORM.getFieldNum() - 1);
+                                    primaryText.append(tokText).append(" "); // update primary text data, tokens separated by space
                                 }
                                 
 				int tokenTextEndOffset = primaryText.length() - 1;
@@ -729,15 +807,102 @@ public class Conll2SaltMapper extends PepperMapperImpl {
                                                 String parts[] = anno.split("=",2);
                                                 String key = parts[0].trim();
                                                 String val = parts[1].trim();
-                                                SAnnotation sa = SaltFactory.createSAnnotation();
-                                                sa.setName(key);
-                                                sa.setValue(val);
-                                                sToken.addAnnotation(sa);
+                                                if (key.equals(this.markAnnotation)) { // bracket markable like Entity=(person
+
+                                                    // Find single token markables;
+                                                    Matcher m = patDouble.matcher(val);                        
+                                                    while (m.find()) {
+                                                        group = m.group(1);
+                                                        CoNLLCorefMarkable new_mark = new CoNLLCorefMarkable(tok_counter);
+                                                        new_mark.setEnd(tok_counter);
+                                                        new_mark.setAnnoString(group); // save contents of bracketed markable
+                                                        if (this.grpIdIndex > -1){
+                                                            group = group.split("-")[this.grpIdIndex];
+                                                        }
+                                                        new_mark.setGroup(group);  // save only the group part, if a GRP part is specified
+                                                        if (last_mark_by_group.containsKey(group)){
+                                                            if (last_mark_by_group.get(group).size()>0){
+                                                                new_mark.antecedent = last_mark_by_group.get(group).get(last_mark_by_group.get(group).size()-1);
+                                                            }
+                                                        }else{
+                                                            LinkedList<CoNLLCorefMarkable> emptyList = new LinkedList<>();
+                                                            last_mark_by_group.put(group, emptyList);
+                                                        }
+                                                        last_mark_by_group.get(group).push(new_mark);
+                                                        markables.add(new_mark);
+                                                        markstart_dict.get(tok_counter).add(new_mark);
+                                                        markend_dict.get(tok_counter).add(new_mark);
+                                                    }
+                                                    val = val.replaceAll("\\(([^|()]+)\\)","");
+                                                    // Find opening markables;
+                                                    m = patOpen.matcher(val);                        
+                                                    while (m.find()) {
+                                                        group = m.group(1);
+                                                        CoNLLCorefMarkable new_mark = new CoNLLCorefMarkable(tok_counter);
+                                                        new_mark.setAnnoString(group);
+                                                        if (this.grpIdIndex > -1){
+                                                            group = group.split("-")[this.grpIdIndex];
+                                                        }
+                                                        new_mark.setGroup(group);
+                                                        markables.add(new_mark);
+                                                        if (last_mark_by_group.containsKey(group)){
+                                                            if (last_mark_by_group.get(group).size()>0){
+                                                                new_mark.antecedent = last_mark_by_group.get(group).get(last_mark_by_group.get(group).size()-1);
+                                                            }
+                                                        }else{
+                                                            LinkedList<CoNLLCorefMarkable> emptyList = new LinkedList<>();
+                                                            last_mark_by_group.put(group, emptyList);
+                                                        }
+                                                        if (!open_marks_by_group.containsKey(group)){
+                                                            LinkedList<CoNLLCorefMarkable> emptyList = new LinkedList<>();
+                                                            open_marks_by_group.put(group, emptyList);
+                                                        }
+                                                        open_marks_by_group.get(group).push(new_mark);
+                                                        last_mark_by_group.get(group).push(new_mark);
+                                                        mark_text_by_group.put(group,mark_text_by_group.get(group) + tokText + " ");
+                                                        markstart_dict.get(tok_counter).add(new_mark);
+                                                    }
+                                                    val = val.replaceAll("\\(([^|()]+)","");
+                                                    // Find closing markables;
+                                                    m = patClose.matcher(val);       
+                                                    CoNLLCorefMarkable mark;
+                                                    while (m.find()) {
+                                                        group = m.group(1);
+                                                        if (this.grpIdIndex > -1){
+                                                            group = group.split("-")[this.grpIdIndex];
+                                                        }
+                                                        if (open_marks_by_group.containsKey(group)){
+                                                            //mark = last_mark_by_group.get(group).pop();
+                                                            //open_marks_by_group.get(group).removeFirst();
+                                                            mark = open_marks_by_group.get(group).pop();
+                                                        } else{
+                                                            throw new PepperModuleDataException(this, "Found closing bracket " + group + " but group was not opened!");
+                                                        }
+                                                        mark.setText(mark_text_by_group.get(group).trim());
+                                                        mark.setEnd(tok_counter);
+                                                        markend_dict.get(tok_counter).add(mark);
+                                                    }
+                                                    for (String g : mark_text_by_group.keySet()){
+                                                        if (!mark_text_by_group.get(g).equals("")) {
+                                                            mark_text_by_group.put(g,mark_text_by_group.get(g) + tokText + " ");
+                                                        }
+                                                    }
+
+                                                }
+                                                else{  // regular MISC annotation
+                                                    SAnnotation sa = SaltFactory.createSAnnotation();
+                                                    sa.setName(key);
+                                                    sa.setValue(val);
+                                                    if (this.miscNamespace!=null){
+                                                        sa.setNamespace(this.miscNamespace);
+                                                    }
+                                                    sToken.addAnnotation(sa);
+                                                }
                                             }
                                         }
                                     }
                                 }
-
+                            tok_counter++;
 			} // if (tupleSize>1)
 			else
 			{
@@ -751,10 +916,12 @@ public class Conll2SaltMapper extends PepperMapperImpl {
                                     key = key.replaceFirst(this.metaPrefix, "");
                                     getDocument().createMetaAnnotation(null, key, val);
                                 } else{
-                                    SAnnotation anno = SaltFactory.createSAnnotation();
-                                    anno.setName(key);
-                                    anno.setValue(val);
-                                    sentAnnos.add(anno);
+                                    if (ArrayUtils.contains(this.sentAnnos, key) || this.sentAnnos == null){
+                                        SAnnotation anno = SaltFactory.createSAnnotation();
+                                        anno.setName(key);
+                                        anno.setValue(val);
+                                        sentAnnos.add(anno);
+                                    }
                                 }
                             }
                             
@@ -805,6 +972,79 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 		// text for TextualDS
 		primaryText.deleteCharAt(primaryText.length() - 1);
 		sTextualDS.setText(primaryText.toString());
+                
+                
+    List<SToken> tokens = getDocument().getDocumentGraph().getTokens();
+    
+    // Import any spans encoded in CoNLL-U MISC field as grouped brackets
+            // add all covered tokens to markables
+        for (CoNLLCorefMarkable mark : markables){
+            for (int i = mark.getStart(); i <= mark.getEnd(); i++){
+                mark.addToken(tokens.get(i));
+            }
+        }
+ 
+        // keep a mapping of Markables to SSpans to link edges later
+        LinkedHashMap<CoNLLCorefMarkable,SSpan> marks2spans = new LinkedHashMap<>();
+        
+        // create sSpans for all markables and link to antecedents if necessary
+        for (CoNLLCorefMarkable mark : markables){
+            SSpan sSpan = getDocument().getDocumentGraph().createSpan(mark.getTokens());
+            if (this.markNamespace != null){
+                if (sSpan == null){
+                    throw new PepperModuleDataException(this, "Null span detected, created from markable object: " + mark.toString());
+                }
+                sSpan.addLayer(this.markLayer);
+            }
+            if (this.markLabels != null){
+                int i=0;
+                for (String subval : mark.getAnnoString().split("-")){                
+                    if (this.markLabels.length < i){
+                        break; // undeclared annotation value, ignore
+                    }
+                    String annoName = this.markLabels[i];
+                    i++;
+                    if (annoName.length() == 0 || subval.length()== 0 || annoName.equals("GRP")){
+                        continue;  // ignore zero length annotations
+                    }
+                    if (annoName.equals("EDGE")){
+                        mark.setEdgeType(subval);
+                        continue;
+                    }
+                    SAnnotation annotation = SaltFactory.createSAnnotation();
+                    annotation.setName(annoName);
+                    annotation.setValue(subval);
+                    if (this.markNamespace != null){
+                        annotation.setNamespace(this.markNamespace);
+                    }                
+                    sSpan.addAnnotation(annotation);
+                }
+            }
+            if (mark.getNodeName()!=null){
+                sSpan.setName(mark.getNodeName());
+            }
+            
+            // remember SSpan object belonging to this markID
+            marks2spans.put(mark, sSpan);
+        }
+        
+        // add edges
+        for (CoNLLCorefMarkable mark : markables){
+             if (mark.antecedent != null){
+                SPointingRelation sRel = SaltFactory.createSPointingRelation();  
+                sRel.setSource(marks2spans.get(mark));
+                sRel.setTarget(marks2spans.get(mark.antecedent));
+                sRel.setType("coref");
+                SAnnotation relAnno = SaltFactory.createSAnnotation();
+                relAnno.setName("type");
+                relAnno.setValue(mark.getEdgeType());
+                sRel.addAnnotation(relAnno);
+                if (this.markNamespace != null){
+                    sRel.addLayer(this.markLayer);
+                }
+                getDocument().getDocumentGraph().addRelation(sRel);
+             }
+        }
 
 		if (nonMatchingCategoryNumberLines.size() > 0) {
 			logger.warn("Number of feature values doesn't match number of categories in lines: " + nonMatchingCategoryNumberLines.toString());

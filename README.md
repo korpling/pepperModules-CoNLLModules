@@ -151,6 +151,8 @@ pepper modules contained in this project
 |conll.projectiveMode		|TYPE, NAMESPACE		|TYPE|
 |conll.field6.POSTAG.TAG	|TRUE, FALSE			|TRUE|
 |conll.field6.CPOSTAG.TAG	|any					| |
+|conll.SECOND.POS.NAME	|String					| |
+|conll.MISC.NAMESPACE	|String					| |
 |conll.field6.default		|any					| |
 |conll.splitFeatures		|a single category name or a pipe separated sequence of category names	| morph|
 |conll.KeyValFeatures		| TRUE, FALSE	| FALSE|
@@ -159,7 +161,11 @@ pepper modules contained in this project
 |conll.split.edeps		        |TRUE, FALSE	| FALSE|
 |conll.no.duplicate.edeps		        |TRUE, FALSE	| FALSE|
 |conll.ellipsis.tok.annotation		        |String	| |
-|conll.meta.prefix            |String| meta_ |
+|conll.meta.prefix            |String| meta:: |
+|conll.markable.namespace            |String|  |
+|conll.markable.annotation           |String|  |
+|conll.markable.labels           |String| entity-GRP-identity |
+|conll.sentence.annotations           |String|  |
 
 ### conll.SPOS
 Usage: conll.SPOS=[FIELD](,[ALTERNATIVEFIELD])
@@ -219,6 +225,14 @@ If the  property is set FALSE, a single SAnnotation is created. If it is set TRU
  This attribute works like , but instead of POSTAG, the CPOSTAG value of data rows is utilized. 
  Note: A configuration may contain both attribute types, even the same [TAG]s can be used, but if a data row is matching conditions for both a POSTAG and a CPOSTAG attribute, the one for the POSTAG attribute is used! 
 
+### conll.SECOND.POS.NAME
+Usage: conll.SECOND.POS.NAME=[VALUE]
+A string specifying a valid annotation name for the second POS annotation, if desired, for example if xpos is the primary POS column, we can choose 'upos' for the other column
+
+### conll.MISC.NAMESPACE
+Usage: conll.MISC.NAMESPACE=[VALUE]
+Namespace to assign to feature annotations in column 10.
+
 ### conll.field6.default
 Usage: conll.field6.default=[VALUE]
 Allowed values are any single category name or pipe separated sequences of category names
@@ -268,4 +282,22 @@ If set, ellipsis token values are imported as annotations, and replaced in base 
 
 ### conll.meta.prefix
 Usage: conll.meta.prefix=[VALUE]
-Comment lines with key value structure: `# key = value` will be interpreted as metadata if the key begins with this string. Default: meta_
+Comment lines with key value structure: `# meta::key = value` will be interpreted as metadata if the key begins with this string. Default: meta::
+
+### conll.markable.namespace 
+Usage: conll.markable.namespace =[VALUE]
+Namespace for CoNLL-Coref-style markables in MISC field if present.
+
+### conll.markable.annotation
+Usage: conll.markable.annotation=[VALUE]
+Annotation key containing CoNLL-Coref-style markables in MISC field, e.g. Entity in Entity=(person
+
+### conll.markable.labels
+Usage: conll.markable.labels=[VALUE]
+Annotation key names (hyphen-separated) for CoNLL-Coref-style markables in MISC field if present.  GRP denotes edge cluster, EDGE denotes edge type. Default: entity-GRP-identity
+
+### conll.sentence.annotations
+Usage: conll.sentence.annotations=[VALUE]
+Comma separated list of sentence hashtag key-value annotations to import, for example: s_type,speaker
+
+
