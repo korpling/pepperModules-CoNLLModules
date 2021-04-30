@@ -515,14 +515,18 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 				} // for (Iterator<String> iter=tuple.iterator();
 					// iter.hasNext(); fieldNum++)
 
+
+                                String tokenIDStr = fieldValues.get(ConllDataField.ID.getFieldNum() - 1);				
+                                if (tokenIDStr.contains("-")) {  // Skip multiword (a.k.a. MWT) supertokens
+                                        continue;
+                                }
+                                
 				// create token and add to local token list
 				SToken sToken = SaltFactory.createSToken();
 				sToken.setGraph(getDocument().getDocumentGraph());
 				tokenList.add(sToken);
 
-                                String tokenIDStr = fieldValues.get(ConllDataField.ID.getFieldNum() - 1);				
-                                
-				// update primary text (sTextualDS.sText will be set after
+                                // update primary text (sTextualDS.sText will be set after
 				// completely reading the input file)
                                 
                                 int tokenTextStartOffset = primaryText.length();
@@ -635,9 +639,6 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 				// get ID of current token
 				Float tokenID = null;
 				try {
-					if (tokenIDStr.contains("-")) {
-						continue;
-					}
 					tokenID = Float.parseFloat(tokenIDStr);
 				} catch (NumberFormatException e) {
 					String errorMessage = String.format("Invalid numerical value '%s' for ID in line %d of input file. Abort conversion of file " + this.getResourceURI() + ".", tokenIDStr, rowIndex + 1);
