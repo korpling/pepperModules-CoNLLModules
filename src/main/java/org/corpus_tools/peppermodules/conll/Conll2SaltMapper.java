@@ -81,8 +81,9 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 	public static final String NAMESPACE = "NAMESPACE";
 	public static final String DEFAULT_FEATURE = "morph";
 
-	private static final String ANNO_NAME_TOKEN_ID = "tokenID";
-	private static final String ANNO_NAME_HEAD_ID = "headID";
+	private static final String ANNO_NAME_TOKEN_ID = "token_id";
+	private static final String ANNO_NAME_HEAD_ID = "head_id";
+	private static final String ANNO_NS_IDS = "sentence";
 
 	// separator for feature annotation values
 	private final String FEATURESEPARATOR = "\\|";
@@ -484,6 +485,7 @@ public class Conll2SaltMapper extends PepperMapperImpl {
                 List<SAnnotation> sentAnnos = new LinkedList<>();	
                 
 		// iteration over all data rows (the complete input-file)
+        String deprelAtTokenAnnoName = ((CoNLLImporterProperties) getProperties()).getDeprelTokenAnnoName();
 		for (int rowIndex = 0; rowIndex < numOfTuples; rowIndex++) {
 			try {
 				tuple = tupleReader.getTuple();
@@ -661,8 +663,8 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 					headID = headIDStr.matches("[0-9]+(\\.[0-9]+)?")? headIDStr : "-1";
 					headID = ((Float) Float.parseFloat(headID)).toString(); // make all string IDs decimal
 					if (importIDs) {
-						sToken.createAnnotation("sentence", ANNO_NAME_TOKEN_ID, Float.toString(tokenID));
-						sToken.createAnnotation("sentence", ANNO_NAME_HEAD_ID, headID);
+						sToken.createAnnotation(textName == null? ANNO_NS_IDS : textName, ANNO_NAME_TOKEN_ID, Float.toString(tokenID).split("\\.")[0]);
+						sToken.createAnnotation(textName == null? ANNO_NS_IDS : textName, ANNO_NAME_HEAD_ID, headID.split("\\.")[0]);
 					}
 				} catch (NumberFormatException e) {
 					String errorMessage = String.format("Invalid numerical value '%s' for HEAD in line %d of input file '" + this.getResourceURI() + "'. Abort conversion of file " + this.getResourceURI() + ".", headIDStr, rowIndex + 1);
@@ -676,6 +678,10 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 				if (Float.parseFloat(headID) > 0) {
 					// create annotation for pointing relation
 					String annoValue = fieldValues.get(ConllDataField.DEPREL.getFieldNum() - 1);
+					if (annoValue != null && deprelAtTokenAnnoName != null) {
+						sToken.createAnnotation(textName, deprelAtTokenAnnoName, annoValue);
+					}
+					
 					primaryDependency = Pair.of(headID, annoValue);
 					if (Float.parseFloat(headID) <= tokenID) {
                                             headIDPosition = SentTokMap.get(headID.toString());

@@ -107,6 +107,9 @@ public class CoNLLImporterProperties extends PepperModuleProperties {
 	
 	/** If this is set to true, the importer imports token ID and head ID as token annotations. **/
 	public static final String PROP_IMPORT_IDS = PREFIX + "import.ids";
+	
+	/** Additionally import deprel as token annotation */
+	public static final String PROP_DEPREL_AT_TOKEN = PREFIX + "deprel.at.token";
         
 	public CoNLLImporterProperties() {
 		this.addProperty(new PepperModuleProperty<String>(PROP_SPOS, String.class,
@@ -216,9 +219,14 @@ public class CoNLLImporterProperties extends PepperModuleProperties {
 		addProperty(PepperModuleProperty.create()
 				.withName(PROP_IMPORT_IDS)
 				.withType(Boolean.class)
-				.withDescription("")
+				.withDescription("Import token and head id of tokens.")
 				.withDefaultValue(false)
 				.build());		
+		addProperty(PepperModuleProperty.create()
+				.withName(PROP_DEPREL_AT_TOKEN)
+				.withType(String.class)
+				.withDescription("If an annotation name is provided, the dependency relation of a token will be annotated additionally at the token directly using the provided annotation name.")
+				.build());
         }
 
 	public String getSPos() {
@@ -348,6 +356,11 @@ public class CoNLLImporterProperties extends PepperModuleProperties {
         
     public Boolean importIDs() {
     	return (Boolean) getProperty(PROP_IMPORT_IDS).getValue();
+    }
+    
+    public String getDeprelTokenAnnoName() {
+    	Object val = getProperty(PROP_DEPREL_AT_TOKEN).getValue();
+    	return val == null? null : (String) val;
     }
 
 }
