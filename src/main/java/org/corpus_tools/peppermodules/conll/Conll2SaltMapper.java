@@ -81,6 +81,9 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 	public static final String NAMESPACE = "NAMESPACE";
 	public static final String DEFAULT_FEATURE = "morph";
 
+	private static final String ANNO_NAME_TOKEN_ID = "tokenID";
+	private static final String ANNO_NAME_HEAD_ID = "headID";
+
 	// separator for feature annotation values
 	private final String FEATURESEPARATOR = "\\|";
 
@@ -651,11 +654,16 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 
                                 
 				// get ID of current token's head token
+                boolean importIDs = ((CoNLLImporterProperties) getProperties()).importIDs();
 				String headIDStr = fieldValues.get(ConllDataField.HEAD.getFieldNum() - 1);
 				String headID = null;
 				try {
 					headID = headIDStr.matches("[0-9]+(\\.[0-9]+)?")? headIDStr : "-1";
-                                        headID = ((Float) Float.parseFloat(headID)).toString(); // make all string IDs decimal
+					headID = ((Float) Float.parseFloat(headID)).toString(); // make all string IDs decimal
+					if (importIDs) {
+						sToken.createAnnotation("sentence", ANNO_NAME_TOKEN_ID, Float.toString(tokenID));
+						sToken.createAnnotation("sentence", ANNO_NAME_HEAD_ID, headID);
+					}
 				} catch (NumberFormatException e) {
 					String errorMessage = String.format("Invalid numerical value '%s' for HEAD in line %d of input file '" + this.getResourceURI() + "'. Abort conversion of file " + this.getResourceURI() + ".", headIDStr, rowIndex + 1);
 					throw new PepperModuleDataException(this, errorMessage);
@@ -1088,5 +1096,7 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 		}
 		return rel;
 	}
+	
+	
 
 } // ConllDep2SaltMapper
