@@ -104,6 +104,9 @@ public class CoNLLImporterProperties extends PepperModuleProperties {
 
         /** Annotation key names (hyphen-separated) for CoNLL-Coref-style markables in MISC field if present.  GRP denotes edge cluster, EDGE denotes edge type. Default: entity-GRP-identity */
 	public static final String MARK_LABELS = PREFIX + "markable.labels";
+	
+	/** If this is set to true, the importer imports token ID and head ID as token annotations. **/
+	public static final String PROP_IMPORT_IDS = PREFIX + "import.ids";
         
 	public CoNLLImporterProperties() {
 		this.addProperty(new PepperModuleProperty<String>(PROP_SPOS, String.class,
@@ -210,6 +213,12 @@ public class CoNLLImporterProperties extends PepperModuleProperties {
 				.withDescription("Annotation key names (hyphen-separated) for CoNLL-Coref-style markables in MISC field if present. GRP denotes edge cluster, EDGE denotes edge type. Default: entity-GRP-identity")
                                 .withDefaultValue("entity-GRP-identity")
 				.build());	
+		addProperty(PepperModuleProperty.create()
+				.withName(PROP_IMPORT_IDS)
+				.withType(Boolean.class)
+				.withDescription("")
+				.withDefaultValue(false)
+				.build());		
         }
 
 	public String getSPos() {
@@ -336,5 +345,9 @@ public class CoNLLImporterProperties extends PepperModuleProperties {
 		Object val = getProperty(MARK_LABELS).getValue();
 		return val == null? null : ((String) val).split("-",-1);
 	}
+        
+    public Boolean importIDs() {
+    	return (Boolean) getProperty(PROP_IMPORT_IDS).getValue();
+    }
 
 }
