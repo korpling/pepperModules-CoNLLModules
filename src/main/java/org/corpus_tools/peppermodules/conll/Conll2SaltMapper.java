@@ -675,12 +675,12 @@ public class Conll2SaltMapper extends PepperMapperImpl {
 
 				// create pointing relation, pointing from head to dependent
 				Pair<String, String> primaryDependency = null;
+				// create annotation for pointing relation
+				String annoValue = fieldValues.get(ConllDataField.DEPREL.getFieldNum() - 1);
+				if (annoValue != null && deprelAtTokenAnnoName != null) {
+					sToken.createAnnotation(textName, deprelAtTokenAnnoName, annoValue);
+				}
 				if (Float.parseFloat(headID) > 0) {
-					// create annotation for pointing relation
-					String annoValue = fieldValues.get(ConllDataField.DEPREL.getFieldNum() - 1);
-					if (annoValue != null && deprelAtTokenAnnoName != null) {
-						sToken.createAnnotation(textName, deprelAtTokenAnnoName, annoValue);
-					}
 					
 					primaryDependency = Pair.of(headID, annoValue);
 					if (Float.parseFloat(headID) <= tokenID) {
