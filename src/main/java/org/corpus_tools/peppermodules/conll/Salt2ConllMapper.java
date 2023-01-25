@@ -281,10 +281,9 @@ public class Salt2ConllMapper extends PepperMapperImpl implements PepperMapper {
 			int head = 0;
 			if (!dependencyQName.trim().isEmpty()){//DEPENDENCY
 				Collection<SRelation> incoming = tok.getInRelations();
-				SRelation next = null;
 				anno = null;
 				if (!incoming.isEmpty()){					
-					for (SRelation rel : incoming){ 				
+					for (SRelation rel : incoming){
 						if (rel instanceof SPointingRelation && dependencyEdgeType.equals(rel.getType())) {
 							anno = rel.getAnnotation(dependencyQName);
 							SNode source = (SNode) rel.getSource();
