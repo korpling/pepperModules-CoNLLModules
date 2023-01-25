@@ -76,6 +76,10 @@ public class CoNLLExporterProperties extends PepperModuleProperties{
 	public static final String PROP_ANNOS_AS_FEATURES = "annos.as.features";
 	/** This property determines whether or not the source directories tree structure should be kept or a flat output directory is desired. */
 	public static final String PROP_FLAT_OUTPUT = "output.flatten";
+	/** This property defines the edge type of the pointing relations containing the dependency annotations */
+	public static final String PROP_DEP_EDGE_TYPE = "dependency.edge.type";
+	/** Default value for {@value #PROP_DEP_EDGE_TYPE} */
+	public static final String DEP_EDGE_TYPE_DEFAULT = "dep";
 	
 	public CoNLLExporterProperties(){
 		this.addProperty(new PepperModuleProperty<String>(PROP_COL_CONFIG, String.class, "In this string the annotation names (and collapse instructions) for the CoNLL columns are encoded.", Joiner.on(",").join(DEFAULTS), false));
@@ -105,6 +109,13 @@ public class CoNLLExporterProperties extends PepperModuleProperties{
 				.withDescription("This property determines whether or not the source directories tree structure should be kept or a flat output directory is desired.")
 				.withDefaultValue(true)
 				.isRequired(false)
+				.build());
+		this.addProperty(
+				PepperModuleProperty.create()
+				.withName(PROP_DEP_EDGE_TYPE)
+				.withType(String.class)
+				.withDescription("This property defines the edge type of the pointing relations containing the dependency annotations")
+				.withDefaultValue(DEP_EDGE_TYPE_DEFAULT)
 				.build());
 	}
 	
@@ -164,5 +175,9 @@ public class CoNLLExporterProperties extends PepperModuleProperties{
 	
 	public boolean flattenOutputTree() {
 		return (Boolean) getProperty(PROP_FLAT_OUTPUT).getValue();
+	}
+	
+	public String getDependencyEdgeType() {
+		return (String) getProperty(PROP_DEP_EDGE_TYPE).getValue();
 	}
 }

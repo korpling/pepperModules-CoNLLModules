@@ -43,10 +43,12 @@ import org.corpus_tools.peppermodules.conll.tupleconnector.TupleConnectorFactory
 import org.corpus_tools.peppermodules.conll.tupleconnector.TupleWriter;
 import org.corpus_tools.salt.common.SDocumentGraph;
 import org.corpus_tools.salt.common.SOrderRelation;
+import org.corpus_tools.salt.common.SPointingRelation;
 import org.corpus_tools.salt.common.SSpan;
 import org.corpus_tools.salt.common.SSpanningRelation;
 import org.corpus_tools.salt.common.SToken;
 import org.corpus_tools.salt.core.SAnnotation;
+import org.corpus_tools.salt.core.SNode;
 import org.corpus_tools.salt.core.SRelation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -73,6 +75,7 @@ public class Salt2ConllMapper extends PepperMapperImpl implements PepperMapper {
 	/*properties*/
 	private String tokName = null;
 	private String dependencyQName = null;
+	private String dependencyEdgeType = null;
 	private String lemmaQName = null;
 	private String posQName = null;
 	private String cposQName = null;
@@ -275,19 +278,22 @@ public class Salt2ConllMapper extends PepperMapperImpl implements PepperMapper {
 			}
 			
 			anno = null;
+			int head = 0;
 			if (!dependencyQName.trim().isEmpty()){//DEPENDENCY
 				Collection<SRelation> incoming = tok.getInRelations();
-				isDependency = false;
-				SRelation next = null;
 				anno = null;
 				if (!incoming.isEmpty()){					
-					for (Iterator<SRelation> iter=incoming.iterator();
-							iter.hasNext()&&!isDependency;
-							next=iter.next(), isDependency=next.getAnnotation(dependencyQName)!=null, anno=next.getAnnotation(dependencyQName)){}				
-					tuple.add(isDependency? Integer.toString((token2Id.get(next.getSource()))) : NO_VALUE);//HEAD
-					tuple.add(anno==null? NO_VALUE : (anno.getValue()==null? NO_VALUE : anno.getValue_STEXT()));//FUNC
-				}						
+					for (SRelation rel : incoming){
+						if (rel instanceof SPointingRelation && dependencyEdgeType.equals(rel.getType())) {
+							anno = rel.getAnnotation(dependencyQName);
+							SNode source = (SNode) rel.getSource();
+							head = source instanceof SToken? token2Id.get((SToken) source) : null;
+						}
+					}					
+				}	
 			}
+			tuple.add(head > 0? Integer.toString(head) : NO_VALUE);//HEAD
+			tuple.add(anno==null? NO_VALUE : (anno.getValue()==null? NO_VALUE : anno.getValue_STEXT()));//FUNC
 			
 			anno = null;
 			if (!miscQName.trim().isEmpty()) {//MISC
@@ -355,6 +361,7 @@ public class Salt2ConllMapper extends PepperMapperImpl implements PepperMapper {
 		}
 		this.tokName = properties.getSegmentationName();
 		this.dependencyQName = columns.get(ConllDataField.DEPREL);
+		this.dependencyEdgeType = properties.getDependencyEdgeType();
 		this.lemmaQName = columns.get(ConllDataField.LEMMA);
 		this.posQName = columns.get(ConllDataField.POSTAG);
 		this.cposQName = columns.get(ConllDataField.CPOSTAG);
